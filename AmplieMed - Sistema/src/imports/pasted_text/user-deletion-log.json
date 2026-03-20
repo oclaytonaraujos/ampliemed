@@ -1,0 +1,802 @@
+[
+  {
+    "event_message": "shutdown",
+    "event_type": "Shutdown",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "338f4cfd-04c5-40d1-a8e7-984086c06ca2",
+    "level": "log",
+    "timestamp": 1773679730074000
+  },
+  {
+    "event_message": "--> POST /make-server-d4766610/admin/delete-all-users 200 4s\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "1e14dc9b-d27e-4ad4-a68a-97a9b5cb0114",
+    "level": "info",
+    "timestamp": 1773679715476000
+  },
+  {
+    "event_message": "✅ [Admin] Deletion complete: 0 deleted, 1 failed\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "548c29f6-d281-4b9b-a8b5-795e3d3283bc",
+    "level": "info",
+    "timestamp": 1773679715475000
+  },
+  {
+    "event_message": "   ❌ Failed to delete brunoleao.ceo@gmail.com: Database error deleting user\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "35ced215-8480-42b7-9da4-e046b8342f83",
+    "level": "error",
+    "timestamp": 1773679715475000
+  },
+  {
+    "event_message": "   🗑️ Deleting user: brunoleao.ceo@gmail.com (420be486-24d0-415a-82f0-9355b3b78b31)\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "e9870186-3074-41f2-a7fd-46a372f74b2d",
+    "level": "info",
+    "timestamp": 1773679715214000
+  },
+  {
+    "event_message": "🗑️ [Admin] Now deleting from auth.users...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "e4b9ca2f-147a-4b6d-a464-034660f2f3fa",
+    "level": "info",
+    "timestamp": 1773679715214000
+  },
+  {
+    "event_message": "   🗑️ Deleting from profiles...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "391643a8-b114-4581-870d-a3c1602db7f4",
+    "level": "info",
+    "timestamp": 1773679715176000
+  },
+  {
+    "event_message": "   🗑️ Deleting from medical_records (signed_by)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "e1355158-2848-45be-b35a-69e6733ad6e0",
+    "level": "info",
+    "timestamp": 1773679715136000
+  },
+  {
+    "event_message": "   🗑️ Deleting from file_attachments (uploaded_by_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "feb48317-f302-4191-b24b-de60065440e1",
+    "level": "info",
+    "timestamp": 1773679715099000
+  },
+  {
+    "event_message": "   🗑️ Deleting from exams (requested_by_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "e762da08-8224-4fe7-ac7c-622284d76101",
+    "level": "info",
+    "timestamp": 1773679715052000
+  },
+  {
+    "event_message": "   🗑️ Deleting from drug_interaction_alerts (acknowledged_by)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "c362b0aa-4d65-4731-ab4a-5762a29f2726",
+    "level": "info",
+    "timestamp": 1773679715008000
+  },
+  {
+    "event_message": "   🗑️ Deleting from doctor_time_off (approved_by)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "1f788088-b92f-4293-9249-4a007d5e76fe",
+    "level": "info",
+    "timestamp": 1773679714963000
+  },
+  {
+    "event_message": "   🗑️ Deleting from professionals (user_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "67ae85ba-01a1-4670-92e7-5940ea2e64a2",
+    "level": "info",
+    "timestamp": 1773679714919000
+  },
+  {
+    "event_message": "   🗑️ Deleting from doctors (user_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "9c1b97ed-dcf4-4b75-b62e-c3dac32838f7",
+    "level": "info",
+    "timestamp": 1773679714876000
+  },
+  {
+    "event_message": "   🗑️ Deleting from telemedicine_sessions (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "97846f19-b027-4e81-b881-ab2b6fedb4b5",
+    "level": "info",
+    "timestamp": 1773679714831000
+  },
+  {
+    "event_message": "   🗑️ Deleting from system_users (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "99d21eb7-ba58-4ca7-ad12-bb4cb60395f7",
+    "level": "info",
+    "timestamp": 1773679714789000
+  },
+  {
+    "event_message": "   🗑️ Deleting from stock_items (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "31e5f863-70d7-464e-a964-58d067a36da1",
+    "level": "info",
+    "timestamp": 1773679714746000
+  },
+  {
+    "event_message": "   🗑️ Deleting from professionals (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "9620c5bf-817f-4e83-a0ef-2585e96117ee",
+    "level": "info",
+    "timestamp": 1773679714697000
+  },
+  {
+    "event_message": "   🗑️ Deleting from prescriptions (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "7318adca-e34a-4916-b49d-b464bd7280a0",
+    "level": "info",
+    "timestamp": 1773679714647000
+  },
+  {
+    "event_message": "   🗑️ Deleting from patients (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "7902419b-e5b9-475f-b3db-4753e88a748f",
+    "level": "info",
+    "timestamp": 1773679714605000
+  },
+  {
+    "event_message": "   🗑️ Deleting from notifications (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "3ce9d092-2d94-4a98-b01e-6370f3ac306d",
+    "level": "info",
+    "timestamp": 1773679714540000
+  },
+  {
+    "event_message": "   🗑️ Deleting from medical_records (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "942523bb-08cc-4709-9daa-402f9bbaa32c",
+    "level": "info",
+    "timestamp": 1773679714481000
+  },
+  {
+    "event_message": "   🗑️ Deleting from insurances (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "a01c6e3f-f38d-4550-8713-2fb3f4148c40",
+    "level": "info",
+    "timestamp": 1773679714413000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_receivables (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "5640ec1b-83c1-4b98-9a8a-753c19c60f86",
+    "level": "info",
+    "timestamp": 1773679714367000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_payments (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "454b40f4-91dd-4185-9d7d-2f8c0a46c3d8",
+    "level": "info",
+    "timestamp": 1773679714326000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_payables (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "f2862147-5034-4666-ac67-2454c3c6e817",
+    "level": "info",
+    "timestamp": 1773679714276000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_glosas (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "3494469f-236f-482a-90a7-5f7b1f3dc03e",
+    "level": "info",
+    "timestamp": 1773679714229000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_billings (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "a23f013a-407f-4d1e-9e12-2aed9d6764fa",
+    "level": "info",
+    "timestamp": 1773679714172000
+  },
+  {
+    "event_message": "   🗑️ Deleting from file_attachments (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "d84b79bd-b48f-4091-926a-a6440173cfd5",
+    "level": "info",
+    "timestamp": 1773679714038000
+  },
+  {
+    "event_message": "   🗑️ Deleting from exams (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "366aab30-d5f0-4918-8ec4-232dc505ee44",
+    "level": "info",
+    "timestamp": 1773679713904000
+  },
+  {
+    "event_message": "   🗑️ Deleting from doctors (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "7fb27aea-027b-4144-bfa1-c4c5b7270b8d",
+    "level": "info",
+    "timestamp": 1773679713767000
+  },
+  {
+    "event_message": "   🗑️ Deleting from communication_messages (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "08615981-5020-4538-8ddc-1f29bf74d58e",
+    "level": "info",
+    "timestamp": 1773679713353000
+  },
+  {
+    "event_message": "   🗑️ Deleting from communication_campaigns (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "b2a40d98-eb84-4dfe-b587-d879bbde0c59",
+    "level": "info",
+    "timestamp": 1773679712950000
+  },
+  {
+    "event_message": "   🗑️ Deleting from clinics (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "98018d3c-7cca-4a0e-b3b2-66242fd9fe41",
+    "level": "info",
+    "timestamp": 1773679712803000
+  },
+  {
+    "event_message": "   🗑️ Deleting from clinic_settings (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "06913004-bdd4-4e52-8e03-7d6159277e7f",
+    "level": "info",
+    "timestamp": 1773679712573000
+  },
+  {
+    "event_message": "   🗑️ Deleting from audit_log (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "3ebd09ee-880d-4ee8-afde-b08b3a57e566",
+    "level": "info",
+    "timestamp": 1773679712336000
+  },
+  {
+    "event_message": "   🗑️ Deleting from appointments (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "7e5e52fc-113f-4412-965c-bc02d1eb82d1",
+    "level": "info",
+    "timestamp": 1773679712194000
+  },
+  {
+    "event_message": "   🗑️ Deleting from app_templates (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "5706e0ed-0f34-489f-a8e2-cf833834a042",
+    "level": "info",
+    "timestamp": 1773679711637000
+  },
+  {
+    "event_message": "📋 [Admin] Found 1 users to delete\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "8952dc41-82ce-42c1-b8ca-96ed98a763bb",
+    "level": "info",
+    "timestamp": 1773679711637000
+  },
+  {
+    "event_message": "🗑️ [Admin] Deleting from all related tables...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "35499280-ffcc-42e4-a421-a4e14c8d5ee2",
+    "level": "info",
+    "timestamp": 1773679711637000
+  },
+  {
+    "event_message": "🗑️ [Admin] Starting to delete all users...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "400d2451-a355-4374-ba2f-b749f5dab794",
+    "level": "info",
+    "timestamp": 1773679711109000
+  },
+  {
+    "event_message": "<-- POST /make-server-d4766610/admin/delete-all-users\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "1ad418df-1ddc-40c7-9d1a-e2438c9412bd",
+    "level": "info",
+    "timestamp": 1773679711108000
+  },
+  {
+    "event_message": "booted (time: 28ms)",
+    "event_type": "Boot",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "b4d995a0-3ffd-4d45-badf-4d99df5f617b",
+    "level": "log",
+    "timestamp": 1773679711068000
+  },
+  {
+    "event_message": "--> OPTIONS /make-server-d4766610/admin/delete-all-users 204 1ms\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "1b054099-f555-4953-9d99-50b518285be8",
+    "level": "info",
+    "timestamp": 1773679710861000
+  },
+  {
+    "event_message": "<-- OPTIONS /make-server-d4766610/admin/delete-all-users\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "9a8a4c2c-91fb-413e-8ff1-4ddfb454d37a",
+    "level": "info",
+    "timestamp": 1773679710860000
+  },
+  {
+    "event_message": "booted (time: 31ms)",
+    "event_type": "Boot",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "3a692b38-2ac4-4c28-8ee1-d6e50bf28a80",
+    "level": "log",
+    "timestamp": 1773679710820000
+  },
+  {
+    "event_message": "shutdown",
+    "event_type": "Shutdown",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "098c29f5-44ac-48d0-ac1d-0568c56becff",
+    "level": "log",
+    "timestamp": 1773679704740000
+  },
+  {
+    "event_message": "--> OPTIONS /make-server-d4766610/data/bulk-load 204 1ms\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "732e07ab-5fd5-4a65-840e-bdd703f3e4b4",
+    "level": "info",
+    "timestamp": 1773679685357000
+  },
+  {
+    "event_message": "<-- OPTIONS /make-server-d4766610/data/bulk-load\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "a06c6607-dac8-4225-bb43-08a5162ef2fa",
+    "level": "info",
+    "timestamp": 1773679685356000
+  },
+  {
+    "event_message": "booted (time: 32ms)",
+    "event_type": "Boot",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "cfaf9ba1-2f35-43fe-b0d9-600487f22c16",
+    "level": "log",
+    "timestamp": 1773679685242000
+  },
+  {
+    "event_message": "shutdown",
+    "event_type": "Shutdown",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "b172bfaf-3391-41ef-aa76-b567cd7d8fde",
+    "level": "log",
+    "timestamp": 1773676847734000
+  },
+  {
+    "event_message": "--> POST /make-server-d4766610/admin/delete-all-users 200 6s\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "d203a580-146b-475f-b2f6-09e003ebb805",
+    "level": "info",
+    "timestamp": 1773676832223000
+  },
+  {
+    "event_message": "   ❌ Failed to delete brunoleao.ceo@gmail.com: Database error deleting user\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "082bee33-2663-4921-9fb9-b4c0b2cf5d27",
+    "level": "error",
+    "timestamp": 1773676832220000
+  },
+  {
+    "event_message": "✅ [Admin] Deletion complete: 0 deleted, 1 failed\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "e86db042-2f0a-47f2-8c89-7fe60884ca26",
+    "level": "info",
+    "timestamp": 1773676832220000
+  },
+  {
+    "event_message": "🗑️ [Admin] Now deleting from auth.users...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "0f218950-89c9-4b22-a3c4-84ab2127aeea",
+    "level": "info",
+    "timestamp": 1773676831740000
+  },
+  {
+    "event_message": "   🗑️ Deleting user: brunoleao.ceo@gmail.com (420be486-24d0-415a-82f0-9355b3b78b31)\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "a514acab-60a1-45e1-983c-53e068c50006",
+    "level": "info",
+    "timestamp": 1773676831740000
+  },
+  {
+    "event_message": "   🗑️ Deleting from profiles...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "86259da6-d721-42fd-af94-0156e7e8d8c7",
+    "level": "info",
+    "timestamp": 1773676831690000
+  },
+  {
+    "event_message": "   🗑️ Deleting from medical_records (signed_by)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "ee4754aa-0570-4cfe-8a5b-c6eccb97f7e6",
+    "level": "info",
+    "timestamp": 1773676831662000
+  },
+  {
+    "event_message": "   🗑️ Deleting from file_attachments (uploaded_by_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "b500fe5c-1f05-4f70-aebe-71cd3f9dfd0b",
+    "level": "info",
+    "timestamp": 1773676831637000
+  },
+  {
+    "event_message": "   🗑️ Deleting from exams (requested_by_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "5a3d962f-6316-48ca-b5fc-f2e31cba8ffe",
+    "level": "info",
+    "timestamp": 1773676831607000
+  },
+  {
+    "event_message": "   🗑️ Deleting from drug_interaction_alerts (acknowledged_by)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "6669eddc-1133-4955-be86-8ace9c59036e",
+    "level": "info",
+    "timestamp": 1773676831570000
+  },
+  {
+    "event_message": "   🗑️ Deleting from doctor_time_off (approved_by)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "114de980-84ec-4835-8c60-4476152a8e2f",
+    "level": "info",
+    "timestamp": 1773676831536000
+  },
+  {
+    "event_message": "   🗑️ Deleting from professionals (user_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "3f6c7bb5-d60c-4175-ac82-2100d153dee6",
+    "level": "info",
+    "timestamp": 1773676831512000
+  },
+  {
+    "event_message": "   🗑️ Deleting from doctors (user_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "13605c9d-3525-4e41-b4f0-0de3035d8014",
+    "level": "info",
+    "timestamp": 1773676831482000
+  },
+  {
+    "event_message": "   🗑️ Deleting from telemedicine_sessions (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "9b27516e-f6e9-4bba-b795-893ec8f3a1ca",
+    "level": "info",
+    "timestamp": 1773676831454000
+  },
+  {
+    "event_message": "   🗑️ Deleting from system_users (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "e8306c2f-85ac-42f6-a932-202d40a9d7fc",
+    "level": "info",
+    "timestamp": 1773676831419000
+  },
+  {
+    "event_message": "   🗑️ Deleting from stock_items (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "ad3bdd08-06d0-4ae1-94db-08332a0f7260",
+    "level": "info",
+    "timestamp": 1773676831385000
+  },
+  {
+    "event_message": "   🗑️ Deleting from professionals (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "cb219950-a592-4399-a00f-45fda2345487",
+    "level": "info",
+    "timestamp": 1773676831357000
+  },
+  {
+    "event_message": "   🗑️ Deleting from prescriptions (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "3c330c22-41b2-482e-b39d-bd7207e85f04",
+    "level": "info",
+    "timestamp": 1773676831255000
+  },
+  {
+    "event_message": "   🗑️ Deleting from patients (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "dc6da999-5e29-4b41-b328-d1b42f6e8025",
+    "level": "info",
+    "timestamp": 1773676831216000
+  },
+  {
+    "event_message": "   🗑️ Deleting from notifications (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "36a4c784-0fe0-4105-b101-f8866b746019",
+    "level": "info",
+    "timestamp": 1773676831181000
+  },
+  {
+    "event_message": "   🗑️ Deleting from medical_records (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "b0a57bb9-3bee-4b19-8c3c-76a74a05aad6",
+    "level": "info",
+    "timestamp": 1773676831153000
+  },
+  {
+    "event_message": "   🗑️ Deleting from insurances (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "3ffc7348-a516-4e7d-b070-4b24ff1c8a55",
+    "level": "info",
+    "timestamp": 1773676831122000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_receivables (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "e084ec4d-1c6e-43ca-86ab-d39aa6e65395",
+    "level": "info",
+    "timestamp": 1773676831092000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_payments (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "fedff2be-bf1b-469c-aa4e-b79a949ac965",
+    "level": "info",
+    "timestamp": 1773676831058000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_payables (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "8bdd3a2d-25c4-4bac-b806-8ce5fea15ce2",
+    "level": "info",
+    "timestamp": 1773676831026000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_glosas (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "42b1818c-0e4a-4d83-b102-4d8baaf4b92c",
+    "level": "info",
+    "timestamp": 1773676830975000
+  },
+  {
+    "event_message": "   🗑️ Deleting from financial_billings (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "9d056de5-0e25-49de-89d7-0544f3a85980",
+    "level": "info",
+    "timestamp": 1773676830898000
+  },
+  {
+    "event_message": "   🗑️ Deleting from file_attachments (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "b106b4e1-c227-4ef9-beec-86f0c46cb53b",
+    "level": "info",
+    "timestamp": 1773676830847000
+  },
+  {
+    "event_message": "   🗑️ Deleting from exams (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "ea1d1897-c433-4c4f-b765-4e06767902f7",
+    "level": "info",
+    "timestamp": 1773676830730000
+  },
+  {
+    "event_message": "   🗑️ Deleting from doctors (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "578c8e08-be85-4c27-8bbe-23955c94c5bf",
+    "level": "info",
+    "timestamp": 1773676830491000
+  },
+  {
+    "event_message": "   🗑️ Deleting from communication_messages (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "73a9fa9d-7e4d-43c5-bdc3-3baa82368e4d",
+    "level": "info",
+    "timestamp": 1773676829974000
+  },
+  {
+    "event_message": "   🗑️ Deleting from communication_campaigns (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "4408e11e-5001-4946-af82-cd06fb870bf4",
+    "level": "info",
+    "timestamp": 1773676829636000
+  },
+  {
+    "event_message": "   🗑️ Deleting from clinics (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "0f67076f-a4b7-4034-8e21-91b0ed6418f1",
+    "level": "info",
+    "timestamp": 1773676829512000
+  },
+  {
+    "event_message": "   🗑️ Deleting from clinic_settings (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "6d55d1dd-e25e-49cf-a4a1-8b42c5c47ffc",
+    "level": "info",
+    "timestamp": 1773676829378000
+  },
+  {
+    "event_message": "   🗑️ Deleting from audit_log (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "142d5711-048d-48fb-a775-d23348d5fa85",
+    "level": "info",
+    "timestamp": 1773676829228000
+  },
+  {
+    "event_message": "   🗑️ Deleting from appointments (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "8bcf289e-51c6-4608-9df1-223962c91686",
+    "level": "info",
+    "timestamp": 1773676829089000
+  },
+  {
+    "event_message": "   🗑️ Deleting from app_templates (owner_id)...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "c95a1177-bf6a-47c7-8456-059fcbba0971",
+    "level": "info",
+    "timestamp": 1773676828489000
+  },
+  {
+    "event_message": "📋 [Admin] Found 1 users to delete\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "2c8c5cba-ef1b-4d0e-9bcb-f4aa2bdd74e9",
+    "level": "info",
+    "timestamp": 1773676828489000
+  },
+  {
+    "event_message": "🗑️ [Admin] Deleting from all related tables...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "08793fca-9ce4-4856-9a68-404ab6a91838",
+    "level": "info",
+    "timestamp": 1773676828489000
+  },
+  {
+    "event_message": "🗑️ [Admin] Starting to delete all users...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "5c44ba89-34f6-48aa-9e4f-28663137b356",
+    "level": "info",
+    "timestamp": 1773676826712000
+  },
+  {
+    "event_message": "<-- POST /make-server-d4766610/admin/delete-all-users\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "f3d111ae-69e3-4e38-8024-5c446bdd03c5",
+    "level": "info",
+    "timestamp": 1773676826709000
+  },
+  {
+    "event_message": "booted (time: 279ms)",
+    "event_type": "Boot",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "f0b81ec0-fc08-4129-9c67-e74c8e5a83a8",
+    "level": "log",
+    "timestamp": 1773676821741000
+  },
+  {
+    "event_message": "shutdown",
+    "event_type": "Shutdown",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "f063dcf2-2c5c-406a-ad37-013c037e3cb8",
+    "level": "log",
+    "timestamp": 1773676538799000
+  },
+  {
+    "event_message": "--> POST /make-server-d4766610/admin/delete-all-users 200 5s\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "e9ef7daa-6b1c-47df-beea-0aac9e3da277",
+    "level": "info",
+    "timestamp": 1773676508367000
+  },
+  {
+    "event_message": "✅ [Admin] Deletion complete: 0 deleted, 1 failed\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "2ba34e6e-fee0-4cfd-949f-04953d073fd7",
+    "level": "info",
+    "timestamp": 1773676508366000
+  },
+  {
+    "event_message": "❌ [Admin] Failed to delete brunoleao.ceo@gmail.com: Database error deleting user\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "87d3cedf-515b-4946-9265-3d825c5c2cb3",
+    "level": "error",
+    "timestamp": 1773676508366000
+  },
+  {
+    "event_message": "🗑️ [Admin] Deleting user: brunoleao.ceo@gmail.com (420be486-24d0-415a-82f0-9355b3b78b31)\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "a67292e9-b2d0-462c-b35b-3ee30283a2fb",
+    "level": "info",
+    "timestamp": 1773676506019000
+  },
+  {
+    "event_message": "🗑️ [Admin] Deleting all profiles...\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "78a146b6-8a8b-4cce-b7bf-836b5f01fa5d",
+    "level": "info",
+    "timestamp": 1773676503947000
+  },
+  {
+    "event_message": "📋 [Admin] Found 1 users to delete\n",
+    "event_type": "Log",
+    "function_id": "e888e7d4-9b51-4208-ad24-2fbfc6ead6fa",
+    "id": "496f2f71-eb0d-45ff-b289-dd004c7b93c3",
+    "level": "info",
+    "timestamp": 1773676503947000
+  }
+]

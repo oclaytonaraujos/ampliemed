@@ -1,0 +1,230 @@
+Execute agora a etapa final de cleanup e blindagem do schema de arquivos.
+
+A análise do schema atual mostra que a migração anterior funcionou parcialmente, mas o banco ainda não está completamente consolidado na arquitetura final.
+
+Estado atual confirmado no schema
+Já existe:
+
+clinic_settings.logo_path
+
+profiles.avatar_path
+
+doctors.photo_path
+
+Ainda existem colunas legadas:
+
+clinic_settings.logo_url
+
+profiles.avatar_url
+
+doctors.photo_url
+
+Em file_attachments:
+
+storage_path existe
+
+bucket_type existe com os valores corretos
+
+storage_bucket existe e já usa default make-d4766610-documents
+
+Problemas restantes confirmados
+1. O schema ainda está híbrido
+
+As colunas _url ainda existem no banco e precisam ser removidas para encerrar a transição.
+
+2. storage_bucket ainda pode ficar inconsistente com bucket_type
+
+Mesmo com o default novo, ainda pode haver inserção inconsistente.
+
+Exemplo de problema:
+
+bucket_type = 'avatars'
+
+storage_bucket omitido
+
+banco usa default 'make-d4766610-documents'
+
+Isso está errado.
+
+3. O banco ainda não impede paths inválidos
+
+É necessário impedir no schema valores como:
+
+http://
+
+https://
+
+data:
+
+blob:
+
+em:
+
+file_attachments.storage_path
+
+clinic_settings.logo_path
+
+profiles.avatar_path
+
+doctors.photo_path
+
+O que deve ser feito
+1. Remover colunas legadas _url
+
+Crie a migration final para remover:
+
+clinic_settings.logo_url
+
+profiles.avatar_url
+
+doctors.photo_url
+
+Só faça isso se os dados já tiverem sido migrados para _path, o que o schema atual indica como provável.
+
+2. Blindar file_attachments
+
+Garanta coerência real entre:
+
+bucket_type
+
+storage_bucket
+
+Implemente uma solução robusta, preferencialmente uma destas:
+
+opção preferida
+
+Criar trigger BEFORE INSERT OR UPDATE para preencher/corrigir storage_bucket automaticamente com base em bucket_type:
+
+avatars → bucket público de avatars
+
+media → bucket público de mídia
+
+documents → bucket privado de documents
+
+chat → bucket privado de chat
+
+opcional adicional
+
+Adicionar constraint para impedir pares inválidos entre:
+
+bucket_type
+
+storage_bucket
+
+3. Impedir path inválido no banco
+
+Adicione constraints ou checks para impedir que estes campos recebam:
+
+URL completa
+
+data URI
+
+blob URI
+
+Campos a proteger:
+
+file_attachments.storage_path
+
+clinic_settings.logo_path
+
+profiles.avatar_path
+
+doctors.photo_path
+
+Bloquear valores que comecem com:
+
+http://
+
+https://
+
+data:
+
+blob:
+
+O banco deve aceitar apenas PATH relativo.
+
+4. Validar dados existentes
+
+Antes de aplicar constraints destrutivas, normalize os dados já existentes:
+
+Em file_attachments
+
+corrigir storage_bucket com base em bucket_type
+
+limpar qualquer storage_path inválido
+
+Em clinic_settings
+
+garantir que logo_path não contenha URL
+
+Em profiles
+
+garantir que avatar_path não contenha URL
+
+Em doctors
+
+garantir que photo_path não contenha URL
+
+5. Entregar migration SQL final completa
+
+A migration deve:
+
+fazer cleanup dos dados
+
+remover _url
+
+criar trigger de coerência para storage_bucket
+
+criar function auxiliar se necessário
+
+adicionar constraints/checks
+
+deixar o schema definitivamente alinhado ao contrato final
+
+Forma obrigatória da resposta
+
+Entregue apenas:
+
+1. Lista dos arquivos alterados
+
+Liste todos os arquivos alterados.
+
+2. Código final relevante
+
+Mostre o código final dos arquivos alterados, se houver ajuste de app/backend.
+
+3. Migration SQL final
+
+Entregue o SQL completo, pronto para colar no Supabase SQL Editor.
+
+4. Checklist final
+
+Responda objetivamente:
+
+logo_url foi removido?
+
+avatar_url foi removido?
+
+photo_url foi removido?
+
+_path virou contrato único?
+
+storage_bucket agora fica coerente com bucket_type automaticamente?
+
+o banco agora bloqueia URL/base64/blob em campos de path?
+
+o schema ficou sem híbrido?
+
+essa parte ficou definitivamente encerrada?
+
+Restrições
+
+não repetir auditoria
+
+não narrar raciocínio
+
+não gerar plano
+
+não deixar pendência para depois
+
+entregar resultado técnico final verificável

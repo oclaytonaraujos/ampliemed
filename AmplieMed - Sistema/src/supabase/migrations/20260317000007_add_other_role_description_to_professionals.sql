@@ -1,0 +1,1 @@
+ALTER TABLE public.professionals ADD COLUMN other_role_description TEXT;

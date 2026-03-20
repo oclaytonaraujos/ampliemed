@@ -1,0 +1,603 @@
+Execute uma refatoração arquitetural completa, definitiva e verificável de toda a gestão de arquivos, imagens e documentos do sistema, com base no schema real do Supabase já existente.
+
+Você não deve auditar novamente, não deve apenas sugerir, não deve responder com plano, e não deve narrar seu raciocínio.
+Você deve corrigir a implementação, alinhar frontend + backend + banco ao schema real, e entregar o resultado técnico final.
+
+CONTEXTO OBRIGATÓRIO
+
+O schema atual já confirma a existência das seguintes estruturas relevantes:
+
+Tabela public.file_attachments
+
+Campos já existentes:
+
+storage_path text NOT NULL
+
+storage_bucket text DEFAULT 'make-d4766610-medical-files'
+
+bucket_type text DEFAULT 'documents'
+
+entity_type
+
+entity_id
+
+mime_type
+
+size_bytes
+
+Tabela public.clinic_settings
+
+Campos já existentes:
+
+logo_url text
+
+logo_path text
+
+Tabela public.profiles
+
+Campo já existente:
+
+avatar_url text
+
+Tabela public.doctors
+
+Campo já existente:
+
+photo_url text
+
+Outras observações do schema
+
+existe a tabela kv_store_d4766610
+
+existe herança de arquitetura antiga com bucket único
+
+a modelagem atual ainda permite inconsistência entre URL persistida e PATH persistido
+
+OBJETIVO DA REFAÇÃO
+
+Deixe o sistema com a arquitetura final obrigatória abaixo:
+
+todo arquivo deve ser armazenado exclusivamente no Supabase Storage
+
+nenhum arquivo pode ser armazenado em base64
+
+nenhuma URL completa pode ser persistida no banco
+
+nenhuma URL completa pode ser persistida em KV store
+
+o banco deve salvar somente o PATH relativo
+
+a exibição deve ocorrer somente por URL gerada dinamicamente
+
+buckets públicos e privados devem ser segregados por responsabilidade
+
+o sistema não pode manter arquitetura híbrida antiga
+
+o sistema deve ficar consistente com o schema real já existente
+
+REGRA MÁXIMA
+É PROIBIDO
+
+persistir base64
+
+usar readAsDataURL
+
+salvar data:image/...
+
+salvar URL completa em logo_url, avatar_url, photo_url ou qualquer outro campo
+
+salvar blob serializado
+
+salvar arquivo no kv_store_d4766610
+
+usar fallback do tipo storagePath || data
+
+manter bucket único para tudo
+
+manter contrato híbrido entre URL persistida e PATH persistido
+
+responder com explicação sem executar a correção
+
+É OBRIGATÓRIO
+
+usar Supabase Storage como única origem real de arquivos
+
+salvar apenas PATH relativo
+
+gerar URL apenas no momento da exibição
+
+migrar os campos legados do schema para a arquitetura correta
+
+atualizar código, tipos, mapeadores, componentes e SQL
+
+entregar resultado final verificável
+
+IMPLEMENTAÇÃO OBRIGATÓRIA BASEADA NO SCHEMA
+1. Corrigir a modelagem persistida de arquivos no banco
+
+Você deve alinhar o schema e o código à seguinte regra:
+
+Regra obrigatória de persistência
+
+No banco deve existir apenas:
+
+storage_path
+
+ou campos equivalentes terminando em _path
+
+Não deve existir campo ativo de persistência definitiva terminando em _url para arquivos armazenados no Supabase Storage.
+
+Ajustes obrigatórios no schema lógico
+
+Corrija os contratos para que estes campos passem a obedecer arquitetura baseada em PATH:
+
+clinic_settings.logo_url → deve ser descontinuado/removido como campo ativo
+
+clinic_settings.logo_path → deve ser o campo oficial
+
+profiles.avatar_url → deve migrar para avatar_path
+
+doctors.photo_url → deve migrar para photo_path
+
+Resultado esperado
+
+Após a refatoração:
+
+logo_path é o campo oficial para logo da clínica
+
+avatar_path é o campo oficial para avatar de perfil
+
+photo_path é o campo oficial para foto de médico
+
+logo_url, avatar_url, photo_url deixam de ser contratos ativos
+
+Se necessário, gere migration SQL para:
+
+criar as novas colunas _path
+
+migrar dados existentes quando possível
+
+remover dependência das colunas _url
+
+opcionalmente manter colunas antigas apenas como legado temporário de migração, mas não como arquitetura final do app
+
+2. Corrigir file_attachments para refletir a arquitetura final
+
+A tabela file_attachments já existe e deve se tornar a referência oficial para anexos.
+
+Regras obrigatórias para file_attachments
+
+storage_path deve armazenar apenas PATH relativo
+
+storage_bucket deve refletir bucket real correto
+
+bucket_type deve ser usado de forma consistente
+
+entity_type + entity_id devem vincular corretamente o anexo à entidade
+
+Corrigir:
+
+qualquer persistência de base64 em storage_path
+
+qualquer persistência de URL completa em storage_path
+
+qualquer uso indevido do bucket legado como padrão universal
+
+Buckets aceitos
+
+O sistema deve operar com segregação equivalente a:
+
+avatars → público
+
+media → público
+
+documents → privado
+
+chat → privado
+
+O campo bucket_type já suporta:
+
+'avatars'
+
+'media'
+
+'documents'
+
+'chat'
+
+Portanto, use essa estrutura real do schema.
+
+3. Remover totalmente base64, inclusive do transporte
+
+Não mantenha base64 nem como armazenamento, nem como transporte HTTP.
+
+Obrigatório
+
+remover FileReader.readAsDataURL
+
+remover qualquer helper de conversão para base64
+
+remover qualquer campo data usado para representar arquivo persistido
+
+usar upload com multipart/form-data ou binário direto
+
+preview temporário local pode usar apenas URL.createObjectURL(file)
+
+Resultado esperado
+
+Após upload:
+
+somente storage_path
+
+nunca data
+
+nunca base64
+
+nunca URL completa persistida
+
+4. Corrigir frontend, tipos e contratos
+
+Refatore todas as interfaces e tipos de arquivos.
+
+Obrigatório
+
+remover data: string de anexos persistidos
+
+tornar storagePath obrigatório nos objetos persistidos
+
+diferenciar claramente:
+
+arquivo local temporário
+
+arquivo persistido no Storage
+
+Estrutura esperada
+
+Crie tipos equivalentes a:
+
+LocalUploadFile
+
+StoredFileAttachment
+
+AvatarAsset
+
+DoctorPhotoAsset
+
+ClinicLogoAsset
+
+Os nomes podem variar, mas a separação conceitual deve existir.
+
+5. Corrigir mapeadores e persistência
+
+Refatore completamente os data mappers.
+
+Proibido manter
+
+storage_path: f.storagePath || f.data || ''
+
+qualquer fallback para base64
+
+qualquer fallback para URL persistida
+
+Obrigatório
+
+persistir apenas storage_path
+
+persistir bucket correto
+
+persistir bucket_type correto
+
+falhar explicitamente se tentarem salvar arquivo sem storagePath
+
+Também revise qualquer persistência envolvendo:
+
+clinic_settings
+
+profiles
+
+doctors
+
+file_attachments
+
+kv_store_d4766610
+
+6. Criar camada centralizada de storage
+
+Crie uma camada única e padronizada para Storage.
+
+Exemplo de arquivo:
+
+utils/storage-helper.ts
+
+services/storage.service.ts
+
+Essa camada deve centralizar:
+
+Upload
+
+upload de avatar
+
+upload de foto de médico
+
+upload de logo da clínica
+
+upload de mídia pública
+
+upload de documento privado
+
+upload de anexo de chat
+
+URL dinâmica
+
+getPublicUrl(path, bucket)
+
+getSignedUrl(path, bucket, expiresIn)
+
+Regras
+
+público usa getPublicUrl
+
+privado usa createSignedUrl
+
+nenhum componente deve montar URL manualmente espalhada pelo app
+
+Segurança/qualidade
+
+sanitização de nome
+
+validação MIME
+
+validação de tamanho
+
+escolha correta do bucket
+
+tratamento de erro
+
+7. Integrar aos módulos reais do sistema
+
+Implemente o fluxo real nos módulos já existentes, com base nas entidades reais do schema.
+
+Integrar onde fizer sentido:
+
+patients
+
+medical_records
+
+appointments
+
+exams
+
+communication_messages
+
+clinic_settings
+
+profiles
+
+doctors
+
+Regras de vínculo
+
+Use file_attachments.entity_type e entity_id corretamente para vincular anexos a:
+
+paciente
+
+exame
+
+prontuário
+
+consulta/agendamento
+
+chat/mensagem
+
+Para logo/avatar/foto institucional, persistir o _path diretamente na tabela correspondente:
+
+clinic_settings.logo_path
+
+profiles.avatar_path
+
+doctors.photo_path
+
+8. Corrigir o uso de campos legados do schema
+
+O schema mostra legado real. Você deve tratar isso corretamente.
+
+Obrigatório
+
+clinic_settings.logo_url deixa de ser usado pelo app
+
+profiles.avatar_url deixa de ser usado pelo app
+
+doctors.photo_url deixa de ser usado pelo app
+
+storage_bucket default 'make-d4766610-medical-files' não pode continuar sendo o bucket universal do sistema
+
+Se mantiver legado temporário no banco
+
+Só pode existir para migração, nunca como arquitetura ativa do app.
+
+9. Corrigir também o kv_store_d4766610
+
+Verifique e elimine qualquer possibilidade de persistência incorreta de arquivo, base64 ou URL no KV store.
+
+Obrigatório
+
+Nenhum dos itens abaixo pode ser salvo em kv_store_d4766610:
+
+base64 de arquivos
+
+blob serializado
+
+data URI
+
+URL persistida de arquivo do storage
+
+objeto de arquivo serializado
+
+Se houver qualquer fluxo usando KV store para anexos ou mídia, refatore para usar Supabase Storage + banco relacional corretamente.
+
+10. Migration SQL obrigatória
+
+Com base no schema real, gere a migration SQL completa para consolidar a arquitetura final.
+
+A migration deve incluir, se necessário:
+
+criação de profiles.avatar_path
+
+criação de doctors.photo_path
+
+migração de dados de avatar_url para avatar_path quando possível
+
+migração de dados de photo_url para photo_path quando possível
+
+normalização de clinic_settings.logo_path
+
+descontinuação de logo_url
+
+atualização de file_attachments.storage_bucket
+
+atualização de registros com bucket_type incorreto
+
+constraints e defaults coerentes com a nova arquitetura
+
+A migration deve ser segura
+
+sem destruir dados sem critério
+
+pronta para colar no SQL Editor do Supabase
+
+claramente separada entre:
+
+criação/alteração de colunas
+
+migração de dados
+
+limpeza de legado
+
+constraints finais
+
+FORMA DE ENTREGA OBRIGATÓRIA
+
+Sua resposta deve ser apenas de execução técnica final.
+
+Entregue obrigatoriamente:
+1. Lista final de arquivos alterados
+
+Liste todos os arquivos:
+
+criados
+
+editados
+
+removidos
+
+renomeados
+
+2. Código final consolidado
+
+Mostre o conteúdo final dos arquivos principais alterados:
+
+componente(s) de upload
+
+helper de storage
+
+hooks de URL
+
+tipos/interfaces
+
+data mappers
+
+integrações em módulos
+
+ajustes backend necessários
+
+3. Migration SQL final
+
+Entregue o SQL final completo com base no schema real acima.
+
+4. Remoções definitivas
+
+Liste exatamente tudo que foi eliminado da arquitetura:
+
+base64
+
+readAsDataURL
+
+_url como contrato ativo
+
+bucket único
+
+fallback híbrido
+
+persistência incorreta em KV store
+
+5. Itens criados
+
+Liste tudo que foi criado:
+
+helpers
+
+hooks
+
+tipos
+
+buckets
+
+integrações
+
+migrações
+
+fluxos padronizados
+
+6. Verificação final obrigatória
+
+Responda item por item com:
+
+SIM ou NÃO
+
+e uma frase curta de comprovação técnica
+
+Para cada item:
+
+base64 foi removido totalmente, inclusive do transporte?
+
+o banco agora salva somente PATH?
+
+clinic_settings usa logo_path como contrato oficial?
+
+profiles usa avatar_path como contrato oficial?
+
+doctors usa photo_path como contrato oficial?
+
+file_attachments.storage_path salva apenas PATH relativo?
+
+file_attachments.bucket_type está consistente com a arquitetura?
+
+URLs deixaram de ser persistidas?
+
+buckets públicos e privados foram segregados?
+
+uploads usam a arquitetura final correta?
+
+o kv_store_d4766610 ficou livre de persistência de arquivos?
+
+os módulos reais foram integrados?
+
+o sistema ficou sem arquitetura híbrida?
+
+essa parte está pronta para produção?
+
+RESTRIÇÕES FINAIS
+
+não narrar raciocínio
+
+não repetir auditoria
+
+não responder com plano
+
+não responder com “recomendação”
+
+não deixar itens “para depois”
+
+não manter arquitetura híbrida por conveniência
+
+entregar apenas resultado técnico final verificável

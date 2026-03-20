@@ -1,0 +1,273 @@
+Execute agora uma correção final e obrigatória do schema e da arquitetura de arquivos, porque a migração anterior ficou parcial.
+
+A análise do schema atual mostra claramente que o banco ainda não está alinhado com a arquitetura final baseada em *_path.
+
+Problemas confirmados no schema atual
+1. profiles ainda está errado
+
+A tabela profiles ainda possui:
+
+avatar_url
+
+E não possui:
+
+avatar_path
+
+Isso precisa ser corrigido.
+
+2. doctors ainda está errado
+
+A tabela doctors ainda possui:
+
+photo_url
+
+E não possui:
+
+photo_path
+
+Isso precisa ser corrigido.
+
+3. clinic_settings ainda está híbrida
+
+A tabela clinic_settings ainda possui:
+
+logo_url
+
+logo_path
+
+O app deve usar apenas logo_path como contrato oficial.
+
+4. file_attachments.storage_bucket ainda está com default legado incorreto
+
+Ainda está assim:
+
+default 'make-d4766610-medical-files'
+
+Isso está errado e precisa ser substituído por uma estratégia coerente com a arquitetura nova.
+
+5. O schema ainda mantém colunas _url legadas ativas
+
+Ainda existem:
+
+clinic_settings.logo_url
+
+profiles.avatar_url
+
+doctors.photo_url
+
+Essas colunas não podem continuar como contrato ativo da aplicação.
+
+O que deve ser feito agora
+1. Corrigir definitivamente o schema
+Em profiles
+
+criar coluna avatar_path text
+
+migrar dados válidos de avatar_url para avatar_path quando possível
+
+atualizar o app para usar apenas avatar_path
+
+remover dependência de avatar_url
+
+se for seguro, remover avatar_url ao final
+
+se não remover agora, deixar explicitamente como legado temporário e não usado pelo app
+
+Em doctors
+
+criar coluna photo_path text
+
+migrar dados válidos de photo_url para photo_path quando possível
+
+atualizar o app para usar apenas photo_path
+
+remover dependência de photo_url
+
+se for seguro, remover photo_url ao final
+
+se não remover agora, deixar explicitamente como legado temporário e não usado pelo app
+
+Em clinic_settings
+
+manter logo_path como campo oficial
+
+garantir que o app não leia nem escreva logo_url
+
+se for seguro, remover logo_url
+
+se não remover agora, deixar como legado temporário e não usado
+
+2. Corrigir file_attachments
+
+A tabela file_attachments precisa ficar coerente com os buckets reais.
+
+Corrigir:
+
+remover o default legado de storage_bucket = 'make-d4766610-medical-files'
+
+atualizar registros existentes para buckets corretos com base em bucket_type
+
+definir defaults coerentes
+
+garantir que storage_path continue salvando apenas PATH relativo
+
+Buckets corretos esperados
+
+A arquitetura final deve refletir estes buckets:
+
+avatars → bucket público de avatars
+
+media → bucket público de mídia
+
+documents → bucket privado de documentos
+
+chat → bucket privado de anexos de chat
+
+Também faça:
+
+normalização de storage_bucket com base em bucket_type
+
+limpeza de registros inválidos com:
+
+data:
+
+blob:
+
+http://
+
+https://
+em storage_path
+
+3. Garantir coerência entre banco e código
+
+Revise o código para garantir que:
+
+profiles use avatar_path
+
+doctors use photo_path
+
+clinic_settings use logo_path
+
+nenhuma tela ainda leia _url
+
+nenhum mapper ainda leia _url
+
+nenhum mapper ainda escreva _url
+
+4. Validar que não existe arquitetura híbrida
+
+Remova qualquer uso ativo de:
+
+logo_url
+
+avatar_url
+
+photo_url
+
+Remova qualquer fallback do tipo:
+
+row.logo_url || row.logo_path
+
+row.avatar_url || row.avatar_path
+
+row.photo_url || row.photo_path
+
+A arquitetura final deve usar somente:
+
+logo_path
+
+avatar_path
+
+photo_path
+
+5. Entregue migration SQL final completa
+
+Gere a migration SQL completa para aplicar no Supabase SQL Editor.
+
+A migration deve incluir:
+
+profiles
+
+add column avatar_path
+
+migrate data from avatar_url
+
+cleanup invalid values
+
+optional drop de avatar_url se seguro
+
+doctors
+
+add column photo_path
+
+migrate data from photo_url
+
+cleanup invalid values
+
+optional drop de photo_url se seguro
+
+clinic_settings
+
+cleanup de logo_path
+
+optional drop de logo_url se seguro
+
+file_attachments
+
+corrigir storage_bucket
+
+remover default legado incorreto
+
+normalizar bucket por bucket_type
+
+limpar storage_path inválido
+
+adicionar constraints ou checks úteis se necessário
+
+Forma obrigatória da resposta
+
+Entregue apenas:
+
+1. Lista dos arquivos alterados
+
+Liste todos os arquivos modificados.
+
+2. Código final consolidado
+
+Mostre o código final dos arquivos relevantes alterados.
+
+3. Migration SQL final
+
+Entregue o SQL completo, pronto para colar no Supabase SQL Editor.
+
+4. Checklist final
+
+Responda objetivamente:
+
+profiles agora usa avatar_path?
+
+doctors agora usa photo_path?
+
+clinic_settings agora usa apenas logo_path?
+
+_url deixou de ser contrato ativo?
+
+file_attachments.storage_bucket deixou de usar o bucket legado como default?
+
+storage_path salva apenas PATH relativo?
+
+a arquitetura ficou sem híbrido?
+
+essa parte ficou realmente pronta?
+
+Restrições
+
+não repetir auditoria
+
+não narrar raciocínio
+
+não responder com plano
+
+não deixar para depois
+
+entregar resultado final técnico verificável

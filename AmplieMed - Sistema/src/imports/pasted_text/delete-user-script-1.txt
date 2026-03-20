@@ -1,0 +1,107 @@
+-- ═════════════════════════════════════════════════════════════════════════════
+-- 🗑️ DELETAR USUÁRIO - VERSÃO AUTOMÁTICA (descobre todas as FK)
+-- ═════════════════════════════════════════════════════════════════════════════
+
+DO $$
+DECLARE
+    target_user_id UUID := '420be486-24d0-415a-82f0-9355b3b78b31';
+    target_user_id_text TEXT := '420be486-24d0-415a-82f0-9355b3b78b31';
+    target_email TEXT := 'brunoleao.ceo@gmail.com';
+    table_record RECORD;
+    delete_sql TEXT;
+    row_count INTEGER;
+BEGIN
+    RAISE NOTICE '🗑️ Starting complete deletion for: % (%)', target_email, target_user_id;
+    
+    -- 1️⃣ Deletar de TODAS as tabelas PUBLIC que referenciam auth.users
+    RAISE NOTICE '📋 Finding all public tables with FK to auth.users...';
+    
+    FOR table_record IN
+        SELECT DISTINCT
+            tc.table_schema,
+            tc.table_name,
+            kcu.column_name
+        FROM information_schema.table_constraints AS tc
+        JOIN information_schema.key_column_usage AS kcu
+          ON tc.constraint_name = kcu.constraint_name
+        JOIN information_schema.constraint_column_usage AS ccu
+          ON ccu.constraint_name = tc.constraint_name
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+          AND ccu.table_name = 'users'
+          AND ccu.table_schema = 'auth'
+          AND tc.table_schema = 'public'
+        ORDER BY tc.table_name
+    LOOP
+        delete_sql := format('DELETE FROM %I.%I WHERE %I = $1',
+            table_record.table_schema,
+            table_record.table_name,
+            table_record.column_name
+        );
+        
+        EXECUTE delete_sql USING target_user_id;
+        GET DIAGNOSTICS row_count = ROW_COUNT;
+        
+        IF row_count > 0 THEN
+            RAISE NOTICE '   🗑️ Deleted % rows from %.% (column: %)',
+                row_count,
+                table_record.table_schema,
+                table_record.table_name,
+                table_record.column_name;
+        END IF;
+    END LOOP;
+    
+    -- 2️⃣ Deletar SESSIONS do schema auth
+    RAISE NOTICE '   🗑️ Deleting from auth.sessions...';
+    DELETE FROM auth.sessions WHERE user_id = target_user_id;
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    IF row_count > 0 THEN
+        RAISE NOTICE '      ✅ Deleted % sessions', row_count;
+    END IF;
+    
+    -- 3️⃣ Deletar REFRESH_TOKENS (user_id é TEXT!)
+    RAISE NOTICE '   🗑️ Deleting from auth.refresh_tokens...';
+    DELETE FROM auth.refresh_tokens WHERE user_id = target_user_id_text;
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    IF row_count > 0 THEN
+        RAISE NOTICE '      ✅ Deleted % tokens', row_count;
+    END IF;
+    
+    -- 4️⃣ Deletar IDENTITIES
+    RAISE NOTICE '   🗑️ Deleting from auth.identities...';
+    DELETE FROM auth.identities WHERE user_id = target_user_id;
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    IF row_count > 0 THEN
+        RAISE NOTICE '      ✅ Deleted % identities', row_count;
+    END IF;
+    
+    -- 5️⃣ Deletar MFA FACTORS
+    RAISE NOTICE '   🗑️ Deleting from auth.mfa_factors...';
+    DELETE FROM auth.mfa_factors WHERE user_id = target_user_id;
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    IF row_count > 0 THEN
+        RAISE NOTICE '      ✅ Deleted % MFA factors', row_count;
+    END IF;
+    
+    -- 6️⃣ Deletar PROFILES
+    RAISE NOTICE '   🗑️ Deleting from public.profiles...';
+    DELETE FROM public.profiles WHERE id = target_user_id;
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    IF row_count > 0 THEN
+        RAISE NOTICE '      ✅ Deleted profile';
+    END IF;
+    
+    -- 7️⃣ FINALMENTE deletar o USUÁRIO
+    RAISE NOTICE '   🗑️ Deleting from auth.users...';
+    DELETE FROM auth.users WHERE id = target_user_id;
+    GET DIAGNOSTICS row_count = ROW_COUNT;
+    
+    IF row_count > 0 THEN
+        RAISE NOTICE '✅ ✅ ✅ User SUCCESSFULLY deleted: %', target_email;
+    ELSE
+        RAISE NOTICE '⚠️ User not found in auth.users';
+    END IF;
+    
+END $$;
+
+-- Verificar deleção
+SELECT COUNT(*) as remaining_users FROM auth.users WHERE id = '420be486-24d0-415a-82f0-9355b3b78b31';
