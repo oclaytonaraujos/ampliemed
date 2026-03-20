@@ -62,7 +62,7 @@ interface Glosa {
 type TabType = 'billing' | 'payments' | 'commissions' | 'receivables' | 'payables' | 'cashflow' | 'glosas';
 
 export function FinancialModule({ userRole }: FinancialModuleProps) {
-  const { financialBillings, setFinancialBillings, financialPayments, setFinancialPayments, financialReceivables, setFinancialReceivables, financialPayables, setFinancialPayables, appointments, patients, insurances, addNotification, addAuditEntry, currentUser } = useApp();
+  const { financialBillings, setFinancialBillings, financialPayments, setFinancialPayments, financialReceivables, setFinancialReceivables, financialPayables, setFinancialPayables, appointments, patients, professionals, insurances, addNotification, addAuditEntry, currentUser } = useApp();
   const { canCreate, canExport } = usePermission('financial');
 
   const [activeTab, setActiveTab] = useState<TabType>('billing');
@@ -80,20 +80,39 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
   const [glosas, setGlosas] = useState<Glosa[]>([]);
 
   useEffect(() => {
-    // Calculate commissions
-    const commissionData = financialPayments.reduce((acc, payment) => {
-      const doctor = patients.find(p => p.name === payment.patient)?.doctor;
-      if (doctor) {
-        if (!acc[doctor]) {
-          acc[doctor] = { id: doctor, doctor, crm: '123456', period: 'Mar/2026', procedures: 0, gross: 0, commission: '50%', value: 0, status: 'pending' };
+    // Calculate commissions based on appointments
+    const commissionData: Record<string, any> = {};
+    
+    appointments.forEach(apt => {
+      if (apt.paymentStatus === 'pago' && apt.doctorName) {
+        const doctor = professionals.find(p => p.name === apt.doctorName);
+        if (doctor) {
+          if (!commissionData[apt.doctorName]) {
+            commissionData[apt.doctorName] = {
+              id: doctor.id,
+              doctor: apt.doctorName,
+              crm: doctor.crm || '—',
+              period: new Date().toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' }),
+              procedures: 0,
+              gross: 0,
+              commission: `${doctor.revenuePercentage || 30}%`,
+              value: 0,
+              status: 'pending'
+            };
+          }
+          commissionData[apt.doctorName].procedures += 1;
+          commissionData[apt.doctorName].gross += apt.consultationValue || 0;
+          const commissionPercentage = doctor.revenuePercentage || 30;
+          commissionData[apt.doctorName].value += (apt.consultationValue || 0) * (commissionPercentage / 100);
         }
-        acc[doctor].procedures += 1;
-        acc[doctor].gross += payment.amount;
-        acc[doctor].value += payment.amount * 0.5;
       }
-      return acc;
-    }, {} as Record<string, any>);
-    setCommissions(Object.values(commissionData).map(c => ({ ...c, gross: `R$ ${c.gross.toFixed(2)}`, value: `R$ ${c.value.toFixed(2)}` })));
+    });
+    
+    setCommissions(Object.values(commissionData).map(c => ({
+      ...c,
+      gross: `R$ ${c.gross.toFixed(2)}`,
+      value: `R$ ${c.value.toFixed(2)}`
+    })));
 
     // Filter glosas
     const glosaData = financialBillings
@@ -109,7 +128,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
         status: b.status,
       }));
     setGlosas(glosaData);
-  }, [financialPayments, financialBillings, patients]);
+  }, [appointments, professionals, financialBillings]);
 
   const filteredBillings = financialBillings.filter(b => !searchTerm || b.insurance.toLowerCase().includes(searchTerm.toLowerCase()) || b.patient.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredPayments = financialPayments.filter(p => !searchTerm || p.patient.toLowerCase().includes(searchTerm.toLowerCase()));
