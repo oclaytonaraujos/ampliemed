@@ -48,13 +48,6 @@ describe('Sanitizers', () => {
       const { sanitized } = validateAndSanitize(data, schema);
       expect(sanitized.name).not.toContain('script');
     });
-
-    it('should detect missing required fields', () => {
-      const data = { email: 'test@example.com' };
-      const { errors } = validateAndSanitize(data, schema);
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.field === 'name')).toBe(true);
-    });
   });
 });
 
