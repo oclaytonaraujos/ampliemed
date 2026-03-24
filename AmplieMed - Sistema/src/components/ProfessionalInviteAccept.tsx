@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Stethoscope, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '../utils/api';
+import { acceptClinicInvite } from '../utils/api';
 
 interface FormData {
   name: string;
@@ -131,7 +131,7 @@ export function ProfessionalInviteAccept() {
     setError(null);
 
     try {
-      const response = await api.acceptClinicInvite({
+      const response = await acceptClinicInvite({
         token: token!,
         email: email!,
         password: formData.password,

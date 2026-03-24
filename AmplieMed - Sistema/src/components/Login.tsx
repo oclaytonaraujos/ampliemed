@@ -239,22 +239,12 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
 
               {/* Switch to signup */}
               <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
-                <p className="text-center text-[13px] text-gray-500">
-                  Não tem conta?{' '}
-                  <button
-                    type="button"
-                    onClick={() => switchMode('professional-signup')}
-                    className="text-blue-600 font-medium hover:text-blue-700 transition-colors text-[13px]"
-                  >
-                    Cadastre-se
-                  </button>
-                </p>
                 <button
                   type="button"
                   onClick={() => switchMode('clinic-signup')}
                   className="w-full text-center text-sm font-medium px-4 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
                 >
-                  Registrar Clínica
+                  Registre-se
                 </button>
               </div>
             </>

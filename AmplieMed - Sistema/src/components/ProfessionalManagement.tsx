@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Plus, Search, Edit, Trash2, Filter, X, CheckCircle, AlertCircle,
   Shield, Mail, Phone, User, Download, Eye, Stethoscope,
-  TrendingUp, DollarSign, Award, Calendar
+  TrendingUp, DollarSign, Award, Calendar, KeyRound
 } from 'lucide-react';
 import type { UserRole } from '../App';
 import type { Professional } from './AppContext';
@@ -55,6 +55,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
   const [filterRole, setFilterRole] = useState('');
   const [form, setForm] = useState<Omit<Professional, 'id' | 'createdAt'> & { password?: string; otherProfessionalType?: string }>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isCreatingUser, setIsCreatingUser] = useState(true);
 
   // Filtering
   let filtered = [...professionals];
@@ -65,9 +66,9 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     const t = searchTerm.toLowerCase();
     filtered = filtered.filter(p =>
       p.name.toLowerCase().includes(t) ||
-      p.crm.toLowerCase().includes(t) ||
-      p.email.toLowerCase().includes(t) ||
-      p.specialty.toLowerCase().includes(t)
+      (p.crm || '').toLowerCase().includes(t) ||
+      (p.email || '').toLowerCase().includes(t) ||
+      (p.specialty || '').toLowerCase().includes(t)
     );
   }
 
@@ -107,7 +108,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
   // Actions
   const handleViewDetails = (prof: Professional) => { setSelectedProf(prof); setView('details'); };
   const handleEdit = (prof: Professional) => { setSelectedProf(prof); setForm({ ...prof }); setErrors({}); setView('edit'); };
-  const handleAdd = () => { setForm(EMPTY_FORM); setErrors({}); setView('add'); };
+  const handleAdd = () => { setForm(EMPTY_FORM); setErrors({}); setIsCreatingUser(true); setView('add'); };
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -115,41 +116,55 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     if (!form.specialty?.trim()) e.specialty = 'Especialidade obrigatória';
     if (form.role === 'doctor' && !form.crm?.trim()) e.crm = 'CRM obrigatório para médicos';
     if (form.cpf && !validateCPF(form.cpf)) e.cpf = 'CPF inválido';
-    if (view === 'add' && !form.password) e.password = 'Senha obrigatória';
-    if (view === 'add' && form.password && form.password.length < 6) e.password = 'A senha deve ter no mínimo 6 caracteres';
-    if (view === 'add' && !form.email) e.email = 'E-mail obrigatório';
 
+    if (view === 'add' && isCreatingUser) {
+        if (!form.password) e.password = 'Senha obrigatória';
+        if (form.password && form.password.length < 6) e.password = 'A senha deve ter no mínimo 6 caracteres';
+        if (!form.email) e.email = 'E-mail obrigatório';
+    }
+    
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSave = async () => {
     if (!validate()) return;
+
     if (view === 'edit' && selectedProf) {
       updateProfessional(selectedProf.id, { ...form });
       toastSuccess('Profissional atualizado!', { description: form.name });
       addNotification({ type: 'info', title: 'Profissional atualizado', message: `Dados de ${form.name} atualizados`, urgent: false });
       addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Profissionais', description: `Profissional editado: ${form.name}`, status: 'success' });
       setView('list');
-    } else {
-      const { data, error } = await getSupabase().auth.signUp({
-        email: form.email,
-        password: form.password!,
-      });
-
-      if (error) {
-        toastError('Erro ao criar usuário', { description: error.message });
-        addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'create', module: 'Profissionais', description: `Falha ao criar usuário: ${form.email}`, status: 'failure' });
-        return;
-      }
-      if (data.user) {
-        const { password, ...professionalData } = form;
-        addProfessional({ ...professionalData, id: data.user.id });
-        toastSuccess('Profissional cadastrado!', { description: `${form.name} — ${form.specialty}` });
-        addNotification({ type: 'info', title: 'Novo profissional', message: `${form.name} (${getRoleLabel(form.role)}) cadastrado`, urgent: false });
-        addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'create', module: 'Profissionais', description: `Profissional criado: ${form.name} (${getRoleLabel(form.role)})`, status: 'success' });
-        setView('list');
-      }
+    } else if (view === 'add') {
+        if (isCreatingUser) {
+            const { data, error } = await getSupabase().auth.signUp({
+              email: form.email,
+              password: form.password!,
+            });
+      
+            if (error) {
+              toastError('Erro ao criar usuário', { description: error.message });
+              addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'create', module: 'Profissionais', description: `Falha ao criar usuário: ${form.email}`, status: 'failure' });
+              return;
+            }
+            if (data.user) {
+              const { password, ...professionalData } = form;
+              addProfessional({ ...professionalData, id: data.user.id });
+              toastSuccess('Profissional e Usuário cadastrados!', { description: `${form.name} — ${form.specialty}` });
+              addNotification({ type: 'info', title: 'Novo profissional', message: `${form.name} (${getRoleLabel(form.role)}) cadastrado com acesso ao sistema.`, urgent: false });
+              addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'create', module: 'Profissionais', description: `Profissional/usuário criado: ${form.name}`, status: 'success' });
+              setView('list');
+            }
+        } else {
+            const { password, ...professionalData } = form;
+            const newId = crypto.randomUUID();
+            addProfessional({ ...professionalData, id: newId });
+            toastSuccess('Profissional cadastrado (sem acesso)!', { description: `${form.name} — ${form.specialty}` });
+            addNotification({ type: 'info', title: 'Novo profissional (sem acesso)', message: `${form.name} (${getRoleLabel(form.role)}) cadastrado.`, urgent: false });
+            addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'create', module: 'Profissionais', description: `Profissional criado (sem acesso): ${form.name}`, status: 'success' });
+            setView('list');
+        }
     }
     setForm(EMPTY_FORM);
   };
@@ -188,6 +203,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     const pctC = goalC > 0 ? Math.min(Math.round((consultations / goalC) * 100), 100) : 0;
     const pctR = goalR > 0 ? Math.min(Math.round((revenue / goalR) * 100), 100) : 0;
     const isDoctor = prof.role === 'doctor' || (!prof.role && prof.crm);
+    const hasUserAccess = prof.email && professionals.some(p => p.id === prof.id && p.email); // Heuristic
 
     return (
       <div key={prof.id} className="border border-gray-200 bg-white p-5 hover:border-blue-400 transition-colors rounded-lg">
@@ -198,7 +214,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="font-semibold text-gray-900">{prof.name}</h3>
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">{prof.name} {hasUserAccess && <KeyRound className="w-3 h-3 text-gray-400" title="Possui acesso ao sistema"/>}</h3>
                 <p className="text-sm text-gray-600">
                   {prof.crm ? `CRM ${prof.crm}/${prof.crmUf} • ` : ''}{prof.specialty}
                 </p>
@@ -237,7 +253,6 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
               )}
             </div>
 
-            {/* Monthly performance (for doctors/professionals with appointments) */}
             {(consultations > 0 || revenue > 0) && (
               <div className="bg-gray-50 border border-gray-100 p-3 rounded mb-3">
                 <p className="text-xs font-medium text-gray-600 mb-2">Desempenho — {now.toLocaleDateString('pt-BR', { month: 'long' })}</p>
@@ -314,7 +329,6 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
         </div>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
           { label: 'Ativos', value: activeProfessionals, icon: User, color: 'blue' },
@@ -336,7 +350,6 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
         })}
       </div>
 
-      {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -362,7 +375,6 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
         </select>
       </div>
 
-      {/* List */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 bg-white border border-gray-200 rounded-lg">
           <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -436,7 +448,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                     {selectedProf.status === 'active' ? 'Ativo' : 'Inativo'}
                   </span>
                 </div>
-                <div><p className="text-gray-500">Membro desde</p><p className="font-medium">{selectedProf.createdAt}</p></div>
+                <div><p className="text-gray-500">Membro desde</p><p className="font-medium">{new Date(selectedProf.createdAt || Date.now()).toLocaleDateString()}</p></div>
               </div>
             </div>
 
@@ -523,7 +535,6 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
         </div>
 
         <div className="bg-white border border-gray-200 p-6 space-y-6 rounded-lg">
-          {/* Tipo de profissional */}
           <div>
             <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3 mb-4">Tipo de Profissional</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -552,7 +563,6 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             )}
           </div>
 
-          {/* Dados Pessoais */}
           <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3">Dados Pessoais</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
@@ -575,25 +585,37 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="(00) 00000-0000" />
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
-              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
-                placeholder="profissional@clinica.com" />
-              {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
-            </div>
+
             {view === 'add' && (
+                <div className="md:col-span-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={isCreatingUser} onChange={() => setIsCreatingUser(!isCreatingUser)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                        <span className="text-sm font-medium text-gray-700">Criar acesso de usuário</span>
+                    </label>
+                </div>
+            )}
+            
+            {(isCreatingUser || view === 'edit') && (
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{isCreatingUser || (view==='edit' && form.email) ? 'E-mail de Acesso *' : 'E-mail de Contato'}</label>
+                    <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                        className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
+                        placeholder="profissional@clinica.com" />
+                    {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
+                </div>
+            )}
+
+            {view === 'add' && isCreatingUser && (
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Senha *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Senha de Acesso *</label>
                 <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                   className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
-                  placeholder="Senha de acesso" />
+                  placeholder="Mínimo 6 caracteres" />
                 {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
               </div>
             )}
           </div>
 
-          {/* Dados Profissionais */}
           <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3 pt-2">Dados Profissionais</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {isDoctor && (
@@ -625,7 +647,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                   placeholder="COREN, CRP, CRN..." />
               </div>
             )}
-            <div>
+            <div className={isDoctor ? '' : 'col-span-2'}>
               <label className="block text-sm font-medium text-gray-700 mb-1">Especialidade *</label>
               {isDoctor ? (
                 <select value={form.specialty} onChange={e => setForm({ ...form, specialty: e.target.value })}
@@ -638,7 +660,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                   className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.specialty ? 'border-red-400' : 'border-gray-200'}`}
                   placeholder="Área de atuação" />
               )}
-              {errors.specialty && <p className="text-xs text-red-600 mt-1">{errors.specialty}</p>}
+              {errors.specialty && <p className="text-xs text-red-600 mt-1">{errors.specialety}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Sala</label>
@@ -670,7 +692,6 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             </div>
           </div>
 
-          {/* Modelo Financeiro */}
           <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3 pt-2">Modelo Financeiro</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
