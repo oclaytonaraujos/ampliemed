@@ -4,28 +4,59 @@
  * and PostgreSQL snake_case rows for all 21 entities.
  */
 
+import type {
+  PatientInput, PatientRow,
+  AppointmentInput, AppointmentRow,
+  MedicalRecordInput, MedicalRecordRow,
+  ExamInput, ExamRow,
+  StockItemInput, StockItemRow,
+  QueueEntryInput, QueueEntryRow,
+  NotificationInput, NotificationRow,
+  BillingInput, BillingRow,
+  Address,
+  ResponsiblePerson,
+} from '../types';
+
 // ─── Generic utilities ───────────────────────────────────────────────────────
 
+/**
+ * Converts camelCase string to snake_case
+ * @param str The string to convert
+ * @returns The converted string
+ */
 function camelToSnake(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
 
+/**
+ * Converts snake_case string to camelCase
+ * @param str The string to convert
+ * @returns The converted string
+ */
 function snakeToCamel(str: string): string {
   return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
-/** Convert an object's keys from camelCase to snake_case (shallow) */
-function keysToSnake(obj: Record<string, any>): Record<string, any> {
-  const result: Record<string, any> = {};
+/**
+ * Convert an object's keys from camelCase to snake_case (shallow)
+ * @param obj The object to convert
+ * @returns New object with snake_case keys
+ */
+function keysToSnake(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     result[camelToSnake(key)] = value;
   }
   return result;
 }
 
-/** Convert an object's keys from snake_case to camelCase (shallow) */
-function keysToCamel(obj: Record<string, any>): Record<string, any> {
-  const result: Record<string, any> = {};
+/**
+ * Convert an object's keys from snake_case to camelCase (shallow)
+ * @param obj The object to convert
+ * @returns New object with camelCase keys
+ */
+function keysToCamel(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     result[snakeToCamel(key)] = value;
   }
@@ -138,7 +169,13 @@ function calculateStockStatus(quantity: number, minQuantity: number, expiry: str
 
 // ─── Patient ─────────────────────────────────────────────────────────────────
 
-export function patientToRow(p: any, ownerId: string): Record<string, any> {
+/**
+ * Convert frontend patient object to database row format
+ * @param p Patient input object with camelCase keys
+ * @param ownerId Owner/clinic ID
+ * @returns Database row object with snake_case keys
+ */
+export function patientToRow(p: PatientInput, ownerId: string): PatientRow {
   return {
     id: p.id,
     owner_id: ownerId,
@@ -180,12 +217,18 @@ export function patientToRow(p: any, ownerId: string): Record<string, any> {
     responsible_relationship: p.responsible?.relationship || null,
     // Control
     status: p.status || 'active',
+    created_at: new Date().toISOString(),
     last_visit: brDateToIso(p.lastVisit) || null,
     total_visits: p.totalVisits ?? 0,
   };
 }
 
-export function patientFromRow(row: any): any {
+/**
+ * Convert database patient row to frontend object
+ * @param row Database row object with snake_case keys
+ * @returns Frontend patient object with camelCase keys
+ */
+export function patientFromRow(row: PatientRow): PatientInput {
   return {
     id: row.id,
     name: row.name || '',
@@ -218,18 +261,28 @@ export function patientFromRow(row: any): any {
     lgpdConsent: row.lgpd_consent ?? false,
     lgpdConsentDate: row.lgpd_consent_date ? isoToBrDate(row.lgpd_consent_date) : undefined,
     status: row.status || 'active',
-    createdAt: isoToBrDate(row.created_at),
     lastVisit: row.last_visit ? isoToBrDate(row.last_visit) : '-',
     totalVisits: row.total_visits ?? 0,
     responsible: row.responsible_name
-      ? { name: row.responsible_name, cpf: row.responsible_cpf || '', phone: row.responsible_phone || '', relationship: row.responsible_relationship || '' }
+      ? {
+          name: row.responsible_name,
+          cpf: row.responsible_cpf || '',
+          phone: row.responsible_phone || '',
+          relationship: row.responsible_relationship || '',
+        }
       : undefined,
   };
 }
 
 // ─── Appointment ─────────────────────────────────────────────────────────────
 
-export function appointmentToRow(a: any, ownerId: string): Record<string, any> {
+/**
+ * Convert frontend appointment object to database row format
+ * @param a Appointment input object with camelCase keys
+ * @param ownerId Owner/clinic ID
+ * @returns Database row object with snake_case keys
+ */
+export function appointmentToRow(a: AppointmentInput, ownerId: string): AppointmentRow {
   return {
     id: a.id,
     owner_id: ownerId,
@@ -260,7 +313,12 @@ export function appointmentToRow(a: any, ownerId: string): Record<string, any> {
   };
 }
 
-export function appointmentFromRow(row: any): any {
+/**
+ * Convert database appointment row to frontend object
+ * @param row Database row object with snake_case keys
+ * @returns Frontend appointment object with camelCase keys
+ */
+export function appointmentFromRow(row: AppointmentRow): AppointmentInput {
   return {
     id: row.id,
     patientName: row.patient_name || '',
@@ -274,7 +332,6 @@ export function appointmentFromRow(row: any): any {
     duration: row.duration ?? 30,
     type: row.type || 'presencial',
     status: row.status || 'pendente',
-    color: '',
     room: row.room || undefined,
     notes: row.notes || undefined,
     telemedLink: row.telemed_link || undefined,
@@ -292,7 +349,13 @@ export function appointmentFromRow(row: any): any {
 
 // ─── MedicalRecord ───────────────────────────────────────────────────────────
 
-export function medicalRecordToRow(r: any, ownerId: string): Record<string, any> {
+/**
+ * Convert frontend medical record object to database row format
+ * @param r Medical record input object with camelCase keys
+ * @param ownerId Owner/clinic ID
+ * @returns Database row object with snake_case keys
+ */
+export function medicalRecordToRow(r: MedicalRecordInput, ownerId: string): MedicalRecordRow {
   return {
     id: r.id,
     owner_id: ownerId,
@@ -309,10 +372,16 @@ export function medicalRecordToRow(r: any, ownerId: string): Record<string, any>
     prescriptions: r.prescriptions || null,
     signed: r.signed ?? false,
     signed_at: r.signedAt ? new Date(r.signedAt).toISOString() : null,
+    created_at: new Date().toISOString(),
   };
 }
 
-export function medicalRecordFromRow(row: any): any {
+/**
+ * Convert database medical record row to frontend object
+ * @param row Database row object with snake_case keys
+ * @returns Frontend medical record object with camelCase keys
+ */
+export function medicalRecordFromRow(row: MedicalRecordRow): MedicalRecordInput {
   return {
     id: row.id,
     patientId: row.patient_id || '',
@@ -328,13 +397,18 @@ export function medicalRecordFromRow(row: any): any {
     prescriptions: row.prescriptions || undefined,
     signed: row.signed ?? false,
     signedAt: row.signed_at || undefined,
-    createdAt: isoToBrDate(row.created_at),
   };
 }
 
 // ─── Exam ────────────────────────────────────────────────────────────────────
 
-export function examToRow(e: any, ownerId: string): Record<string, any> {
+/**
+ * Convert frontend exam object to database row format
+ * @param e Exam input object with camelCase keys
+ * @param ownerId Owner/clinic ID
+ * @returns Database row object with snake_case keys
+ */
+export function examToRow(e: ExamInput, ownerId: string): ExamRow {
   return {
     id: e.id,
     owner_id: ownerId,
@@ -352,7 +426,12 @@ export function examToRow(e: any, ownerId: string): Record<string, any> {
   };
 }
 
-export function examFromRow(row: any): any {
+/**
+ * Convert database exam row to frontend object
+ * @param row Database row object with snake_case keys
+ * @returns Frontend exam object with camelCase keys
+ */
+export function examFromRow(row: ExamRow): ExamInput {
   return {
     id: row.id,
     patientName: row.patient_name || '',
