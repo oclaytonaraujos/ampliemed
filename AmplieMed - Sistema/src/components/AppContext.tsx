@@ -480,6 +480,7 @@ interface AppContextType {
   currentUser: AuthUser | null;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (data: { email: string; password: string; name: string; role?: string; specialty?: string; crm?: string; phone?: string }) => Promise<boolean>;
+  clinicSignup: (data: any) => Promise<any>;
   logout: () => void;
   updateCurrentUser: (data: Partial<AuthUser>) => void;
 
@@ -1119,6 +1120,77 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clinicSignup = async (data: any) => {
+    try {
+      console.log('[Auth] Clinic signup started:', data.clinicName);
+      
+      // Call the Edge Function to register clinic + admin
+      const result = await api.clinicSignup(data);
+      
+      // The Edge Function should have:
+      // 1. Created the auth user
+      // 2. Created the clinic
+      // 3. Created clinic_memberships with role 'admin'
+      
+      // Now sign in with the admin email and password
+      const supabase = getSupabase();
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (signInError) {
+        console.error('[Auth] Sign-in after clinic signup failed:', signInError.message);
+        throw new Error('Clínica criada, mas não foi possível fazer login. Tente novamente.');
+      }
+
+      if (signInData.session) {
+        api.setAccessToken(signInData.session.access_token);
+        const meta = signInData.session.user?.user_metadata || {};
+        const adminName = meta.name || 'Administrador';
+        const initials = adminName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+        
+        // Set current user as clinic admin
+        const user: AuthUser = {
+          name: adminName,
+          email: data.email,
+          crm: '',
+          initials,
+          role: 'admin',
+          specialty: data.specialty || '',
+          phone: data.phone || '',
+        };
+        
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+        dataLoadedRef.current = false;
+
+        const entry: AuditEntry = {
+          id: crypto.randomUUID(),
+          timestamp: new Date().toLocaleString('pt-BR'),
+          user: adminName,
+          userRole: 'admin',
+          action: 'create',
+          module: 'Sistema',
+          description: `Clínica registrada: ${data.clinicName} (ID: ${result.clinic?.id || 'N/A'})`,
+          ipAddress: '0.0.0.0',
+          device: 'Web Browser',
+          status: 'success',
+        };
+        
+        setAuditLog(prev => [entry, ...prev.slice(0, 999)]);
+        
+        console.log(`[Auth] Clinic signup complete: ${data.clinicName}`);
+        return result;
+      }
+
+      throw new Error('Nenhuma sessão após registro da clínica');
+    } catch (err: any) {
+      console.error('[Auth] Clinic signup error:', err);
+      throw err;
+    }
+  };
+
   const updateCurrentUser = useCallback((data: Partial<AuthUser>) => {
     setCurrentUser(prev => {
       if (!prev) return prev;
@@ -1342,7 +1414,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <AppContext.Provider value={{
-      isAuthenticated, currentUser, login, signup, logout, updateCurrentUser,
+      isAuthenticated, currentUser, login, signup, clinicSignup, logout, updateCurrentUser,
       isLoading, syncStatus,
       patients, setPatients, addPatient, updatePatient, deletePatient,
       appointments, setAppointments,

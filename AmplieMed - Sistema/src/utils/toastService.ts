@@ -4,7 +4,7 @@
  * Importe e use em qualquer módulo: import { toastSuccess, toastError, ... } from '../utils/toastService';
  */
 
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 

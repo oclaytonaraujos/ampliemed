@@ -10,7 +10,7 @@ import type { UserRole } from '../App';
 import { NotificationCenter } from './NotificationCenter';
 import { useApp } from './AppContext';
 import { MODULE_PATHS } from '../routes';
-import logoAmplieMed from 'figma:asset/775bd1b6594b305b8d42a07d24da813913fe5060.png';
+import logoAmplieMed from '../assets/775bd1b6594b305b8d42a07d24da813913fe5060.png';
 
 interface HeaderProps {
   onOpenSearch?: () => void;

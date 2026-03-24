@@ -26,6 +26,156 @@ export interface ApiError {
 
 export type ApiResult<T = unknown> = ApiResponse<T> | ApiError;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ─── Clinic Registration (Clinic-First Model) ──────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Clinic registration form data (first step)
+ * When a clinic signs up, this data is collected
+ */
+export interface ClinicSignupData {
+  /**
+   * Clinic business name (razão social)
+   */
+  clinicName: string;
+  /**
+   * CNPJ (14 digits, optional but recommended)
+   */
+  cnpj?: string;
+  /**
+   * Email for clinic admin notifications
+   */
+  email: string;
+  /**
+   * Phone for clinic contact
+   */
+  phone: string;
+  /**
+   * Admin password (encrypted in transit)
+   */
+  password: string;
+  /**
+   * Admin password confirmation
+   */
+  confirmPassword: string;
+  /**
+   * Primary specialty or service type
+   */
+  specialty?: string;
+  /**
+   * Full address of the clinic
+   */
+  address?: {
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    complement?: string;
+  };
+  /**
+   * Terms of service acceptance
+   */
+  acceptTerms: boolean;
+  /**
+   * LGPD compliance acknowledgment
+   */
+  lgpdConsent: boolean;
+}
+
+/**
+ * Clinic invite token metadata
+ * Stored when admin generates invite for professionals
+ */
+export interface ClinicInviteToken {
+  id: string;
+  clinicId: string;
+  /**
+   * Unique token sent to invited professional
+   */
+  token: string;
+  /**
+   * Email of invited professional
+   */
+  invitedEmail: string;
+  /**
+   * Optional: specific role for the invite (doctor, receptionist, etc)
+   */
+  role?: string;
+  /**
+   * When invite was created
+   */
+  createdAt: string;
+  /**
+   * When invite expires (24-48 hours typically)
+   */
+  expiresAt: string;
+  /**
+   * Has this invite been used?
+   */
+  usedAt?: string;
+  /**
+   * Who created this invite
+   */
+  createdBy: string;
+  /**
+   * Additional metadata (specialty, clinic_room, etc)
+   */
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Clinic membership record
+ * Maps user to clinic(s) with a specific role
+ */
+export interface ClinicMembership {
+  id: string;
+  clinicId: string;
+  userId: string;
+  /**
+   * User's role within this clinic
+   */
+  role: 'admin' | 'doctor' | 'receptionist' | 'financial' | 'viewer';
+  /**
+   * Timestamp of membership creation
+   */
+  joinedAt: string;
+  /**
+   * If membership is suspended/removed
+   */
+  active: boolean;
+  /**
+   * Clinic-specific properties (room assignment, etc)
+   */
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Clinic registration result
+ * Returned after successful clinic signup
+ */
+export interface ClinicSignupResult {
+  clinic: {
+    id: string;
+    name: string;
+    cnpj?: string;
+    email: string;
+    phone: string;
+    createdAt: string;
+  };
+  admin: {
+    id: string;
+    email: string;
+    name?: string;
+  };
+  /**
+   * Invite link to share with professionals
+   */
+  inviteLink?: string;
+}
+
 /**
  * Template data for document generation (prescription, etc)
  */

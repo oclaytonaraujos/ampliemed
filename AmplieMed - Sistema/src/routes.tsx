@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import { Layout } from './components/Layout';
 import { Login } from './components/Login';
+import { ProfessionalInviteAccept } from './components/ProfessionalInviteAccept';
 import { Home } from './components/Home';
 import { Dashboard } from './components/Dashboard';
 import { PatientManagement } from './components/PatientManagement';
@@ -95,7 +96,7 @@ function useUserRole(): UserRole {
 // ─── Public pages ─────────────────────────────────────────────────────────────
 
 function LoginPage() {
-  const { login, signup, isAuthenticated, isLoading } = useApp();
+  const { login, signup, clinicSignup, isAuthenticated, isLoading } = useApp();
   
   if (isLoading) {
     return (
@@ -118,7 +119,13 @@ function LoginPage() {
     return await signup(data);
   };
 
-  return <Login onLogin={handleLogin} onSignup={handleSignup} />;
+  const handleClinicSignup = (result: any) => {
+    console.log('Clinic signup success:', result);
+    // Automatically login with the clinic admin credentials
+    // Or redirect to a welcome screen
+  };
+
+  return <Login onLogin={handleLogin} onSignup={handleSignup} onClinicSignup={handleClinicSignup} />;
 }
 
 // ─── Protected page wrappers ─────────────────────────────────────────────────
@@ -243,6 +250,11 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     Component: LoginPage,
+  },
+
+  {
+    path: '/accept-invite',
+    Component: ProfessionalInviteAccept,
   },
 
   // ── Protected shell (authenticated layout) ──────────────────────────────────

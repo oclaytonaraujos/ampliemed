@@ -235,8 +235,8 @@ export const UI_CONFIG = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const FEATURES = {
-  TELEMEDICINE: process.env.REACT_APP_FEATURE_TELEMEDICINE === 'true',
-  FINANCIAL_REPORTS: process.env.REACT_APP_FEATURE_FINANCIAL_REPORTS === 'true',
-  AUDIT_LOG: process.env.REACT_APP_FEATURE_AUDIT_LOG === 'true',
-  DARK_MODE: process.env.REACT_APP_FEATURE_DARK_MODE === 'true',
+  TELEMEDICINE: import.meta.env.VITE_FEATURE_TELEMEDICINE === 'true',
+  FINANCIAL_REPORTS: import.meta.env.VITE_FEATURE_FINANCIAL_REPORTS === 'true',
+  AUDIT_LOG: import.meta.env.VITE_FEATURE_AUDIT_LOG === 'true',
+  DARK_MODE: import.meta.env.VITE_FEATURE_DARK_MODE === 'true',
 } as const;

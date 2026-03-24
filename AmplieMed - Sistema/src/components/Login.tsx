@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, ArrowLeft, User, Mail, Phone } from 'lucide-react';
-import logoAmplieMed from 'figma:asset/775bd1b6594b305b8d42a07d24da813913fe5060.png';
+import logoAmplieMed from '../assets/775bd1b6594b305b8d42a07d24da813913fe5060.png';
 import { toastInfo } from '../utils/toastService';
+import { ClinicSignup } from './ClinicSignup';
+import type { ClinicSignupResult } from '../types';
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
@@ -14,14 +16,15 @@ interface LoginProps {
     crm?: string;
     phone?: string;
   }) => Promise<boolean>;
+  onClinicSignup?: (result: ClinicSignupResult) => void;
 }
 
-type Mode = 'login' | 'signup';
+type Mode = 'login' | 'professional-signup' | 'clinic-signup';
 
 const INPUT_CLASS =
   'w-full px-3.5 py-2.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all placeholder:text-gray-300';
 
-export function Login({ onLogin, onSignup }: LoginProps) {
+export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
   const [mode, setMode] = useState<Mode>('login');
 
   // Login state
@@ -235,25 +238,32 @@ export function Login({ onLogin, onSignup }: LoginProps) {
               </form>
 
               {/* Switch to signup */}
-              <div className="mt-6 pt-4 border-t border-gray-100">
+              <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
                 <p className="text-center text-[13px] text-gray-500">
                   Não tem conta?{' '}
                   <button
                     type="button"
-                    onClick={() => switchMode('signup')}
+                    onClick={() => switchMode('professional-signup')}
                     className="text-blue-600 font-medium hover:text-blue-700 transition-colors text-[13px]"
                   >
                     Cadastre-se
                   </button>
                 </p>
+                <button
+                  type="button"
+                  onClick={() => switchMode('clinic-signup')}
+                  className="w-full text-center text-sm font-medium px-4 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                >
+                  Registrar Clínica
+                </button>
               </div>
             </>
           )}
 
           {/* ══════════════════════════════════════════════════════════════ */}
-          {/* SIGNUP FORM                                                   */}
+          {/* SIGNUP FORM (Professional)                                   */}
           {/* ══════════════════════════════════════════════════════════════ */}
-          {mode === 'signup' && (
+          {mode === 'professional-signup' && (
             <>
               <div className="mb-6">
                 <button
@@ -265,7 +275,7 @@ export function Login({ onLogin, onSignup }: LoginProps) {
                   Voltar ao login
                 </button>
                 <div className="text-center">
-                  <h1 className="text-lg font-semibold text-gray-900">Criar conta</h1>
+                  <h1 className="text-lg font-semibold text-gray-900">Criar conta profissional</h1>
                   <p className="text-[13px] text-gray-400 mt-0.5">Preencha seus dados para começar</p>
                 </div>
               </div>
@@ -429,9 +439,9 @@ export function Login({ onLogin, onSignup }: LoginProps) {
               </form>
 
               {/* Switch to login */}
-              <div className="mt-5 pt-4 border-t border-gray-100">
+              <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
                 <p className="text-center text-[13px] text-gray-500">
-                  Já tem conta?{' '}
+                  Já tem uma clínica?{' '}
                   <button
                     type="button"
                     onClick={() => switchMode('login')}
@@ -440,8 +450,27 @@ export function Login({ onLogin, onSignup }: LoginProps) {
                     Faça login
                   </button>
                 </p>
+                <button
+                  type="button"
+                  onClick={() => switchMode('clinic-signup')}
+                  className="w-full text-center text-sm font-medium px-4 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                >
+                  Registrar uma Clínica
+                </button>
               </div>
             </>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════ */}
+          {/* CLINIC SIGNUP (Clinic-First Model)                            */}
+          {/* ══════════════════════════════════════════════════════════════ */}
+          {mode === 'clinic-signup' && (
+            <ClinicSignup
+              onSignupSuccess={(result) => {
+                onClinicSignup?.(result);
+              }}
+              onBackToLogin={() => switchMode('login')}
+            />
           )}
         </div>
 

@@ -23,7 +23,7 @@ interface LogEntry {
  * Development: DEBUG, INFO, WARN, ERROR
  */
 const shouldLog = (level: LogLevel): boolean => {
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = import.meta.env.DEV;
   const levels = isDev 
     ? ['DEBUG', 'INFO', 'WARN', 'ERROR']
     : ['INFO', 'WARN', 'ERROR'];
@@ -72,7 +72,7 @@ const log = (level: LogLevel, message: string, context?: any, error?: Error) => 
   logFn(JSON.stringify(entry));
 
   // TODO: Send to monitoring service (Sentry, LogRocket, etc)
-  // if (level === 'ERROR' && process.env.NODE_ENV === 'production') {
+  // if (level === 'ERROR' && import.meta.env.PROD) {
   //   sendToMonitoringService(entry);
   // }
 };

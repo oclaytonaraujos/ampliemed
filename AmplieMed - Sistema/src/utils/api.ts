@@ -91,6 +91,105 @@ export async function signup(data: {
   });
 }
 
+/**
+ * Register a new clinic (Clinic-First model)
+ * Creates clinic + admin user in a single transaction
+ * Returns clinic ID and invite link for adding professionals
+ */
+export async function clinicSignup(data: {
+  clinicName: string;
+  cnpj?: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  specialty?: string;
+  address?: {
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    complement?: string;
+  };
+  acceptTerms: boolean;
+  lgpdConsent: boolean;
+}) {
+  return edgeFetch<{
+    clinic: {
+      id: string;
+      name: string;
+      cnpj?: string;
+      email: string;
+      phone: string;
+      createdAt: string;
+    };
+    admin: {
+      id: string;
+      email: string;
+      name?: string;
+    };
+    inviteLink?: string;
+    message: string;
+  }>('/auth/clinic-signup', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Generate invite token for professional to join clinic
+ * Called by clinic admin
+ */
+export async function generateClinicInvite(clinicId: string, data: {
+  invitedEmail: string;
+  role?: string;
+  metadata?: Record<string, any>;
+}) {
+  return edgeFetch<{
+    token: string;
+    inviteLink: string;
+    expiresAt: string;
+    message: string;
+  }>(`/clinic/${clinicId}/invite`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Accept clinic invite and join as professional
+ */
+export async function acceptClinicInvite(data: {
+  token: string;
+  email: string;
+  password: string;
+  name?: string;
+  crm?: string;
+  specialty?: string;
+}) {
+  return edgeFetch<{
+    clinic: {
+      id: string;
+      name: string;
+    };
+    user: {
+      id: string;
+      email: string;
+    };
+    professional?: {
+      id: string;
+      name?: string;
+      role: string;
+    };
+    message: string;
+  }>('/auth/accept-clinic-invite', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function createUser(data: {
   email: string;
   password: string;

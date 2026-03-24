@@ -1,25 +1,23 @@
 import { RouterProvider } from 'react-router';
-import { Toaster } from 'sonner@2.0.3';
+import { Toaster } from 'sonner';
 import * as Sentry from '@sentry/react';
 import { AppProvider } from './components/AppContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { router } from './routes';
 
 // Initialize Sentry for error tracking and monitoring
+const isDev = import.meta.env.DEV;
+const isProd = import.meta.env.PROD;
+
 Sentry.init({
-  dsn: process.env.REACT_APP_SENTRY_DSN,
-  enabled: process.env.NODE_ENV === 'production',
-  environment: process.env.NODE_ENV,
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-  integrations: [
-    new Sentry.Replay({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
-  ],
-  // Capture 10% of all transactions for performance monitoring
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0,
+  dsn: import.meta.env.VITE_SENTRY_DSN || '',
+  enabled: isProd,
+  environment: isProd ? 'production' : 'development',
+  tracesSampleRate: isProd ? 0.1 : 1.0,
+  integrations: [],
+  // Note: Session replay requires @sentry/replay package
+  // replaysSessionSampleRate: 0.1,
+  // replaysOnErrorSampleRate: 1.0,
 });
 
 // UserRole type exported so other components can import it
