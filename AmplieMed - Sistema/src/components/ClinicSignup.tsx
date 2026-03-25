@@ -576,39 +576,59 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
 
       {/* Action Buttons */}
       <div className="mt-6 flex gap-2">
-        {currentStep !== 'clinic-info' && (
-          <button
-            onClick={handlePrev}
-            disabled={loading}
-            className="flex-1 border border-gray-200 text-gray-700 text-sm font-medium py-2.5 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Voltar
-          </button>
+        {currentStep === 'clinic-info' ? (
+          <>
+            <button
+              onClick={onBackToLogin}
+              disabled={loading}
+              className="flex-1 border border-gray-200 text-gray-700 text-sm font-medium py-2.5 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Voltar ao Login
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={loading}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2.5 rounded-xl active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Próximo...
+                </>
+              ) : (
+                'Próximo'
+              )}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handlePrev}
+              disabled={loading}
+              className="flex-1 border border-gray-200 text-gray-700 text-sm font-medium py-2.5 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Voltar
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={loading}
+              className={`flex-1 text-white text-sm font-medium py-2.5 rounded-xl active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                currentStep === 'confirmation' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {currentStep === 'confirmation' ? 'Registrando...' : 'Próximo...'}
+                </>
+              ) : currentStep === 'confirmation' ? (
+                'Registrar Clínica'
+              ) : (
+                'Próximo'
+              )}
+            </button>
+          </>
         )}
-        <button
-          onClick={currentStep === 'clinic-info' ? onBackToLogin : handleNext}
-          disabled={loading}
-          className={`flex-1 text-white text-sm font-medium py-2.5 rounded-xl active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
-            currentStep !== 'clinic-info'
-              ? currentStep === 'confirmation'
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-blue-600 hover:bg-blue-700'
-              : 'bg-gray-400 hover:bg-gray-500'
-          }`}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {currentStep === 'confirmation' ? 'Registrando...' : 'Próximo...'}
-            </>
-          ) : currentStep === 'clinic-info' ? (
-            'Voltar ao Login'
-          ) : currentStep === 'confirmation' ? (
-            'Registrar Clínica'
-          ) : (
-            'Próximo'
-          )}
-        </button>
       </div>
     </div>
   );

@@ -14,7 +14,9 @@ import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { getSupabase } from './supabaseClient';
 import * as M from './dataMappers';
 
-const EDGE_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-d4766610`;
+// Edge Functions are accessed directly via their path in /supabase/functions/
+// e.g., /supabase/functions/auth/clinic-signup/ -> /functions/v1/auth/clinic-signup
+const EDGE_BASE = `https://${projectId}.supabase.co/functions/v1`;
 
 // ─── Token management (kept for Edge Function auth routes) ───────────────────
 let _accessToken: string | null = null;
@@ -132,7 +134,7 @@ export async function clinicSignup(data: {
     };
     inviteLink?: string;
     message: string;
-  }>('/auth/clinic-signup', {
+  }>('/auth_clinic_signup', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -152,9 +154,14 @@ export async function generateClinicInvite(clinicId: string, data: {
     inviteLink: string;
     expiresAt: string;
     message: string;
-  }>(`/clinic/${clinicId}/invite`, {
+  }>(`/clinic_invite`, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      clinicId,
+      email: data.invitedEmail,
+      role: data.role,
+      metadata: data.metadata,
+    }),
   });
 }
 
@@ -184,7 +191,7 @@ export async function acceptClinicInvite(data: {
       role: string;
     };
     message: string;
-  }>('/auth/accept-clinic-invite', {
+  }>('/auth_accept_clinic_invite', {
     method: 'POST',
     body: JSON.stringify(data),
   });

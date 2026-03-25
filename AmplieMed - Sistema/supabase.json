@@ -1,0 +1,17 @@
+{
+  "project_id": "suycrqtvipfzrkcmopua",
+  "functions": [
+    {
+      "slug": "auth-clinic-signup",
+      "importMap": "shared/import_map.json"
+    },
+    {
+      "slug": "auth-accept-clinic-invite",
+      "importMap": "shared/import_map.json"
+    },
+    {
+      "slug": "clinic-invite",
+      "importMap": "shared/import_map.json"
+    }
+  ]
+}
