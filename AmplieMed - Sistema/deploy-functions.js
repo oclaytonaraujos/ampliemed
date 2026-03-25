@@ -3,16 +3,28 @@
  * Deploy Edge Functions via Supabase API
  * 
  * Este script faz o deploy das 3 funções sem precisar do CLI
+ * 
+ * Configuração necesária:
+ * - VITE_SUPABASE_URL: URL do projeto Supabase (lida de .env)
+ * - VITE_SUPABASE_PROJECT_ID: ID do projeto (lida de .env)
+ * - SUPABASE_ACCESS_TOKEN: Token de acesso (env var necessário)
  */
 
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
 
-const SUPABASE_URL = 'https://suycrqtvipfzrkcmopua.supabase.co';
-const SUPABASE_PROJECT_ID = 'suycrqtvipfzrkcmopua';
+// Load .env file
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+}
 
-// Você precisa gerar um token de acesso
-// Vá em: Supabase Dashboard → Project Settings → Access Tokens → Generate New Token
+// Read from .env or use defaults
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://suycrqtvipfzrkcmopua.supabase.co';
+const SUPABASE_PROJECT_ID = process.env.VITE_SUPABASE_PROJECT_ID || 'suycrqtvipfzrkcmopua';
+
+// Access token must be provided as environment variable
 const ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 
 if (!ACCESS_TOKEN) {

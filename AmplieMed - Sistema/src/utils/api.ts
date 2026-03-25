@@ -14,9 +14,8 @@ import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { getSupabase } from './supabaseClient';
 import * as M from './dataMappers';
 
-// Edge Functions are accessed directly via their path in /supabase/functions/
-// e.g., /supabase/functions/auth/clinic-signup/ -> /functions/v1/auth/clinic-signup
-const EDGE_BASE = `https://${projectId}.supabase.co/functions/v1`;
+// Edge Functions URL — synced from .env (VITE_EDGE_FUNCTION_URL)
+const EDGE_BASE = import.meta.env.VITE_EDGE_FUNCTION_URL || `https://${projectId}.supabase.co/functions/v1`;
 
 // ─── Token management (kept for Edge Function auth routes) ───────────────────
 let _accessToken: string | null = null;

@@ -5,9 +5,21 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { projectId, publicAnonKey } from './supabase/info';
 
-const supabaseUrl = `https://${projectId}.supabase.co`;
+/**
+ * Credentials are now read from .env variables for global synchronization.
+ * This allows different credentials per environment (dev/staging/prod).
+ */
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const publicAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+if (!supabaseUrl || !publicAnonKey) {
+  console.error(
+    'Missing Supabase configuration. Check .env file:\n' +
+    '  VITE_SUPABASE_URL\n' +
+    '  VITE_SUPABASE_ANON_KEY'
+  );
+}
 
 let _supabase: SupabaseClient | null = null;
 

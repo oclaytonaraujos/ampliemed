@@ -231,6 +231,32 @@ export const UI_CONFIG = {
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ─── Environment Configuration ─────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ENV_CONFIG = {
+  // Supabase
+  SUPABASE_PROJECT_NAME: import.meta.env.VITE_SUPABASE_PROJECT_NAME || 'AMPLIEMED',
+  SUPABASE_PROJECT_ID: import.meta.env.VITE_SUPABASE_PROJECT_ID || 'suycrqtvipfzrkcmopua',
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://suycrqtvipfzrkcmopua.supabase.co',
+  
+  // Edge Functions
+  EDGE_FUNCTION_URL: import.meta.env.VITE_EDGE_FUNCTION_URL || 'https://suycrqtvipfzrkcmopua.supabase.co/functions/v1',
+  EDGE_FUNCTION_ACCESS_TOKEN: import.meta.env.VITE_EDGE_FUNCTION_ACCESS_TOKEN || '',
+  
+  // Stripe (Payment Processing)
+  STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+  // Note: VITE_STRIPE_SECRET_KEY should NEVER be used in frontend
+  
+  // JWT Configuration
+  JWT_ACCESS_TOKEN_EXPIRY: parseInt(import.meta.env.VITE_JWT_ACCESS_TOKEN_EXPIRY || '3600', 10),
+  // Note: JWT_SECRET, JWT_SECRET_PREVIOUS, JWT_SECRET_LEGACY are only for backend
+  
+  // Sentry
+  SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN || '',
+} as const;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ─── Feature Flags ─────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
 
