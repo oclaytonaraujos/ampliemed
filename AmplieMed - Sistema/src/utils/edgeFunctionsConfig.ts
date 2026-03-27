@@ -1,8 +1,9 @@
 /**
  * Edge Functions Configuration & Utilities
- * 
- * Provides utilities for managing Edge Functions
- * All variables are properly synced from .env
+ *
+ * Provides frontend-safe utilities for Edge Functions.
+ * Secret credentials (access token, email, password) are NEVER available
+ * in the frontend — they exist only in Edge Functions via Deno.env.get().
  */
 
 import { EdgeFunctions as edgeFunctionsConfig } from './envConfig';
@@ -10,13 +11,10 @@ import { EdgeFunctions as edgeFunctionsConfig } from './envConfig';
 // Type definitions
 export interface EdgeFunctionConfig {
   url: string;
-  accessToken?: string;
-  email?: string;
 }
 
 /**
  * Get Edge Functions base URL
- * This is used to construct requests to Edge Functions
  */
 export function getEdgeFunctionBaseURL(): string {
   return edgeFunctionsConfig.url;
@@ -37,8 +35,6 @@ export function getEdgeFunctionURL(functionPath: string): string {
 export function getEdgeFunctionsConfig(): EdgeFunctionConfig {
   return {
     url: edgeFunctionsConfig.url,
-    // accessToken should not be exposed to frontend
-    // accessToken: edgeFunctionsConfig.accessToken,
   };
 }
 
@@ -56,8 +52,6 @@ export function getEdgeFunctionsInfo() {
   return {
     baseURL: edgeFunctionsConfig.url,
     isConfigured: isEdgeFunctionsConfigured(),
-    hasAccessToken: !!edgeFunctionsConfig.accessToken,
-    hasEmailConfig: !!edgeFunctionsConfig.email,
     availableFunctions: [
       '/auth/clinic-signup',
       '/auth/accept-clinic-invite',
@@ -71,8 +65,8 @@ export function getEdgeFunctionsInfo() {
  */
 export function logEdgeFunctionsConfig(): void {
   if (!import.meta.env.DEV) return;
-  
-  console.group('🚀 Edge Functions Configuration');
+
+  console.group('Edge Functions Configuration');
   console.log('Base URL:', edgeFunctionsConfig.url);
   console.log('Is Configured:', isEdgeFunctionsConfigured());
   console.log('Available Functions:', getEdgeFunctionsInfo().availableFunctions);

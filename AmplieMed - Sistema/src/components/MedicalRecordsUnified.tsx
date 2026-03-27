@@ -498,7 +498,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           value={anamnesis.chiefComplaint}
           onChange={(e) => setAnamnesis({ ...anamnesis, chiefComplaint: e.target.value })}
           rows={2}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Descreva a queixa principal do paciente..."
         />
       </div>
@@ -511,7 +511,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           value={anamnesis.historyOfPresentIllness}
           onChange={(e) => setAnamnesis({ ...anamnesis, historyOfPresentIllness: e.target.value })}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Descreva a evolução dos sintomas, duração, fatores agravantes e atenuantes..."
         />
       </div>
@@ -525,7 +525,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={anamnesis.pastMedicalHistory}
             onChange={(e) => setAnamnesis({ ...anamnesis, pastMedicalHistory: e.target.value })}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Doenças prévias, cirurgias, hospitalizações..."
           />
         </div>
@@ -538,7 +538,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={anamnesis.medications}
             onChange={(e) => setAnamnesis({ ...anamnesis, medications: e.target.value })}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Liste as medicações atuais, doses e frequência..."
           />
         </div>
@@ -551,7 +551,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={anamnesis.allergies}
             onChange={(e) => setAnamnesis({ ...anamnesis, allergies: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Medicamentos, alimentos, outras substâncias..."
           />
         </div>
@@ -564,7 +564,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={anamnesis.familyHistory}
             onChange={(e) => setAnamnesis({ ...anamnesis, familyHistory: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Doenças em familiares próximos..."
           />
         </div>
@@ -578,7 +578,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           value={anamnesis.socialHistory}
           onChange={(e) => setAnamnesis({ ...anamnesis, socialHistory: e.target.value })}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Tabagismo, etilismo, atividade física, ocupação..."
         />
       </div>
@@ -587,46 +587,46 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
 
   const renderPhysicalExam = () => (
     <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 p-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-3">Sinais Vitais</h3>
+      <div className="bg-pink-50 border border-pink-200 p-4">
+        <h3 className="text-sm font-medium text-pink-900 mb-3">Sinais Vitais</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">PA (mmHg)</label>
+            <label className="block text-xs font-medium text-pink-700 mb-1">PA (mmHg)</label>
             <input
               type="text"
               value={physicalExam.bloodPressure}
               onChange={(e) => setPhysicalExam({ ...physicalExam, bloodPressure: e.target.value })}
-              className="w-full px-3 py-2 border border-blue-300 focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-pink-300 focus:outline-none focus:border-pink-600"
               placeholder="120/80"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">FC (bpm)</label>
+            <label className="block text-xs font-medium text-pink-700 mb-1">FC (bpm)</label>
             <input
               type="text"
               value={physicalExam.heartRate}
               onChange={(e) => setPhysicalExam({ ...physicalExam, heartRate: e.target.value })}
-              className="w-full px-3 py-2 border border-blue-300 focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-pink-300 focus:outline-none focus:border-pink-600"
               placeholder="72"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">Temp (°C)</label>
+            <label className="block text-xs font-medium text-pink-700 mb-1">Temp (°C)</label>
             <input
               type="text"
               value={physicalExam.temperature}
               onChange={(e) => setPhysicalExam({ ...physicalExam, temperature: e.target.value })}
-              className="w-full px-3 py-2 border border-blue-300 focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-pink-300 focus:outline-none focus:border-pink-600"
               placeholder="36.5"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">FR (irpm)</label>
+            <label className="block text-xs font-medium text-pink-700 mb-1">FR (irpm)</label>
             <input
               type="text"
               value={physicalExam.respiratoryRate}
               onChange={(e) => setPhysicalExam({ ...physicalExam, respiratoryRate: e.target.value })}
-              className="w-full px-3 py-2 border border-blue-300 focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-pink-300 focus:outline-none focus:border-pink-600"
               placeholder="16"
             />
           </div>
@@ -634,42 +634,42 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">Peso (kg)</label>
+            <label className="block text-xs font-medium text-pink-700 mb-1">Peso (kg)</label>
             <input
               type="text"
               value={physicalExam.weight}
               onChange={(e) => setPhysicalExam({ ...physicalExam, weight: e.target.value })}
-              className="w-full px-3 py-2 border border-blue-300 focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-pink-300 focus:outline-none focus:border-pink-600"
               placeholder="70"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">Altura (cm)</label>
+            <label className="block text-xs font-medium text-pink-700 mb-1">Altura (cm)</label>
             <input
               type="text"
               value={physicalExam.height}
               onChange={(e) => setPhysicalExam({ ...physicalExam, height: e.target.value })}
-              className="w-full px-3 py-2 border border-blue-300 focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-pink-300 focus:outline-none focus:border-pink-600"
               placeholder="170"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">IMC</label>
+            <label className="block text-xs font-medium text-pink-700 mb-1">IMC</label>
             <input
               type="text"
               value={physicalExam.bmi}
               onChange={(e) => setPhysicalExam({ ...physicalExam, bmi: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-100 border border-blue-300"
+              className="w-full px-3 py-2 bg-gray-100 border border-pink-300"
               placeholder="Auto"
               readOnly
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-blue-700 mb-1">Estado Geral</label>
+            <label className="block text-xs font-medium text-pink-700 mb-1">Estado Geral</label>
             <select
               value={physicalExam.generalState}
               onChange={(e) => setPhysicalExam({ ...physicalExam, generalState: e.target.value })}
-              className="w-full px-3 py-2 border border-blue-300 focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-pink-300 focus:outline-none focus:border-pink-600"
             >
               <option value="">Selecione</option>
               <option value="Bom">Bom</option>
@@ -687,7 +687,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={physicalExam.headNeck}
             onChange={(e) => setPhysicalExam({ ...physicalExam, headNeck: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Descrição do exame..."
           />
         </div>
@@ -698,7 +698,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={physicalExam.cardiovascular}
             onChange={(e) => setPhysicalExam({ ...physicalExam, cardiovascular: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Descrição do exame..."
           />
         </div>
@@ -709,7 +709,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={physicalExam.respiratory}
             onChange={(e) => setPhysicalExam({ ...physicalExam, respiratory: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Descrição do exame..."
           />
         </div>
@@ -720,7 +720,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={physicalExam.abdomen}
             onChange={(e) => setPhysicalExam({ ...physicalExam, abdomen: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Descrição do exame..."
           />
         </div>
@@ -731,7 +731,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={physicalExam.extremities}
             onChange={(e) => setPhysicalExam({ ...physicalExam, extremities: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Descrição do exame..."
           />
         </div>
@@ -742,7 +742,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             value={physicalExam.neurological}
             onChange={(e) => setPhysicalExam({ ...physicalExam, neurological: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Descrição do exame..."
           />
         </div>
@@ -760,7 +760,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           type="text"
           value={diagnosis.mainDiagnosis}
           onChange={(e) => setDiagnosis({ ...diagnosis, mainDiagnosis: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Digite o diagnóstico..."
         />
       </div>
@@ -774,7 +774,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             type="text"
             value={diagnosis.cid10}
             onChange={(e) => setDiagnosis({ ...diagnosis, cid10: e.target.value })}
-            className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Ex: I10"
           />
         </div>
@@ -788,7 +788,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           value={diagnosis.secondaryDiagnosis}
           onChange={(e) => setDiagnosis({ ...diagnosis, secondaryDiagnosis: e.target.value })}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Outros diagnósticos relevantes..."
         />
       </div>
@@ -801,7 +801,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           value={diagnosis.conductPlan}
           onChange={(e) => setDiagnosis({ ...diagnosis, conductPlan: e.target.value })}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Tratamento proposto, exames solicitados, orientações..."
         />
       </div>
@@ -814,7 +814,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           value={diagnosis.observations}
           onChange={(e) => setDiagnosis({ ...diagnosis, observations: e.target.value })}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Informações adicionais..."
         />
       </div>
@@ -827,7 +827,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
         <h3 className="text-sm font-medium text-gray-700">Prescrição Médica</h3>
         <button
           onClick={handleAddPrescription}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Adicionar Medicamento
@@ -841,7 +841,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             <p className="text-sm text-gray-500">Nenhum medicamento adicionado</p>
             <button
               onClick={handleAddPrescription}
-              className="mt-3 text-sm text-blue-600 hover:text-blue-700"
+              className="mt-3 text-sm text-pink-600 hover:text-pink-700"
             >
               Adicionar primeiro medicamento
             </button>
@@ -870,7 +870,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                       updated[index].medication = e.target.value;
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                     placeholder="Nome do medicamento e concentração"
                   />
                 </div>
@@ -885,7 +885,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                       updated[index].dosage = e.target.value;
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                     placeholder="Ex: 1 comprimido"
                   />
                 </div>
@@ -900,7 +900,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                       updated[index].frequency = e.target.value;
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                     placeholder="Ex: 2x ao dia"
                   />
                 </div>
@@ -915,7 +915,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                       updated[index].duration = e.target.value;
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                     placeholder="Ex: 30 dias"
                   />
                 </div>
@@ -930,7 +930,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                       updated[index].instructions = e.target.value;
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                     placeholder="Instruções especiais de uso"
                   />
                 </div>
@@ -961,20 +961,20 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-6 border border-gray-200 hover:border-blue-600 hover:bg-blue-50 transition-colors text-center group">
-            <FileCheck className="w-8 h-8 text-gray-400 group-hover:text-blue-600 mx-auto mb-2" />
+          <button className="p-6 border border-gray-200 hover:border-pink-600 hover:bg-pink-50 transition-colors text-center group">
+            <FileCheck className="w-8 h-8 text-gray-400 group-hover:text-pink-600 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-900">Atestado Médico</p>
             <p className="text-xs text-gray-500 mt-1">Gerar atestado</p>
           </button>
 
-          <button className="p-6 border border-gray-200 hover:border-blue-600 hover:bg-blue-50 transition-colors text-center group">
-            <Pill className="w-8 h-8 text-gray-400 group-hover:text-blue-600 mx-auto mb-2" />
+          <button className="p-6 border border-gray-200 hover:border-pink-600 hover:bg-pink-50 transition-colors text-center group">
+            <Pill className="w-8 h-8 text-gray-400 group-hover:text-pink-600 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-900">Receita</p>
             <p className="text-xs text-gray-500 mt-1">Imprimir receita</p>
           </button>
 
-          <button className="p-6 border border-gray-200 hover:border-blue-600 hover:bg-blue-50 transition-colors text-center group">
-            <FileText className="w-8 h-8 text-gray-400 group-hover:text-blue-600 mx-auto mb-2" />
+          <button className="p-6 border border-gray-200 hover:border-pink-600 hover:bg-pink-50 transition-colors text-center group">
+            <FileText className="w-8 h-8 text-gray-400 group-hover:text-pink-600 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-900">Relatório</p>
             <p className="text-xs text-gray-500 mt-1">Gerar relatório</p>
           </button>
@@ -1048,8 +1048,8 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
               <div key={evolution.id} className="border border-gray-200 bg-white">
                 <div className="flex items-start justify-between p-4 bg-gray-50 border-b border-gray-200">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-50">
-                      <Stethoscope className="w-4 h-4 text-blue-600" />
+                    <div className="p-2 bg-pink-50">
+                      <Stethoscope className="w-4 h-4 text-pink-600" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">{evolution.doctor}</p>
@@ -1120,8 +1120,8 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           <div className="bg-white border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-blue-50">
-                  <User className="w-6 h-6 text-blue-600" />
+                <div className="p-3 bg-pink-50">
+                  <User className="w-6 h-6 text-pink-600" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">{selectedPatient.name}</h2>
@@ -1164,7 +1164,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                     onClick={() => setActiveTab(tab.id as RecordTab)}
                     className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-colors whitespace-nowrap ${
                       activeTab === tab.id
-                        ? 'border-blue-600 text-blue-600 bg-blue-50'
+                        ? 'border-pink-600 text-pink-600 bg-pink-50'
                         : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`}
                   >
@@ -1195,7 +1195,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
               isSigned
                 ? 'bg-green-600 text-white cursor-not-allowed'
                 : canSign
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-pink-600 text-white hover:bg-pink-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
@@ -1214,7 +1214,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
               disabled={!canCreate && !editingRecordId}
               className={`flex items-center gap-2 px-6 py-2.5 transition-colors ${
                 (canCreate || editingRecordId)
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'bg-pink-600 text-white hover:bg-pink-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
@@ -1251,7 +1251,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                 className="w-full pl-7 pr-3 bg-gray-50 border-0 text-sm focus:outline-none focus:bg-white transition-all" />
             </div>
             <button onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2.5 border-r border-gray-200 text-sm transition-colors ${showFilters ? 'bg-blue-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
+              className={`flex items-center gap-2 px-4 py-2.5 border-r border-gray-200 text-sm transition-colors ${showFilters ? 'bg-pink-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
               <Filter className="w-4 h-4 text-gray-600" />
             </button>
             {canExport && (
@@ -1264,7 +1264,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                 <div className="grid grid-cols-3 gap-2">
                   {(['all', 'signed', 'pending'] as const).map(f => (
                     <button key={f} onClick={() => setFilterType(f)}
-                      className={`px-3 py-2 border text-sm transition-colors ${filterType === f ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
+                      className={`px-3 py-2 border text-sm transition-colors ${filterType === f ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
                       {f === 'all' ? 'Todos' : f === 'signed' ? 'Assinados' : 'Pendentes'}
                     </button>
                   ))}
@@ -1274,7 +1274,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
           </div>
           {canCreate && (
             <button onClick={handleNewRecord}
-              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+              className="flex items-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
               <Plus className="w-4 h-4" /> Novo Registro
             </button>
           )}
@@ -1284,7 +1284,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total', value: allRecords.length, icon: FileText, color: 'text-blue-600' },
+          { label: 'Total', value: allRecords.length, icon: FileText, color: 'text-pink-600' },
           { label: 'Assinados', value: allRecords.filter(r => r.signed).length, icon: CheckCircle2, color: 'text-green-600' },
           { label: 'Pendentes', value: allRecords.filter(r => !r.signed).length, icon: FileSignature, color: 'text-orange-600' },
         ].map(s => { const Icon = s.icon; return (
@@ -1347,7 +1347,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleViewRecord(record.id)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 transition-colors"
+                          className="p-1.5 text-pink-600 hover:bg-pink-50 transition-colors"
                           title="Ver/Editar"
                         >
                           <Eye className="w-4 h-4" />
@@ -1405,7 +1405,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                   placeholder="Buscar por nome ou CPF..."
                   value={patientSearchTerm}
                   onChange={(e) => setPatientSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-blue-600"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-pink-600"
                   autoFocus
                 />
               </div>
@@ -1416,7 +1416,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
                     <button
                       key={patient.id}
                       onClick={() => handleSelectPatient(patient)}
-                      className="w-full p-4 border border-gray-200 hover:border-blue-600 hover:bg-blue-50 transition-colors text-left"
+                      className="w-full p-4 border border-gray-200 hover:border-pink-600 hover:bg-pink-50 transition-colors text-left"
                     >
                       <p className="text-sm font-medium text-gray-900 mb-1">{patient.name}</p>
                       <div className="flex items-center gap-3 text-xs text-gray-500">

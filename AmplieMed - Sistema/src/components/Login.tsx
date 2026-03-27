@@ -22,7 +22,7 @@ interface LoginProps {
 type Mode = 'login' | 'professional-signup' | 'clinic-signup';
 
 const INPUT_CLASS =
-  'w-full px-3.5 py-2.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all placeholder:text-gray-300';
+  'w-full px-3.5 py-2.5 text-sm bg-gray-50/80 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400 transition-all placeholder:text-gray-300';
 
 export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
   const [mode, setMode] = useState<Mode>('login');
@@ -142,7 +142,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/40 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-pink-50/40 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -214,7 +214,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
+                    className="text-xs text-pink-500 hover:text-pink-600 transition-colors"
                     onClick={() => toastInfo('Recuperação de senha: entre em contato com o administrador do sistema')}
                   >
                     Esqueceu a senha?
@@ -224,7 +224,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-pink-600 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-pink-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -242,7 +242,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
                 <button
                   type="button"
                   onClick={() => switchMode('clinic-signup')}
-                  className="w-full text-center text-sm font-medium px-4 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                  className="w-full text-center text-sm font-medium px-4 py-2 rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors"
                 >
                   Registre-se
                 </button>
@@ -415,7 +415,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
+                  className="w-full bg-pink-600 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-pink-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
                 >
                   {loading ? (
                     <>
@@ -435,7 +435,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
                   <button
                     type="button"
                     onClick={() => switchMode('login')}
-                    className="text-blue-600 font-medium hover:text-blue-700 transition-colors text-[13px]"
+                    className="text-pink-600 font-medium hover:text-pink-700 transition-colors text-[13px]"
                   >
                     Faça login
                   </button>
@@ -443,7 +443,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
                 <button
                   type="button"
                   onClick={() => switchMode('clinic-signup')}
-                  className="w-full text-center text-sm font-medium px-4 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
+                  className="w-full text-center text-sm font-medium px-4 py-2 rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors"
                 >
                   Registrar uma Clínica
                 </button>

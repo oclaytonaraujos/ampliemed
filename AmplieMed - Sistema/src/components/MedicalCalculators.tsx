@@ -103,7 +103,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
   };
 
   const getIMCClassification = (imc: number) => {
-    if (imc < 18.5) return { label: 'Baixo Peso', color: 'text-blue-600' };
+    if (imc < 18.5) return { label: 'Baixo Peso', color: 'text-pink-600' };
     if (imc < 25) return { label: 'Peso Normal', color: 'text-green-600' };
     if (imc < 30) return { label: 'Sobrepeso', color: 'text-yellow-600' };
     if (imc < 35) return { label: 'Obesidade Grau I', color: 'text-orange-600' };
@@ -144,8 +144,8 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
               onClick={() => setActiveCalc(calc.id as any)}
               className={`flex items-center gap-2 px-4 py-3 whitespace-nowrap transition-colors ${
                 activeCalc === calc.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-600'
+                  ? 'bg-pink-600 text-white'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:border-pink-600'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -166,7 +166,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                 placeholder="Ex: 70"
               />
             </div>
@@ -176,7 +176,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={height}
                 onChange={(e) => setHeight(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                 placeholder="Ex: 170"
               />
             </div>
@@ -184,13 +184,13 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
 
           <button
             onClick={calculateIMC}
-            className="mt-4 w-full md:w-auto px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="mt-4 w-full md:w-auto px-6 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
           >
             Calcular
           </button>
 
           {imcResult !== null && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200">
+            <div className="mt-6 p-4 bg-pink-50 border border-pink-200">
               <p className="text-sm text-gray-700 mb-2">Resultado:</p>
               <p className="text-3xl font-bold text-gray-900 mb-2">{imcResult}</p>
               <p className={`text-sm font-medium ${getIMCClassification(imcResult).color}`}>
@@ -212,7 +212,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={medicationDose}
                 onChange={(e) => setMedicationDose(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                 placeholder="Ex: 10"
               />
             </div>
@@ -222,7 +222,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={childWeight}
                 onChange={(e) => setChildWeight(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                 placeholder="Ex: 15"
               />
             </div>
@@ -230,7 +230,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
 
           <button
             onClick={calculatePediatricDose}
-            className="mt-4 w-full md:w-auto px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="mt-4 w-full md:w-auto px-6 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
           >
             Calcular
           </button>
@@ -255,7 +255,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                 placeholder="Ex: 65"
               />
             </div>
@@ -265,7 +265,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                 placeholder="Ex: 70"
               />
             </div>
@@ -275,7 +275,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={creatinine}
                 onChange={(e) => setCreatinine(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                 placeholder="Ex: 1.2"
               />
             </div>
@@ -284,7 +284,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value as 'male' | 'female')}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
               >
                 <option value="male">Masculino</option>
                 <option value="female">Feminino</option>
@@ -294,7 +294,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
 
           <button
             onClick={calculateClearance}
-            className="mt-4 w-full md:w-auto px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="mt-4 w-full md:w-auto px-6 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
           >
             Calcular
           </button>
@@ -322,7 +322,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
               />
             </div>
             <div>
@@ -331,7 +331,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={cholesterol}
                 onChange={(e) => setCholesterol(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
               />
             </div>
             <div>
@@ -340,7 +340,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={hdl}
                 onChange={(e) => setHdl(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
               />
             </div>
             <div>
@@ -349,7 +349,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 type="number"
                 value={systolicBP}
                 onChange={(e) => setSystolicBP(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
               />
             </div>
             <div className="md:col-span-2">
@@ -358,7 +358,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                   type="checkbox"
                   checked={smoker}
                   onChange={(e) => setSmoker(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300"
+                  className="w-4 h-4 text-pink-600 border-gray-300"
                 />
                 Tabagista
               </label>
@@ -369,7 +369,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                   type="checkbox"
                   checked={diabetes}
                   onChange={(e) => setDiabetes(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300"
+                  className="w-4 h-4 text-pink-600 border-gray-300"
                 />
                 Diabetes
               </label>
@@ -378,7 +378,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
 
           <button
             onClick={calculateCardiovascularRisk}
-            className="mt-4 w-full md:w-auto px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="mt-4 w-full md:w-auto px-6 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
           >
             Calcular
           </button>
@@ -420,7 +420,7 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
                 <select
                   value={apgarScores[item.key as keyof typeof apgarScores]}
                   onChange={(e) => setApgarScores({ ...apgarScores, [item.key]: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
                 >
                   {item.options.map((option, index) => (
                     <option key={index} value={index}>{option}</option>
@@ -432,13 +432,13 @@ export function MedicalCalculators({ userRole }: MedicalCalculatorsProps) {
 
           <button
             onClick={calculateApgar}
-            className="mt-4 w-full md:w-auto px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="mt-4 w-full md:w-auto px-6 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
           >
             Calcular Score
           </button>
 
           {apgarTotal > 0 && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200">
+            <div className="mt-6 p-4 bg-pink-50 border border-pink-200">
               <p className="text-sm text-gray-700 mb-2">Score APGAR:</p>
               <p className="text-4xl font-bold text-gray-900 mb-2">{apgarTotal}/10</p>
               <p className={`text-sm font-medium ${getApgarClassification(apgarTotal).color}`}>

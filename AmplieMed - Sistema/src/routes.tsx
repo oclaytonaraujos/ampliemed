@@ -13,6 +13,7 @@ import { CommunicationModule } from './components/CommunicationModule';
 import { TelemedicineModule } from './components/TelemedicineModule';
 import { AccessControl } from './components/AccessControl';
 import { PatientPortal } from './components/PatientPortal';
+import { PatientPortalPublic } from './components/PatientPortalPublic';
 import { StockManagement } from './components/StockManagement';
 import { ExamsManagement } from './components/ExamsManagement';
 import { ClinicalProtocols } from './components/ClinicalProtocols';
@@ -22,8 +23,6 @@ import { QueueManagement } from './components/QueueManagement';
 import { ReportsModule } from './components/ReportsModule';
 import { TemplatesModule } from './components/TemplatesModule';
 import { MedicalCalculators } from './components/MedicalCalculators';
-import { AuditLog } from './components/AuditLog';
-import { SystemAnalysis } from './components/SystemAnalysis';
 import { useApp } from './components/AppContext';
 import type { UserRole } from './App';
 
@@ -51,8 +50,7 @@ export const MODULE_PATHS: Record<string, string> = {
   reports:            '/relatorios',
   templates:          '/templates',
   calculators:        '/calculadoras',
-  audit:              '/auditoria',
-  analysis:           '/analise-sistema',
+  audit:              '/controle-acesso',
 };
 
 /** Reverse map — path → module id */
@@ -83,7 +81,6 @@ export const PATH_NAMES: Record<string, string> = {
   '/templates':                     'Templates',
   '/calculadoras':                  'Calculadoras Médicas',
   '/auditoria':                     'Auditoria',
-  '/analise-sistema':               'Análise Técnica do Sistema',
 };
 
 // ─── Shared hook ─────────────────────────────────────────────────────────────
@@ -102,7 +99,7 @@ function LoginPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-10 h-10 border-4 border-pink-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600 text-sm">Verificando sessão...</p>
         </div>
       </div>
@@ -234,15 +231,6 @@ function CalculatorsPage() {
   return <MedicalCalculators userRole={role} />;
 }
 
-function AuditPage() {
-  const role = useUserRole();
-  return <AuditLog userRole={role} />;
-}
-
-function AnalysisPage() {
-  return <SystemAnalysis />;
-}
-
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 export const router = createBrowserRouter([
@@ -255,6 +243,11 @@ export const router = createBrowserRouter([
   {
     path: '/accept-invite',
     Component: ProfessionalInviteAccept,
+  },
+
+  {
+    path: '/paciente',
+    Component: PatientPortalPublic,
   },
 
   // ── Protected shell (authenticated layout) ──────────────────────────────────
@@ -299,13 +292,11 @@ export const router = createBrowserRouter([
 
       // Sistema
       { path: 'controle-acesso', Component: AccessPage },
-      { path: 'auditoria',       Component: AuditPage },
+      { path: 'auditoria',       element: <Navigate to="/controle-acesso" replace /> },
 
       // Configurações
       { path: 'configuracoes', Component: SettingsPage },
 
-      // Análise técnica
-      { path: 'analise-sistema', Component: AnalysisPage },
     ],
   },
 

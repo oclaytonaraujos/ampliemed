@@ -147,10 +147,10 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
     const pctR = goalR > 0 ? Math.min(Math.round((revenue / goalR) * 100), 100) : 0;
 
     return (
-      <div key={doctor.id} className="border border-gray-300 bg-white p-4 hover:border-blue-600 transition-colors">
+      <div key={doctor.id} className="border border-gray-300 bg-white p-4 hover:border-pink-600 transition-colors">
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0">
-            <Stethoscope className="w-7 h-7 text-blue-600" />
+          <div className="w-14 h-14 bg-pink-100 border border-pink-200 flex items-center justify-center flex-shrink-0">
+            <Stethoscope className="w-7 h-7 text-pink-600" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
@@ -191,7 +191,7 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
                   <p className="font-bold text-gray-900">{consultations}{goalC > 0 ? `/${goalC}` : ''}</p>
                   {goalC > 0 && (
                     <div className="w-full bg-gray-200 h-1 mt-1">
-                      <div className="bg-blue-600 h-1" style={{ width: `${pctC}%` }} />
+                      <div className="bg-pink-600 h-1" style={{ width: `${pctC}%` }} />
                     </div>
                   )}
                 </div>
@@ -215,7 +215,7 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
 
             <div className="flex items-center gap-2">
               <button onClick={() => handleViewDetails(doctor)}
-                className="flex items-center gap-1 px-3 py-1 text-xs bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                className="flex items-center gap-1 px-3 py-1 text-xs bg-pink-600 text-white hover:bg-pink-700 transition-colors">
                 <Eye className="w-3 h-3" /> Detalhes
               </button>
               {(userRole === 'admin' || canUpdate) && (
@@ -257,7 +257,7 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
           )}
           {(userRole === 'admin' || canCreate) && (
             <button onClick={() => { setForm(EMPTY_FORM); setView('add'); }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+              className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
               <Plus className="w-4 h-4" /> Novo Médico
             </button>
           )}
@@ -269,15 +269,15 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Buscar médico..." className="w-full pl-10 pr-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" />
+            placeholder="Buscar médico..." className="w-full pl-10 pr-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" />
         </div>
         <select value={filterSpecialty} onChange={e => setFilterSpecialty(e.target.value)}
-          className="px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600">
+          className="px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
           <option value="">Todas as especialidades</option>
           {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
-          className="px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600">
+          className="px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
           <option value="all">Todos os status</option>
           <option value="active">Ativos</option>
           <option value="inactive">Inativos</option>
@@ -286,12 +286,12 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 border border-blue-200 p-4">
+        <div className="bg-pink-50 border border-pink-200 p-4">
           <div className="flex items-center justify-between mb-2">
-            <Stethoscope className="w-8 h-8 text-blue-600" />
-            <span className="text-2xl font-bold text-blue-900">{activeDoctors}</span>
+            <Stethoscope className="w-8 h-8 text-pink-600" />
+            <span className="text-2xl font-bold text-pink-900">{activeDoctors}</span>
           </div>
-          <p className="text-sm text-blue-700 font-medium">Médicos Ativos</p>
+          <p className="text-sm text-pink-700 font-medium">Médicos Ativos</p>
         </div>
         <div className="bg-green-50 border border-green-200 p-4">
           <div className="flex items-center justify-between mb-2">
@@ -348,7 +348,7 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
           </div>
           {(userRole === 'admin' || canUpdate) && (
             <button onClick={() => handleEdit(selectedDoctor)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">
+              className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700">
               <Edit className="w-4 h-4" /> Editar
             </button>
           )}
@@ -382,9 +382,9 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
             <div className="border border-gray-300 p-6">
               <h3 className="font-bold text-gray-900 mb-4">Performance — {now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3>
               <div className="grid grid-cols-3 gap-4 text-sm">
-                <div className="p-3 bg-blue-50 border border-blue-200 text-center">
-                  <p className="text-2xl font-bold text-blue-900">{consultations}</p>
-                  <p className="text-xs text-blue-600 mt-1">Consultas</p>
+                <div className="p-3 bg-pink-50 border border-pink-200 text-center">
+                  <p className="text-2xl font-bold text-pink-900">{consultations}</p>
+                  <p className="text-xs text-pink-600 mt-1">Consultas</p>
                 </div>
                 <div className="p-3 bg-green-50 border border-green-200 text-center">
                   <p className="text-2xl font-bold text-green-900">R$ {(revenue / 1000).toFixed(1)}k</p>
@@ -466,22 +466,22 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
             <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" placeholder="Nome completo" />
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" placeholder="Nome completo" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
             <input type="text" value={form.cpf} onChange={e => setForm({ ...form, cpf: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" placeholder="000.000.000-00" />
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" placeholder="000.000.000-00" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
             <input type="text" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" placeholder="(00) 00000-0000" />
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" placeholder="(00) 00000-0000" />
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
             <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" placeholder="medico@clinica.com" />
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" placeholder="medico@clinica.com" />
           </div>
         </div>
 
@@ -490,17 +490,17 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">CRM *</label>
             <input type="text" value={form.crm} onChange={e => setForm({ ...form, crm: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" placeholder="000000" />
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" placeholder="000000" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">UF do CRM</label>
             <input type="text" value={form.crmUf} onChange={e => setForm({ ...form, crmUf: e.target.value.toUpperCase().slice(0, 2) })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" placeholder="SP" maxLength={2} />
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" placeholder="SP" maxLength={2} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Especialidade</label>
             <select value={form.specialty} onChange={e => setForm({ ...form, specialty: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600">
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
               <option value="">Selecione</option>
               {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -508,7 +508,7 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Certificado Digital</label>
             <select value={form.digitalCertificate} onChange={e => setForm({ ...form, digitalCertificate: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600">
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
               <option value="none">Nenhum</option>
               <option value="A1">A1</option>
               <option value="A3">A3</option>
@@ -517,12 +517,12 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Validade do Certificado</label>
             <input type="date" value={form.certificateExpiry} onChange={e => setForm({ ...form, certificateExpiry: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" />
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600">
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
               <option value="active">Ativo</option>
               <option value="inactive">Inativo</option>
             </select>
@@ -534,7 +534,7 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Modelo de Pagamento</label>
             <select value={form.paymentModel || 'percentage'} onChange={e => setForm({ ...form, paymentModel: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600">
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
               <option value="fixed">Salário Fixo</option>
               <option value="percentage">Percentual da Receita</option>
               <option value="procedure">Por Procedimento</option>
@@ -545,14 +545,14 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Salário Fixo (R$)</label>
               <input type="number" value={form.fixedSalary || ''} onChange={e => setForm({ ...form, fixedSalary: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" placeholder="0.00" />
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" placeholder="0.00" />
             </div>
           )}
           {(form.paymentModel === 'percentage' || form.paymentModel === 'mixed') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Percentual (%)</label>
               <input type="number" value={form.revenuePercentage || ''} onChange={e => setForm({ ...form, revenuePercentage: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600" placeholder="30" min={0} max={100} />
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" placeholder="30" min={0} max={100} />
             </div>
           )}
         </div>
@@ -564,7 +564,7 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
           Cancelar
         </button>
         <button onClick={handleSave}
-          className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+          className="px-6 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
           {view === 'edit' ? 'Salvar Alterações' : 'Cadastrar Médico'}
         </button>
       </div>

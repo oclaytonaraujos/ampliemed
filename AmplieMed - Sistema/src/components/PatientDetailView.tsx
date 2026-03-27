@@ -107,7 +107,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
 
   const recordTypeBadge = (type: string) => {
     const colors: Record<string, string> = {
-      'Consulta': 'bg-blue-100 text-blue-700',
+      'Consulta': 'bg-pink-100 text-pink-700',
       'Telemedicina': 'bg-purple-100 text-purple-700',
       'Prescrição': 'bg-green-100 text-green-700',
       'Atestado': 'bg-yellow-100 text-yellow-700',
@@ -119,14 +119,14 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
 
   const examStatusMap: Record<string, { label: string; cls: string }> = {
     solicitado: { label: 'Solicitado', cls: 'bg-yellow-100 text-yellow-700' },
-    em_andamento: { label: 'Em andamento', cls: 'bg-blue-100 text-blue-700' },
+    em_andamento: { label: 'Em andamento', cls: 'bg-pink-100 text-pink-700' },
     concluido: { label: 'Concluído', cls: 'bg-green-100 text-green-700' },
     atrasado: { label: 'Atrasado', cls: 'bg-red-100 text-red-700' },
   };
 
   const appointmentStatusMap: Record<string, { label: string; cls: string }> = {
     realizado: { label: 'Realizado', cls: 'bg-green-100 text-green-700' },
-    confirmado: { label: 'Confirmado', cls: 'bg-blue-100 text-blue-700' },
+    confirmado: { label: 'Confirmado', cls: 'bg-pink-100 text-pink-700' },
     cancelado: { label: 'Cancelado', cls: 'bg-red-100 text-red-700' },
     pendente: { label: 'Pendente', cls: 'bg-yellow-100 text-yellow-700' },
     agendado: { label: 'Agendado', cls: 'bg-yellow-100 text-yellow-700' },
@@ -259,7 +259,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
             {patient.medications && (
               <div>
                 <p className="text-xs text-gray-500 mb-1">Medicamentos em Uso</p>
-                <p className="text-sm text-gray-900 bg-blue-50 px-3 py-2 rounded border border-blue-200">{patient.medications}</p>
+                <p className="text-sm text-gray-900 bg-pink-50 px-3 py-2 rounded border border-pink-200">{patient.medications}</p>
               </div>
             )}
             {patient.observations && (
@@ -309,17 +309,17 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-1">De</label>
             <input type="date" value={recordDateFrom} onChange={e => setRecordDateFrom(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-1">Até</label>
             <input type="date" value={recordDateTo} onChange={e => setRecordDateTo(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-1">Tipo</label>
             <select value={recordTypeFilter} onChange={e => setRecordTypeFilter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
               <option value="all">Todos</option>
               <option value="Consulta">Consulta</option>
               <option value="Telemedicina">Telemedicina</option>
@@ -352,7 +352,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
           {filteredRecords.map(record => {
             const isExpanded = expandedRecordId === record.id;
             return (
-              <div key={record.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 transition-colors">
+              <div key={record.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:border-pink-300 transition-colors">
                 {/* Header row – always visible */}
                 <button
                   onClick={() => setExpandedRecordId(isExpanded ? null : record.id)}
@@ -437,17 +437,17 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-1">De</label>
             <input type="date" value={examDateFrom} onChange={e => setExamDateFrom(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-1">Até</label>
             <input type="date" value={examDateTo} onChange={e => setExamDateTo(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-1">Status</label>
             <select value={examStatusFilter} onChange={e => setExamStatusFilter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
               <option value="all">Todos</option>
               <option value="solicitado">Solicitado</option>
               <option value="em_andamento">Em andamento</option>
@@ -543,11 +543,11 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
       ) : (
         <div className="space-y-3">
           {appointmentHistory.map((apt) => (
-            <div key={apt.id} className="bg-white border border-gray-200 rounded-lg p-5 hover:border-blue-300 transition-colors">
+            <div key={apt.id} className="bg-white border border-gray-200 rounded-lg p-5 hover:border-pink-300 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {apt.type === 'telemedicina' ? <Video className="w-5 h-5 text-blue-600" /> : <Stethoscope className="w-5 h-5 text-blue-600" />}
+                  <div className="w-10 h-10 bg-pink-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    {apt.type === 'telemedicina' ? <Video className="w-5 h-5 text-pink-600" /> : <Stethoscope className="w-5 h-5 text-pink-600" />}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">
@@ -685,8 +685,8 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
           {activityLog2.map((activity, index) => (
             <div key={activity.id} className="flex gap-4">
               <div className="flex flex-col items-center">
-                <div className="w-8 h-8 bg-blue-100 flex items-center justify-center flex-shrink-0 rounded">
-                  <Clock className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-pink-100 flex items-center justify-center flex-shrink-0 rounded">
+                  <Clock className="w-4 h-4 text-pink-600" />
                 </div>
                 {index < activityLog2.length - 1 && (
                   <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
@@ -741,7 +741,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
       {/* Patient header card */}
       <div className="bg-white border border-gray-200 p-6 rounded-lg">
         <div className="flex items-start gap-6">
-          <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+          <div className="w-20 h-20 rounded-full bg-pink-600 flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
             {patient.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
           </div>
           <div className="flex-1">
@@ -777,7 +777,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
             {/* Quick stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="flex items-center gap-2 p-2.5 bg-gray-50 rounded-lg border border-gray-100">
-                <Activity className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <Activity className="w-4 h-4 text-pink-600 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-500">Consultas</p>
                   <p className="text-sm font-semibold text-gray-900">{patient.totalVisits}</p>
@@ -822,7 +822,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                   isActive
-                    ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                    ? 'border-pink-600 text-pink-600 bg-pink-50/50'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -830,7 +830,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
                 {tab.label}
                 {count !== undefined && count > 0 && (
                   <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                    isActive ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-600'
                   }`}>
                     {count}
                   </span>
@@ -851,7 +851,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button
             onClick={() => navigate('/agenda', { state: { preselectedPatient: { id: patient.id, name: patient.name, cpf: patient.cpf, phone: patient.phone, insurance: patient.insurance } } })}
-            className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium">
+            className="flex items-center gap-2 px-4 py-3 bg-pink-600 text-white hover:bg-pink-700 rounded-lg transition-colors text-sm font-medium">
             <Calendar className="w-4 h-4" /> Agendar Consulta
           </button>
           <button

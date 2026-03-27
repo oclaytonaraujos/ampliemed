@@ -30,7 +30,7 @@ export const ClinicSelector = forwardRef<ClinicSelectorRef>((props, ref) => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition-colors min-w-[240px]"
       >
-        <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+        <Building2 className="w-4 h-4 text-pink-600 flex-shrink-0" />
         <div className="flex-1 text-left min-w-0">
           <p className="text-sm font-medium text-gray-900 truncate">{clinicName}</p>
           {clinicAddress && (
@@ -50,15 +50,15 @@ export const ClinicSelector = forwardRef<ClinicSelectorRef>((props, ref) => {
               </p>
 
               {/* Single clinic card */}
-              <div className="px-3 py-3 flex items-center gap-3 bg-blue-50 border border-blue-200 mx-1 mb-1">
-                <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+              <div className="px-3 py-3 flex items-center gap-3 bg-pink-50 border border-pink-200 mx-1 mb-1">
+                <Building2 className="w-4 h-4 text-pink-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-blue-900 truncate">{clinicName}</p>
+                  <p className="text-sm font-medium text-pink-900 truncate">{clinicName}</p>
                   {clinicAddress && (
-                    <p className="text-xs text-blue-600 truncate">{clinicAddress}</p>
+                    <p className="text-xs text-pink-600 truncate">{clinicAddress}</p>
                   )}
                 </div>
-                <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
+                <div className="w-2 h-2 bg-pink-600 rounded-full flex-shrink-0" />
               </div>
 
               {!clinicSettings.clinicName && (
@@ -74,7 +74,7 @@ export const ClinicSelector = forwardRef<ClinicSelectorRef>((props, ref) => {
                   navigate('/configuracoes');
                   setIsOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                className="w-full flex items-center justify-center gap-2 text-sm text-pink-600 hover:text-pink-700"
               >
                 <Settings className="w-4 h-4" />
                 <span>Configurações da Clínica</span>

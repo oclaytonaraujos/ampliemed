@@ -29,44 +29,68 @@ export function getAccessToken(): string | null {
 
 // ─── Edge Function fetch helper (auth + storage only) ────────────────────────
 async function edgeFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
-  // Recover token from live Supabase session when module-level cache was wiped
-  // (e.g. Vite HMR resets module variables to their initial null value)
-  let token = _accessToken;
-  if (!token) {
+  // Helper: get the freshest available JWT from the Supabase session
+  const getFreshToken = async (): Promise<string | null> => {
     try {
       const { data: { session } } = await getSupabase().auth.getSession();
       if (session?.access_token) {
-        token = session.access_token;
-        _accessToken = token; // restore cache so subsequent calls don't re-fetch
+        _accessToken = session.access_token;
+        return session.access_token;
       }
-    } catch { /* ignore — will fall back to publicAnonKey below */ }
-  }
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token || publicAnonKey}`,
-    ...((options.headers as Record<string, string>) || {}),
+    } catch { /* ignore */ }
+    return _accessToken;
   };
-  
+
+  // Helper: attempt to force-refresh the session via refresh_token
+  const refreshToken = async (): Promise<string | null> => {
+    try {
+      const { data } = await getSupabase().auth.refreshSession();
+      if (data?.session?.access_token) {
+        _accessToken = data.session.access_token;
+        return data.session.access_token;
+      }
+    } catch { /* ignore */ }
+    return null;
+  };
+
+  const doFetch = (token: string | null) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token || publicAnonKey}`,
+      ...((options.headers as Record<string, string>) || {}),
+    };
+    return fetch(`${EDGE_BASE}${path}`, { ...options, headers });
+  };
+
+  console.log(`[API] ${options.method || 'GET'} ${EDGE_BASE}${path}`);
+
+  let token = await getFreshToken();
+
   try {
-    const url = `${EDGE_BASE}${path}`;
-    console.log(`[API] ${options.method || 'GET'} ${url}`);
-    
-    const res = await fetch(url, { ...options, headers });
-    
+    let res = await doFetch(token);
+
+    // On 401 (expired or invalid JWT), force-refresh the session and retry once
+    if (res.status === 401) {
+      const refreshed = await refreshToken();
+      if (refreshed) {
+        res = await doFetch(refreshed);
+      }
+    }
+
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: res.statusText }));
-      const msg = body?.error || `HTTP ${res.status}`;
-      console.error(`[API] ${options.method || 'GET'} ${path} failed:`, msg);
+      const rawMsg = body?.error || body?.message || `HTTP ${res.status}`;
+      const msg = res.status === 401
+        ? 'Sessão inválida ou expirada. Faça logout e entre novamente.'
+        : rawMsg;
+      console.error(`[API] ${options.method || 'GET'} ${path} failed:`, rawMsg);
       throw new Error(msg);
     }
-    
+
     return res.json();
   } catch (err: any) {
-    // Better error messages for common issues
     if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-      console.error(`[API] Servidor não respondeu. Verifique se o Edge Function está deployado.`);
-      console.error(`[API] URL: ${EDGE_BASE}${path}`);
+      console.error(`[API] Servidor não respondeu. URL: ${EDGE_BASE}${path}`);
       throw new Error('Não foi possível conectar ao servidor. O serviço pode estar temporariamente indisponível.');
     }
     throw err;
@@ -446,12 +470,10 @@ async function syncCollection<T>(
   const supabase = getSupabase();
 
   if (items.length === 0) {
-    // Delete all rows for this owner
-    const { error } = await supabase.from(tableName).delete().eq('owner_id', ownerId);
-    if (error) {
-      console.error(`[Sync] Delete-all error on ${tableName}:`, error.message, error.code);
-      throw error;
-    }
+    // SAFETY: Never delete all rows on empty array.
+    // An empty array typically means React state hasn't hydrated yet,
+    // or a transient render glitch. Wiping the table would cause data loss.
+    console.warn(`[Sync] Skipping sync for ${tableName}: items array is empty (possible state hydration issue)`);
     return;
   }
 
@@ -536,6 +558,7 @@ export interface AllData {
   campaigns: any[];
   fileAttachments: any[];
   clinicSettings: any | null;
+  clinicId: string | null;
 }
 
 export async function loadAllData(): Promise<AllData> {
@@ -568,6 +591,7 @@ export async function loadAllData(): Promise<AllData> {
     campaignsRes,
     filesRes,
     settingsRes,
+    clinicsRes,
   ] = await Promise.all([
     supabase.from('patients').select('*').order('created_at', { ascending: false }),
     supabase.from('appointments').select('*').order('appointment_date', { ascending: false }),
@@ -592,10 +616,37 @@ export async function loadAllData(): Promise<AllData> {
     supabase.from('communication_campaigns').select('*').order('created_at', { ascending: false }),
     supabase.from('file_attachments').select('*').order('created_at', { ascending: false }),
     supabase.from('clinic_settings').select('*').limit(1),
+    supabase.from('clinics').select('id, name, cnpj, email, phone, address_street, address_number, address_neighborhood, address_city, address_state').limit(1),
   ]);
 
   // Transform all rows through mappers
   const allSteps = protocolStepsRes.data || [];
+
+  // If clinic_settings doesn't have a proper name, use the name from clinics table
+  let finalSettingsRow = settingsRes.data?.[0];
+  const clinicRow = clinicsRes.data?.[0];
+
+  // Enrich clinic_settings with data from clinics table
+  if (clinicRow) {
+    if (!finalSettingsRow) {
+      // No clinic_settings row exists — build one from the clinics table
+      finalSettingsRow = {
+        clinic_name: clinicRow.name || '',
+        cnpj: clinicRow.cnpj || '',
+        email: clinicRow.email || '',
+        phone: clinicRow.phone || '',
+        address: [clinicRow.address_street, clinicRow.address_number, clinicRow.address_neighborhood, clinicRow.address_city, clinicRow.address_state].filter(Boolean).join(', '),
+      };
+    } else if (!finalSettingsRow.clinic_name || finalSettingsRow.clinic_name === 'AmplieMed') {
+      finalSettingsRow.clinic_name = clinicRow.name || finalSettingsRow.clinic_name;
+      if (!finalSettingsRow.cnpj && clinicRow.cnpj) finalSettingsRow.cnpj = clinicRow.cnpj;
+      if (!finalSettingsRow.email && clinicRow.email) finalSettingsRow.email = clinicRow.email;
+      if (!finalSettingsRow.phone && clinicRow.phone) finalSettingsRow.phone = clinicRow.phone;
+      if (!finalSettingsRow.address && clinicRow.address_street) {
+        finalSettingsRow.address = [clinicRow.address_street, clinicRow.address_number, clinicRow.address_neighborhood, clinicRow.address_city, clinicRow.address_state].filter(Boolean).join(', ');
+      }
+    }
+  }
 
   return {
     patients: (patientsRes.data || []).map(M.patientFromRow),
@@ -619,7 +670,8 @@ export async function loadAllData(): Promise<AllData> {
     communicationMessages: (commMsgRes.data || []).map(M.commMessageFromRow),
     campaigns: (campaignsRes.data || []).map(M.campaignFromRow),
     fileAttachments: (filesRes.data || []).map(M.fileAttachmentFromRow),
-    clinicSettings: settingsRes.data?.[0] ? M.clinicSettingsFromRow(settingsRes.data[0]) : null,
+    clinicSettings: finalSettingsRow ? M.clinicSettingsFromRow(finalSettingsRow) : null,
+    clinicId: settingsRes.data?.[0]?.clinic_id || clinicsRes.data?.[0]?.id || null,
   };
 }
 
@@ -903,6 +955,42 @@ export async function migrateFromKvStore(): Promise<boolean> {
     console.error('[Migration] Failed to migrate from KV store:', err);
     return false;
   }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// EVOLUTION API — WhatsApp integration
+// ═════════════════════════════════════════════════════════════════════════════
+
+export interface SendEvolutionMessageParams {
+  /** UUID of the clinic sending the message */
+  clinicId: string;
+  /** Recipient phone number (any Brazilian format) */
+  phone: string;
+  /** Message body text */
+  text: string;
+  /** Existing communication_messages.id to update with send result */
+  messageId?: string;
+}
+
+export interface SendEvolutionMessageResult {
+  success: true;
+  evolutionMessageId: string;
+  phone: string;
+}
+
+/**
+ * Send a real WhatsApp message via the evolution_send_message Edge Function.
+ * Updates the corresponding communication_messages row on success or failure.
+ *
+ * @throws {Error} when the Edge Function returns an error response.
+ */
+export async function sendEvolutionMessage(
+  params: SendEvolutionMessageParams,
+): Promise<SendEvolutionMessageResult> {
+  return edgeFetch<SendEvolutionMessageResult>('/evolution_send_message', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════════════

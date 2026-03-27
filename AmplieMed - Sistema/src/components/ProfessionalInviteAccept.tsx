@@ -163,7 +163,7 @@ export function ProfessionalInviteAccept() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
           <div className="flex justify-center mb-4">
-            <Loader className="h-8 w-8 text-blue-500 animate-spin" />
+            <Loader className="h-8 w-8 text-pink-500 animate-spin" />
           </div>
           <p className="text-center text-slate-600">Validating your invite...</p>
         </div>
@@ -184,7 +184,7 @@ export function ProfessionalInviteAccept() {
           </p>
           <button
             onClick={() => navigate('/login')}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-pink-600 text-white py-2 rounded-lg font-semibold hover:bg-pink-700 transition-colors"
           >
             Back to Login
           </button>
@@ -200,9 +200,9 @@ export function ProfessionalInviteAccept() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full blur opacity-75"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-cyan-500 rounded-full blur opacity-75"></div>
               <div className="relative bg-white p-3 rounded-full">
-                <Stethoscope className="h-8 w-8 text-blue-600" />
+                <Stethoscope className="h-8 w-8 text-pink-600" />
               </div>
             </div>
           </div>
@@ -221,7 +221,7 @@ export function ProfessionalInviteAccept() {
           )}
 
           {/* Invite Info */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-6 p-4 bg-pink-50 border border-pink-200 rounded-lg">
             <p className="text-sm text-slate-600 mb-2">
               <span className="font-semibold">Email:</span> {email}
             </p>
@@ -246,7 +246,7 @@ export function ProfessionalInviteAccept() {
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="Your full name"
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -263,7 +263,7 @@ export function ProfessionalInviteAccept() {
                 value={formData.crm || ''}
                 onChange={handleInputChange}
                 placeholder="Your CRM number"
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               />
             </div>
 
@@ -277,7 +277,7 @@ export function ProfessionalInviteAccept() {
                 name="specialty"
                 value={formData.specialty || ''}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               >
                 <option value="">Select a specialty</option>
                 <option value="general">General Practice</option>
@@ -304,7 +304,7 @@ export function ProfessionalInviteAccept() {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Min. 8 chars, uppercase, numbers"
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                 />
               </div>
               <p className="mt-1 text-xs text-slate-500">
@@ -326,7 +326,7 @@ export function ProfessionalInviteAccept() {
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   placeholder="Confirm your password"
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -339,10 +339,10 @@ export function ProfessionalInviteAccept() {
                 name="acceptTerms"
                 checked={formData.acceptTerms}
                 onChange={handleInputChange}
-                className="mt-1 w-4 h-4 border border-slate-300 rounded text-blue-600 focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-4 h-4 border border-slate-300 rounded text-pink-600 focus:ring-2 focus:ring-pink-500"
               />
               <label htmlFor="acceptTerms" className="text-sm text-slate-700">
-                I accept the <a href="#" className="text-blue-600 hover:text-blue-700 font-semibold">terms of service</a> *
+                I accept the <a href="#" className="text-pink-600 hover:text-pink-700 font-semibold">terms of service</a> *
               </label>
             </div>
 
@@ -354,10 +354,10 @@ export function ProfessionalInviteAccept() {
                 name="lgpdConsent"
                 checked={formData.lgpdConsent}
                 onChange={handleInputChange}
-                className="mt-1 w-4 h-4 border border-slate-300 rounded text-blue-600 focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-4 h-4 border border-slate-300 rounded text-pink-600 focus:ring-2 focus:ring-pink-500"
               />
               <label htmlFor="lgpdConsent" className="text-sm text-slate-700">
-                I consent to LGPD data processing <a href="#" className="text-blue-600 hover:text-blue-700 font-semibold">privacy policy</a> *
+                I consent to LGPD data processing <a href="#" className="text-pink-600 hover:text-pink-700 font-semibold">privacy policy</a> *
               </label>
             </div>
 
@@ -365,7 +365,7 @@ export function ProfessionalInviteAccept() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold py-2 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
+              className="w-full bg-gradient-to-r from-pink-600 to-cyan-600 text-white font-semibold py-2 rounded-lg hover:from-pink-700 hover:to-cyan-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
             >
               {isLoading ? (
                 <>
@@ -385,7 +385,7 @@ export function ProfessionalInviteAccept() {
           <div className="mt-6 text-center">
             <p className="text-sm text-slate-600">
               Already have an account?{' '}
-              <a href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+              <a href="/login" className="text-pink-600 hover:text-pink-700 font-semibold">
                 Sign in
               </a>
             </p>

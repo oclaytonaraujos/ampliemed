@@ -195,7 +195,7 @@ export function getProductivityColor(level: 'low' | 'medium' | 'high' | 'excelle
   switch (level) {
     case 'low':       return 'text-red-600 bg-red-50 border-red-300';
     case 'medium':    return 'text-yellow-600 bg-yellow-50 border-yellow-300';
-    case 'high':      return 'text-blue-600 bg-blue-50 border-blue-300';
+    case 'high':      return 'text-pink-600 bg-pink-50 border-pink-300';
     case 'excellent': return 'text-green-600 bg-green-50 border-green-300';
   }
 }

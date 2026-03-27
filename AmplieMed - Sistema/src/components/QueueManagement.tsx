@@ -6,6 +6,7 @@ import type { QueueEntry } from './AppContext';
 import { useApp } from './AppContext';
 import { MedicalConsultationWorkspace } from './MedicalConsultationWorkspace';
 import { toastSuccess, toastInfo } from '../utils/toastService';
+import { sendEvolutionMessage } from '../utils/api';
 import { exportToCSV, exportToPDF } from '../utils/exportService';
 import { usePermission } from './PermissionGuard';
 
@@ -13,7 +14,7 @@ interface QueueManagementProps { userRole: UserRole; }
 type QueuePatient = QueueEntry;
 
 export function QueueManagement({ userRole }: QueueManagementProps) {
-  const { queueEntries: queuePatients, setQueueEntries: setQueuePatients, patients, addNotification, addAuditEntry, currentUser } = useApp();
+  const { queueEntries: queuePatients, setQueueEntries: setQueuePatients, patients, addNotification, addAuditEntry, currentUser, selectedClinicId, addCommunicationMessage } = useApp();
   const { canCreate, canExport } = usePermission('queue');
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<'queue' | 'tv-panel'>('queue');
@@ -45,6 +46,11 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
     setCurrentTicket(patient.ticketNumber);
     setQueuePatients(prev => prev.map(p => p.id === patient.id ? { ...p, status: 'called' as const } : p));
     addNotification({ type: 'appointment', title: 'Paciente chamado', message: `Paciente ${patient.name} — Senha ${patient.ticketNumber} — chamado para ${patient.doctor || 'consultório'}`, urgent: false });
+    if (patient.phone && selectedClinicId) {
+      const text = `Olá ${patient.name}! Sua senha ${patient.ticketNumber} foi chamada. Por favor, dirija-se ao consultório${patient.doctor ? ` de ${patient.doctor}` : ''}.`;
+      const msg = addCommunicationMessage({ type: 'reminder', patientName: patient.name, channel: 'whatsapp', subject: 'Chamada de senha', body: text, status: 'pending' });
+      sendEvolutionMessage({ clinicId: selectedClinicId, messageId: msg.id, phone: patient.phone, text }).catch(() => {});
+    }
     toastSuccess(`Paciente ${patient.name} chamado!`, { description: `Senha ${patient.ticketNumber}` });
   };
 
@@ -72,6 +78,11 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
   };
 
   const handleNotifyPatient = (patient: QueuePatient, method: 'sms' | 'whatsapp') => {
+    if (method === 'whatsapp' && patient.phone && selectedClinicId) {
+      const text = `Olá ${patient.name}! Você está na fila de espera. Sua senha é ${patient.ticketNumber}. Aguarde ser chamado.`;
+      const msg = addCommunicationMessage({ type: 'reminder', patientName: patient.name, channel: 'whatsapp', subject: 'Lembrete de fila', body: text, status: 'pending' });
+      sendEvolutionMessage({ clinicId: selectedClinicId, messageId: msg.id, phone: patient.phone, text }).catch(() => {});
+    }
     addNotification({ type: 'info', title: `Notificação ${method.toUpperCase()} enviada`, message: `Lembrete enviado para ${patient.name} via ${method === 'whatsapp' ? 'WhatsApp' : 'SMS'}`, urgent: false });
     toastInfo(`Notificação ${method.toUpperCase()} enviada`, { description: `Lembrete para ${patient.name}` });
   };
@@ -153,7 +164,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
     );
   }
 
-  const statusColor = (s: string) => s === 'waiting' ? 'bg-yellow-100 text-yellow-700' : s === 'called' ? 'bg-blue-100 text-blue-700' : s === 'in-progress' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
+  const statusColor = (s: string) => s === 'waiting' ? 'bg-yellow-100 text-yellow-700' : s === 'called' ? 'bg-pink-100 text-pink-700' : s === 'in-progress' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
   const statusLabel = (s: string) => s === 'waiting' ? 'Aguardando' : s === 'called' ? 'Chamado' : s === 'in-progress' ? 'Em Atendimento' : 'Concluído';
 
   return (
@@ -175,7 +186,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
               const Icon = v.icon;
               return (
                 <button key={v.id} onClick={() => setActiveView(v.id as any)}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors ${activeView === v.id ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors ${activeView === v.id ? 'bg-pink-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
                   <Icon className="w-4 h-4" />{v.label}
                 </button>
               );
@@ -192,7 +203,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
         {[
           { label: 'Aguardando', value: stats.waiting, color: 'bg-yellow-600', icon: Clock },
           { label: 'Em Atendimento', value: stats.inProgress, color: 'bg-green-600', icon: Play },
-          { label: 'Concluídos', value: stats.completed, color: 'bg-blue-600', icon: CheckCircle },
+          { label: 'Concluídos', value: stats.completed, color: 'bg-pink-600', icon: CheckCircle },
           { label: 'Espera Média (min)', value: stats.averageWait, color: 'bg-gray-600', icon: Clock },
         ].map(s => { const Icon = s.icon; return (
           <div key={s.label} className="bg-white border border-gray-200 p-4">
@@ -213,7 +224,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
               <div className="text-9xl font-bold text-yellow-400 mb-6">{currentPatientOnScreen.ticketNumber}</div>
               <p className="text-3xl text-gray-300 mt-4">{currentPatientOnScreen.doctor}</p>
               {currentPatientOnScreen.room && (
-                <p className="text-2xl text-blue-400 mt-3">{currentPatientOnScreen.room}</p>
+                <p className="text-2xl text-pink-400 mt-3">{currentPatientOnScreen.room}</p>
               )}
             </div>
           ) : <p className="text-gray-500 text-2xl">Aguardando próximo chamado...</p>}
@@ -261,7 +272,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
                       <div className="flex items-center justify-end gap-1">
                         {patient.status === 'waiting' && (
                           <>
-                            <button onClick={() => handleCallPatient(patient)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Chamar"><Bell className="w-4 h-4" /></button>
+                            <button onClick={() => handleCallPatient(patient)} className="p-1.5 text-pink-600 hover:bg-pink-50 rounded" title="Chamar"><Bell className="w-4 h-4" /></button>
                             <button onClick={() => handleNotifyPatient(patient, 'whatsapp')} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="WhatsApp"><MessageSquare className="w-4 h-4" /></button>
                             <button onClick={() => handleNotifyPatient(patient, 'sms')} className="p-1.5 text-gray-600 hover:bg-gray-50 rounded" title="SMS"><Phone className="w-4 h-4" /></button>
                           </>
@@ -300,7 +311,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
                 <select onChange={(e) => {
                   const p = patients.find(pt => pt.id === e.target.value);
                   if (p) setNewPatientForm(prev => ({ ...prev, name: p.name, cpf: p.cpf, phone: p.phone, insurance: p.insurance }));
-                }} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                }} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500">
                   <option value="">Selecionar paciente cadastrado...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name} — {p.cpf}</option>)}
                 </select>
@@ -320,7 +331,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
                   <input type={field.type} placeholder={field.placeholder}
                     value={(newPatientForm as any)[field.key]}
                     onChange={(e) => setNewPatientForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white" />
                 </div>
               ))}
               <label className="flex items-center gap-3 cursor-pointer p-3 bg-red-50 border border-red-200">
@@ -331,7 +342,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowAddModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50">Cancelar</button>
               <button onClick={handleAddToQueue} disabled={!newPatientForm.name.trim()}
-                className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50">
+                className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors disabled:opacity-50">
                 Emitir Senha
               </button>
             </div>

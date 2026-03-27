@@ -83,7 +83,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
   };
 
   const categoryColor = (c: string) => ({
-    diagnóstico: 'bg-blue-100 text-blue-700',
+    diagnóstico: 'bg-pink-100 text-pink-700',
     tratamento: 'bg-green-100 text-green-700',
     emergência: 'bg-red-100 text-red-700',
     prevenção: 'bg-orange-100 text-orange-700',
@@ -143,7 +143,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
             </button>
           )}
           {canCreate && (
-            <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700">
+            <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700">
               <Plus className="w-4 h-4" /> Novo Protocolo
             </button>
           )}
@@ -153,7 +153,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Total', value: protocols.length, color: 'text-blue-600' },
+          { label: 'Total', value: protocols.length, color: 'text-pink-600' },
           { label: 'Ativos', value: protocols.filter(p => p.active).length, color: 'text-green-600' },
           { label: 'Emergências', value: protocols.filter(p => p.category === 'emergência').length, color: 'text-red-600' },
           { label: 'Usos totais', value: protocols.reduce((s, p) => s + p.usage, 0), color: 'text-gray-600' },
@@ -177,7 +177,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
             const stepsCompleted = completedSteps[p.id] || new Set();
             const completionPct = p.steps.length > 0 ? Math.round((stepsCompleted.size / p.steps.length) * 100) : 0;
             return (
-              <div key={p.id} className={`bg-white border ${isExpanded ? 'border-blue-300' : 'border-gray-200'} transition-colors`}>
+              <div key={p.id} className={`bg-white border ${isExpanded ? 'border-pink-300' : 'border-gray-200'} transition-colors`}>
                 <div className="p-5 flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap mb-2">
@@ -194,7 +194,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
                     {isExpanded && p.steps.length > 0 && (
                       <div className="mt-2">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className="flex-1 h-1.5 bg-gray-100"><div className="h-full bg-blue-600 transition-all" style={{ width: `${completionPct}%` }} /></div>
+                          <div className="flex-1 h-1.5 bg-gray-100"><div className="h-full bg-pink-600 transition-all" style={{ width: `${completionPct}%` }} /></div>
                           <span className="text-xs text-gray-500">{completionPct}%</span>
                         </div>
                       </div>
@@ -202,11 +202,11 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button onClick={() => handleApply(p)}
-                      className="px-3 py-1.5 text-xs bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1">
+                      className="px-3 py-1.5 text-xs bg-pink-600 text-white hover:bg-pink-700 flex items-center gap-1">
                       <Star className="w-3 h-3" /> Aplicar
                     </button>
                     {canUpdate && (
-                      <button onClick={() => openEdit(p)} className="p-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => openEdit(p)} className="p-1.5 text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded"><Edit className="w-4 h-4" /></button>
                     )}
                     {canDelete && (
                       <button onClick={() => handleDelete(p)} className="p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded"><Trash2 className="w-4 h-4" /></button>
@@ -225,7 +225,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
                         const done = stepsCompleted.has(step.step);
                         return (
                           <div key={step.step} onClick={() => toggleStep(p.id, step.step)}
-                            className={`flex items-start gap-3 p-3 cursor-pointer border transition-all ${done ? 'border-green-200 bg-green-50' : 'border-gray-200 hover:border-blue-200 hover:bg-blue-50'}`}>
+                            className={`flex items-start gap-3 p-3 cursor-pointer border transition-all ${done ? 'border-green-200 bg-green-50' : 'border-gray-200 hover:border-pink-200 hover:bg-pink-50'}`}>
                             <div className={`w-5 h-5 mt-0.5 flex-shrink-0 flex items-center justify-center rounded-full border-2 ${done ? 'bg-green-600 border-green-600' : 'border-gray-300'}`}>
                               {done && <CheckCircle className="w-3 h-3 text-white" />}
                             </div>
@@ -284,7 +284,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm text-gray-700">Passos do Protocolo</label>
-                  <button onClick={addStep} className="text-xs text-blue-600 hover:underline flex items-center gap-1"><Plus className="w-3 h-3" /> Adicionar passo</button>
+                  <button onClick={addStep} className="text-xs text-pink-600 hover:underline flex items-center gap-1"><Plus className="w-3 h-3" /> Adicionar passo</button>
                 </div>
                 <div className="space-y-3">
                   {(formData.steps || []).map((step, idx) => (
@@ -316,7 +316,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50">Cancelar</button>
-              <button onClick={handleSave} className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700">
+              <button onClick={handleSave} className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700">
                 {editingId ? 'Salvar Alterações' : 'Criar Protocolo'}
               </button>
             </div>

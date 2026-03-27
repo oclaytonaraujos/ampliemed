@@ -82,7 +82,7 @@ interface UploadingFile extends LocalUploadFile {
 // ─── File icon helper ─────────────────────────────────────────────────────────
 
 function FileIcon({ mimeType, className = 'w-4 h-4' }: { mimeType: string; className?: string }) {
-  if (mimeType.startsWith('image/')) return <Image className={`${className} text-blue-600`} />;
+  if (mimeType.startsWith('image/')) return <Image className={`${className} text-pink-600`} />;
   if (mimeType === 'application/pdf') return <FileText className={`${className} text-red-600`} />;
   return <File className={`${className} text-gray-600`} />;
 }
@@ -126,7 +126,7 @@ function StoredFileRow({
           {canPreview && displayUrl && (
             <button
               onClick={() => setPreviewOpen(true)}
-              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+              className="p-1 text-gray-400 hover:text-pink-600 transition-colors"
               title="Visualizar"
             >
               <Eye className="w-4 h-4" />
@@ -347,7 +347,7 @@ export function FileUpload({
                   ? 'bg-red-50 border-red-200 text-red-700'
                   : f.done
                   ? 'bg-green-50 border-green-200 text-green-700'
-                  : 'bg-blue-50 border-blue-200 text-blue-700'
+                  : 'bg-pink-50 border-pink-200 text-pink-700'
               }`}
             >
               {f.done ? (
@@ -365,12 +365,12 @@ export function FileUpload({
           {existingFiles.map((f) => (
             <div
               key={f.id}
-              className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 text-xs"
+              className="flex items-center gap-1 px-2 py-1 bg-pink-50 border border-pink-200 text-xs"
             >
               <FileIcon mimeType={f.type} className="w-3 h-3" />
-              <span className="text-blue-700 max-w-[120px] truncate">{f.name}</span>
+              <span className="text-pink-700 max-w-[120px] truncate">{f.name}</span>
               {onRemove && (
-                <button onClick={() => onRemove(f.id)} className="text-blue-400 hover:text-red-500">
+                <button onClick={() => onRemove(f.id)} className="text-pink-400 hover:text-red-500">
                   <X className="w-3 h-3" />
                 </button>
               )}
@@ -404,13 +404,13 @@ export function FileUpload({
         onClick={() => !disabled && inputRef.current?.click()}
         className={[
           'border-2 border-dashed p-6 text-center cursor-pointer transition-all',
-          dragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50',
+          dragging ? 'border-pink-500 bg-pink-50' : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50',
           disabled ? 'opacity-50 cursor-not-allowed' : '',
         ].join(' ')}
       >
         <div className="flex flex-col items-center gap-2">
-          <div className={`w-12 h-12 flex items-center justify-center ${dragging ? 'bg-blue-100' : 'bg-gray-100'}`}>
-            <Upload className={`w-6 h-6 ${dragging ? 'text-blue-600' : 'text-gray-400'}`} />
+          <div className={`w-12 h-12 flex items-center justify-center ${dragging ? 'bg-pink-100' : 'bg-gray-100'}`}>
+            <Upload className={`w-6 h-6 ${dragging ? 'text-pink-600' : 'text-gray-400'}`} />
           </div>
           <div>
             <p className="text-sm text-gray-700 font-medium">
@@ -480,7 +480,7 @@ export function FileUpload({
                   <div className="mt-1">
                     <div className="w-full bg-gray-200 h-1">
                       <div
-                        className="bg-blue-600 h-1 transition-all duration-300"
+                        className="bg-pink-600 h-1 transition-all duration-300"
                         style={{ width: `${f.progress}%` }}
                       />
                     </div>
@@ -494,7 +494,7 @@ export function FileUpload({
                 ) : f.error ? (
                   <AlertTriangle className="w-4 h-4 text-red-500" />
                 ) : (
-                  <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-pink-600 animate-spin" />
                 )}
               </div>
             </div>

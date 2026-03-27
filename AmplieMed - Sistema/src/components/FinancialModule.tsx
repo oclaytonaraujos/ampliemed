@@ -245,7 +245,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
     switch (status) {
       case 'paid': return 'bg-green-100 text-green-700';
       case 'pending': return 'bg-yellow-100 text-yellow-700';
-      case 'sent': return 'bg-blue-100 text-blue-700';
+      case 'sent': return 'bg-pink-100 text-pink-700';
       case 'received': return 'bg-green-100 text-green-700';
       case 'overdue': return 'bg-red-100 text-red-700';
       case 'contested': return 'bg-orange-100 text-orange-700';
@@ -297,7 +297,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               onClick={() => setActiveTab('billing')}
               className={`px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'billing'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-pink-600 text-pink-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -307,7 +307,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               onClick={() => setActiveTab('receivables')}
               className={`px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'receivables'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-pink-600 text-pink-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -317,7 +317,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               onClick={() => setActiveTab('payables')}
               className={`px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'payables'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-pink-600 text-pink-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -327,7 +327,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               onClick={() => setActiveTab('payments')}
               className={`px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'payments'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-pink-600 text-pink-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -337,7 +337,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               onClick={() => setActiveTab('commissions')}
               className={`px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'commissions'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-pink-600 text-pink-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -347,7 +347,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               onClick={() => setActiveTab('cashflow')}
               className={`px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'cashflow'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-pink-600 text-pink-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -357,7 +357,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               onClick={() => setActiveTab('glosas')}
               className={`px-4 py-3 text-sm border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'glosas'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-pink-600 text-pink-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -378,7 +378,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     <input
                       type="text"
                       placeholder="Buscar faturamento..."
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
                     />
                   </div>
                   <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
@@ -388,7 +388,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 </div>
                 <button
                   onClick={() => setShowBillingModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Novo Faturamento
@@ -435,7 +435,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
-                            <button className="flex items-center gap-1 px-3 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                            <button className="flex items-center gap-1 px-3 py-1 text-xs text-pink-600 hover:bg-pink-50 rounded-lg transition-colors">
                               <Download className="w-3 h-3" />
                               XML
                             </button>
@@ -463,10 +463,10 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     <input
                       type="text"
                       placeholder="Buscar contas..."
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
                     />
                   </div>
-                  <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                  <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
                     <option value="">Todos os status</option>
                     <option value="pending">Pendente</option>
                     <option value="overdue">Vencido</option>
@@ -475,7 +475,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 </div>
                 <button
                   onClick={() => setShowReceivableModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Nova Conta a Receber
@@ -501,7 +501,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                       <tr key={receivable.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 text-sm text-gray-900">{receivable.description}</td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                          <span className="inline-flex px-2 py-1 text-xs rounded-full bg-pink-100 text-pink-700">
                             {receivable.category}
                           </span>
                         </td>
@@ -543,10 +543,10 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     <input
                       type="text"
                       placeholder="Buscar contas..."
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
                     />
                   </div>
-                  <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                  <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
                     <option value="">Todas as categorias</option>
                     <option value="comissao">Comissão</option>
                     <option value="fixo">Fixo</option>
@@ -555,7 +555,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 </div>
                 <button
                   onClick={() => setShowPayableModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Nova Conta a Pagar
@@ -584,7 +584,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                             payable.category === 'Comissão' ? 'bg-purple-100 text-purple-700' :
-                            payable.category === 'Fixo' ? 'bg-blue-100 text-blue-700' :
+                            payable.category === 'Fixo' ? 'bg-pink-100 text-pink-700' :
                             'bg-orange-100 text-orange-700'
                           }`}>
                             {payable.category}
@@ -627,10 +627,10 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     <input
                       type="text"
                       placeholder="Buscar por paciente ou CPF..."
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-80"
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm w-80"
                     />
                   </div>
-                  <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                  <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
                     <option value="">Todas as formas</option>
                     <option value="pix">Pix</option>
                     <option value="cartao">Cartão</option>
@@ -640,7 +640,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 </div>
                 <button
                   onClick={() => setShowPaymentModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Registrar Pagamento
@@ -683,7 +683,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
-                            <button className="px-3 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                            <button className="px-3 py-1 text-xs text-pink-600 hover:bg-pink-50 rounded-lg transition-colors">
                               <Receipt className="w-3 h-3" />
                             </button>
                           </div>
@@ -831,10 +831,10 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     <input
                       type="text"
                       placeholder="Buscar glosas..."
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
                     />
                   </div>
-                  <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                  <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
                     <option value="">Todos os status</option>
                     <option value="pending">Pendente</option>
                     <option value="contested">Contestado</option>
@@ -843,7 +843,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 </div>
                 <button
                   onClick={() => setShowGlosaModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Registrar Glosa
@@ -869,7 +869,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     ) : glosas.map((glosa) => (
                       <tr key={glosa.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
-                          <span className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                          <span className="inline-flex px-2 py-1 text-xs rounded-full bg-pink-100 text-pink-700">
                             {glosa.insurance}
                           </span>
                         </td>
@@ -886,7 +886,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-end gap-2">
                             {glosa.status === 'pending' && (
-                              <button className="px-3 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                              <button className="px-3 py-1 text-xs text-pink-600 hover:bg-pink-50 rounded-lg transition-colors">
                                 Contestar
                               </button>
                             )}
@@ -922,7 +922,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   <select
                     value={billingForm.insurance || ''}
                     onChange={e => setBillingForm({ ...billingForm, insurance: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     <option value="">Selecione...</option>
                     {insurances.length > 0
@@ -936,7 +936,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   <select
                     value={billingForm.patient || ''}
                     onChange={e => setBillingForm({ ...billingForm, patient: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     <option value="">Selecione...</option>
                     {patients.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
@@ -950,7 +950,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     type="date"
                     value={billingForm.date || ''}
                     onChange={e => setBillingForm({ ...billingForm, date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   />
                 </div>
                 <div>
@@ -959,7 +959,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     type="number"
                     value={billingForm.items || ''}
                     onChange={e => setBillingForm({ ...billingForm, items: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="1"
                     min={1}
                   />
@@ -971,7 +971,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   type="number"
                   value={billingForm.amount || ''}
                   onChange={e => setBillingForm({ ...billingForm, amount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="0.00"
                   min={0}
                   step={0.01}
@@ -982,7 +982,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 <select
                   value={billingForm.status || 'pending'}
                   onChange={e => setBillingForm({ ...billingForm, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="pending">Pendente</option>
                   <option value="sent">Enviado</option>
@@ -1000,7 +1000,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               <button
                 onClick={handleAddBilling}
                 disabled={!billingForm.insurance || !billingForm.amount}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Gerar Faturamento
               </button>
@@ -1024,7 +1024,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 <select
                   value={paymentForm.patient || ''}
                   onChange={e => setPaymentForm({ ...paymentForm, patient: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="">Selecione o paciente...</option>
                   {patients.map(p => (
@@ -1038,7 +1038,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   <select
                     value={paymentForm.type || 'Consulta'}
                     onChange={e => setPaymentForm({ ...paymentForm, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     <option value="Consulta">Consulta</option>
                     <option value="Exame">Exame</option>
@@ -1056,7 +1056,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     step={0.01}
                     value={paymentForm.amount || ''}
                     onChange={e => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0.00"
                   />
                 </div>
@@ -1067,7 +1067,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   <select
                     value={paymentForm.method || 'pix'}
                     onChange={e => setPaymentForm({ ...paymentForm, method: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     <option value="pix">PIX</option>
                     <option value="credito">Cartão de Crédito</option>
@@ -1083,7 +1083,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     type="date"
                     value={paymentForm.date || new Date().toISOString().split('T')[0]}
                     onChange={e => setPaymentForm({ ...paymentForm, date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   />
                 </div>
               </div>
@@ -1092,7 +1092,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 <select
                   value={paymentForm.status || 'pending'}
                   onChange={e => setPaymentForm({ ...paymentForm, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="received">Recebido</option>
                   <option value="pending">Pendente</option>
@@ -1110,7 +1110,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               <button
                 onClick={handleAddPayment}
                 disabled={!paymentForm.patient || !paymentForm.amount}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Confirmar Pagamento
               </button>
@@ -1134,7 +1134,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 <select
                   value={receivableForm.patient || ''}
                   onChange={e => setReceivableForm({ ...receivableForm, patient: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="">Selecione o paciente...</option>
                   {patients.map(p => (
@@ -1148,7 +1148,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   type="text"
                   value={receivableForm.description || ''}
                   onChange={e => setReceivableForm({ ...receivableForm, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Ex: Faturamento Unimed — Janeiro/2026"
                 />
               </div>
@@ -1161,7 +1161,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     step={0.01}
                     value={receivableForm.amount || ''}
                     onChange={e => setReceivableForm({ ...receivableForm, amount: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0.00"
                   />
                 </div>
@@ -1171,7 +1171,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     type="date"
                     value={receivableForm.dueDate || ''}
                     onChange={e => setReceivableForm({ ...receivableForm, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   />
                 </div>
               </div>
@@ -1180,7 +1180,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 <select
                   value={receivableForm.status || 'pending'}
                   onChange={e => setReceivableForm({ ...receivableForm, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="pending">Pendente</option>
                   <option value="received">Recebido</option>
@@ -1198,7 +1198,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               <button
                 onClick={handleAddReceivable}
                 disabled={!receivableForm.patient || !receivableForm.amount}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Salvar Conta a Receber
               </button>
@@ -1223,7 +1223,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   type="text"
                   value={payableForm.supplier || ''}
                   onChange={e => setPayableForm({ ...payableForm, supplier: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Nome do fornecedor ou credor"
                 />
               </div>
@@ -1233,7 +1233,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   type="text"
                   value={payableForm.description || ''}
                   onChange={e => setPayableForm({ ...payableForm, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Ex: Aluguel da clínica, fornecedor de materiais..."
                 />
               </div>
@@ -1246,7 +1246,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     step={0.01}
                     value={payableForm.amount || ''}
                     onChange={e => setPayableForm({ ...payableForm, amount: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="0.00"
                   />
                 </div>
@@ -1256,7 +1256,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                     type="date"
                     value={payableForm.dueDate || ''}
                     onChange={e => setPayableForm({ ...payableForm, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   />
                 </div>
               </div>
@@ -1265,7 +1265,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 <select
                   value={payableForm.status || 'pending'}
                   onChange={e => setPayableForm({ ...payableForm, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="pending">Pendente</option>
                   <option value="paid">Pago</option>
@@ -1283,7 +1283,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               <button
                 onClick={handleAddPayable}
                 disabled={!payableForm.supplier || !payableForm.amount}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Salvar Conta a Pagar
               </button>
@@ -1305,7 +1305,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-700 mb-2">Convênio *</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
                     <option value="">Selecione...</option>
                     <option value="unimed">Unimed</option>
                     <option value="bradesco">Bradesco Saúde</option>
@@ -1316,7 +1316,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   <label className="block text-sm text-gray-700 mb-2">Paciente *</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="Nome do paciente"
                   />
                 </div>
@@ -1326,7 +1326,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   <label className="block text-sm text-gray-700 mb-2">Procedimento *</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="Ex: Consulta Cardiologia"
                   />
                 </div>
@@ -1334,14 +1334,14 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                   <label className="block text-sm text-gray-700 mb-2">Valor *</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="R$ 0,00"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm text-gray-700 mb-2">Motivo da Glosa *</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
                   <option value="">Selecione...</option>
                   <option value="codigo">Código TUSS incorreto</option>
                   <option value="autorizacao">Falta de autorização prévia</option>
@@ -1354,7 +1354,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
                 <label className="block text-sm text-gray-700 mb-2">Observações</label>
                 <textarea
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Detalhes adicionais sobre a glosa..."
                 ></textarea>
               </div>
@@ -1368,7 +1368,7 @@ export function FinancialModule({ userRole }: FinancialModuleProps) {
               </button>
               <button
                 onClick={() => setShowGlosaModal(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors"
               >
                 Registrar Glosa
               </button>

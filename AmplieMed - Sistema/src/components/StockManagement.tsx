@@ -142,7 +142,7 @@ export function StockManagement({ userRole }: StockManagementProps) {
                 className="w-full pl-7 pr-3 bg-gray-50 border-0 text-sm focus:outline-none" />
             </div>
             <button onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm ${showFilters ? 'bg-blue-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm ${showFilters ? 'bg-pink-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
               <Filter className="w-4 h-4 text-gray-600" />
             </button>
           </div>
@@ -154,7 +154,7 @@ export function StockManagement({ userRole }: StockManagementProps) {
           )}
           {canCreate && (
             <button onClick={openAdd}
-              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+              className="flex items-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
               <Plus className="w-4 h-4" /> Novo Item
             </button>
           )}
@@ -169,7 +169,7 @@ export function StockManagement({ userRole }: StockManagementProps) {
             <div className="flex gap-2">
               {['all', 'ok', 'baixo', 'critico', 'vencido'].map(s => (
                 <button key={s} onClick={() => setFilterStatus(s)}
-                  className={`px-3 py-1.5 text-xs border transition-colors ${filterStatus === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
+                  className={`px-3 py-1.5 text-xs border transition-colors ${filterStatus === s ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
                   {s === 'all' ? 'Todos' : statusInfo(s).label}
                 </button>
               ))}
@@ -180,7 +180,7 @@ export function StockManagement({ userRole }: StockManagementProps) {
             <div className="flex gap-2">
               {['all', 'medicamento', 'material', 'equipamento'].map(c => (
                 <button key={c} onClick={() => setFilterCategory(c)}
-                  className={`px-3 py-1.5 text-xs border transition-colors ${filterCategory === c ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
+                  className={`px-3 py-1.5 text-xs border transition-colors ${filterCategory === c ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
                   {c === 'all' ? 'Todas' : c.charAt(0).toUpperCase() + c.slice(1)}
                 </button>
               ))}
@@ -206,7 +206,7 @@ export function StockManagement({ userRole }: StockManagementProps) {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Itens', value: stockItems.length, icon: Package, color: 'text-blue-600' },
+          { label: 'Total de Itens', value: stockItems.length, icon: Package, color: 'text-pink-600' },
           { label: 'Críticos + Baixos', value: criticalItems, icon: TrendingDown, color: 'text-red-600' },
           { label: 'Vencidos', value: expiredItems, icon: AlertTriangle, color: 'text-gray-600' },
           { label: 'OK', value: stockItems.filter(i => i.status === 'ok').length, icon: CheckCircle, color: 'text-green-600' },
@@ -269,7 +269,7 @@ export function StockManagement({ userRole }: StockManagementProps) {
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {canUpdate && (
-                          <button onClick={() => openEdit(item)} className="p-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => openEdit(item)} className="p-1.5 text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded"><Edit className="w-4 h-4" /></button>
                         )}
                         {userRole === 'admin' && canDelete && (
                           <button onClick={() => handleDelete(item.id, item.name)} className="p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded"><Trash2 className="w-4 h-4" /></button>
@@ -307,7 +307,7 @@ export function StockManagement({ userRole }: StockManagementProps) {
                   <label className="block text-sm text-gray-700 mb-1.5">{f.label}</label>
                   <input type={f.type} value={(formData as any)[f.key] || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, [f.key]: f.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value }))}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white" />
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white" />
                 </div>
               ))}
               <div>
@@ -330,7 +330,7 @@ export function StockManagement({ userRole }: StockManagementProps) {
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50">Cancelar</button>
               <button onClick={handleSave} disabled={!formData.name}
-                className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+                className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50">
                 {editingItem ? 'Salvar Alterações' : 'Adicionar Item'}
               </button>
             </div>

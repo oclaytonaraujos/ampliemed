@@ -82,7 +82,7 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
   };
 
   const statusColor = (s: string) => ({
-    scheduled: 'bg-blue-100 text-blue-700',
+    scheduled: 'bg-pink-100 text-pink-700',
     'in-progress': 'bg-green-100 text-green-700',
     completed: 'bg-gray-100 text-gray-700',
     cancelled: 'bg-red-100 text-red-700',
@@ -106,7 +106,7 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
         </div>
         {canCreate && (
           <button onClick={() => setShowSessionModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+            className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
             <Video className="w-4 h-4" /> Nova Sessão
           </button>
         )}
@@ -118,8 +118,8 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
           <Lock className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
           <div><p className="text-sm text-gray-900 mb-1">Conexão Segura E2EE</p><p className="text-xs text-gray-600">Links únicos por sessão com criptografia ponta-a-ponta para proteção de dados sensíveis.</p></div>
         </div>
-        <div className="bg-blue-50 border border-blue-200 p-4 flex items-start gap-3">
-          <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-pink-50 border border-pink-200 p-4 flex items-start gap-3">
+          <FileText className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
           <div><p className="text-sm text-gray-900 mb-1">Termo de Consentimento</p><p className="text-xs text-gray-600">Registro obrigatório de consentimento expresso para gravação de teleconsultas.</p></div>
         </div>
       </div>
@@ -127,10 +127,10 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Agendadas', value: stats.scheduled, color: 'bg-blue-600', icon: Calendar },
+          { label: 'Agendadas', value: stats.scheduled, color: 'bg-pink-600', icon: Calendar },
           { label: 'Em Andamento', value: stats.inProgress, color: 'bg-green-600', icon: PlayCircle },
           { label: 'Concluídas', value: stats.completed, color: 'bg-gray-600', icon: CheckCircle },
-          { label: 'Total', value: stats.total, color: 'bg-blue-800', icon: Video },
+          { label: 'Total', value: stats.total, color: 'bg-pink-800', icon: Video },
         ].map(s => { const Icon = s.icon; return (
           <div key={s.label} className="bg-white border border-gray-200 p-4">
             <div className={`w-9 h-9 ${s.color} flex items-center justify-center mb-3`}><Icon className="w-5 h-5 text-white" /></div>
@@ -173,7 +173,7 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
                   <td className="px-5 py-4 text-sm text-gray-600">{session.date} {session.time && `às ${session.time}`}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-blue-600 truncate max-w-[160px]">{session.link}</span>
+                      <span className="text-xs font-mono text-pink-600 truncate max-w-[160px]">{session.link}</span>
                       <button onClick={() => copyLink(session.link)} className="p-1 hover:bg-gray-100 rounded flex-shrink-0">
                         {copiedLink === session.link ? <CheckCircle className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3 text-gray-400" />}
                       </button>
@@ -195,7 +195,7 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
                         </button>
                       )}
                       <a href={session.link} target="_blank" rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-blue-600 text-white text-xs hover:bg-blue-700 flex items-center gap-1">
+                        className="px-3 py-1.5 bg-pink-600 text-white text-xs hover:bg-pink-700 flex items-center gap-1">
                         <Link2 className="w-3 h-3" /> Entrar
                       </a>
                     </div>
@@ -227,7 +227,7 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
                   <label className="block text-sm text-gray-700 mb-1.5">{f.label}</label>
                   <input type={f.type} value={(formData as any)[f.key]}
                     onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500" />
                 </div>
               ))}
               <div>
@@ -240,9 +240,9 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
                   <option value={60}>60 min</option>
                 </select>
               </div>
-              <label className="flex items-center gap-3 cursor-pointer p-3 bg-blue-50 border border-blue-200">
+              <label className="flex items-center gap-3 cursor-pointer p-3 bg-pink-50 border border-pink-200">
                 <input type="checkbox" checked={formData.recordingConsent} onChange={(e) => setFormData(p => ({ ...p, recordingConsent: e.target.checked }))} className="w-4 h-4" />
-                <span className="text-sm text-blue-700">Paciente consente com a gravação da sessão</span>
+                <span className="text-sm text-pink-700">Paciente consente com a gravação da sessão</span>
               </label>
               <div className="p-3 bg-gray-50 border border-gray-200 text-xs text-gray-600">
                 <Lock className="w-3 h-3 inline mr-1" />
@@ -252,7 +252,7 @@ export function TelemedicineModule({ userRole }: TelemedicineModuleProps) {
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowSessionModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50">Cancelar</button>
               <button onClick={handleCreate} disabled={!formData.patientName || !formData.date}
-                className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+                className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50">
                 Criar Sessão
               </button>
             </div>

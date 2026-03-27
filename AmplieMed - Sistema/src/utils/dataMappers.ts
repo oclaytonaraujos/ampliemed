@@ -263,6 +263,7 @@ export function patientFromRow(row: PatientRow): PatientInput {
     status: row.status || 'active',
     lastVisit: row.last_visit ? isoToBrDate(row.last_visit) : '-',
     totalVisits: row.total_visits ?? 0,
+    createdAt: row.created_at ? isoToBrDate(row.created_at) : undefined,
     responsible: row.responsible_name
       ? {
           name: row.responsible_name,
@@ -1046,7 +1047,7 @@ export function fileAttachmentFromRow(row: any): any {
 export function clinicSettingsToRow(s: any, ownerId: string): Record<string, any> {
   return {
     owner_id: ownerId,
-    clinic_name: s.clinicName || 'AmplieMed',
+    clinic_name: s.clinicName || '',
     cnpj: s.cnpj || '',
     address: s.address || '',
     phone: s.phone || '',
@@ -1069,7 +1070,7 @@ export function clinicSettingsToRow(s: any, ownerId: string): Record<string, any
 
 export function clinicSettingsFromRow(row: any): any {
   return {
-    clinicName: row.clinic_name || 'AmplieMed',
+    clinicName: row.clinic_name || '',
     cnpj: row.cnpj || '',
     address: row.address || '',
     phone: row.phone || '',

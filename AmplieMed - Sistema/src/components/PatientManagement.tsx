@@ -264,6 +264,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
     active: patients.filter((p) => p.status === 'active').length,
     lgpdPending: patients.filter((p) => !p.lgpdConsent).length,
     newThisMonth: patients.filter((p) => {
+      if (!p.createdAt) return false;
       const created = new Date(p.createdAt.split('/').reverse().join('-'));
       const now = new Date();
       return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
@@ -474,7 +475,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-2.5 border-r border-gray-200 text-sm transition-colors ${
-                showFilters ? 'bg-blue-50' : 'bg-gray-50 hover:bg-gray-100'
+                showFilters ? 'bg-pink-50' : 'bg-gray-50 hover:bg-gray-100'
               }`}
             >
               <Filter className="w-4 h-4 text-gray-600" />
@@ -496,7 +497,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                     onClick={() => setFilterType('all')}
                     className={`px-3 py-2 border text-sm transition-colors ${
                       filterType === 'all'
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-pink-600 text-white border-pink-600'
                         : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                     }`}
                   >
@@ -506,7 +507,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                     onClick={() => setFilterType('active')}
                     className={`px-3 py-2 border text-sm transition-colors ${
                       filterType === 'active'
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-pink-600 text-white border-pink-600'
                         : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                     }`}
                   >
@@ -516,7 +517,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                     onClick={() => setFilterType('inactive')}
                     className={`px-3 py-2 border text-sm transition-colors ${
                       filterType === 'inactive'
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-pink-600 text-white border-pink-600'
                         : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                     }`}
                   >
@@ -526,7 +527,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                     onClick={() => setFilterType('lgpd-pending')}
                     className={`px-3 py-2 border text-sm transition-colors ${
                       filterType === 'lgpd-pending'
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-pink-600 text-white border-pink-600'
                         : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                     }`}
                   >
@@ -539,7 +540,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
           
           <button
             onClick={handleNewPatient}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             Novo Paciente
@@ -591,7 +592,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                 <tr key={patient.id} onClick={() => handleViewPatient(patient)} className="hover:bg-gray-50 transition-colors group cursor-pointer">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-pink-600 flex items-center justify-center text-white text-sm flex-shrink-0">
                         {patient.name
                           .split(' ')
                           .map((n) => n[0])
@@ -644,14 +645,14 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                           e.stopPropagation();
                           handleEditPatient(patient);
                         }}
-                        className="p-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded transition-all"
+                        className="p-2 text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded transition-all"
                         title="Editar"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); navigate('/prontuarios'); }}
-                        className="p-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded transition-all"
+                        className="p-2 text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded transition-all"
                         title="Prontuário"
                       >
                         <FileText className="w-4 h-4" />
@@ -693,7 +694,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 text-sm transition-colors ${
                     currentPage === page
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-pink-600 text-white'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
@@ -749,7 +750,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleInputChange('name', e.target.value)}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.name ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.name && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -768,7 +769,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       maxLength={14}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.cpf ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.cpf ? (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -789,7 +790,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       type="text"
                       value={formData.rg || ''}
                       onChange={(e) => handleInputChange('rg', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     />
                   </div>
 
@@ -803,7 +804,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       maxLength={10}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.birthDate ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.birthDate && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -818,7 +819,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                     <select
                       value={formData.gender || 'M'}
                       onChange={(e) => handleInputChange('gender', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     >
                       <option value="M">Masculino</option>
                       <option value="F">Feminino</option>
@@ -834,7 +835,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleInputChange('motherName', e.target.value)}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.motherName ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.motherName && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -849,7 +850,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                     <select
                       value={formData.maritalStatus || 'Solteiro'}
                       onChange={(e) => handleInputChange('maritalStatus', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     >
                       <option value="Solteiro">Solteiro(a)</option>
                       <option value="Casado">Casado(a)</option>
@@ -865,7 +866,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       type="text"
                       value={formData.occupation || ''}
                       onChange={(e) => handleInputChange('occupation', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     />
                   </div>
                 </div>
@@ -888,7 +889,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       maxLength={15}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.phone ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.phone && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -906,7 +907,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleInputChange('phone2', maskPhone(e.target.value))}
                       placeholder="(00) 00000-0000"
                       maxLength={15}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     />
                   </div>
 
@@ -918,7 +919,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.email ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.email && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -947,7 +948,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       maxLength={9}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.cep ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.cep && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -965,7 +966,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleAddressChange('street', e.target.value)}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.street ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.street && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -983,7 +984,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleAddressChange('number', e.target.value)}
                       className={`w-full px-4 py-3 bg-gray-50 border ${
                         formErrors.number ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all`}
+                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
                     />
                     {formErrors.number && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
@@ -999,7 +1000,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       type="text"
                       value={formData.address?.complement || ''}
                       onChange={(e) => handleAddressChange('complement', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     />
                   </div>
 
@@ -1009,7 +1010,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       type="text"
                       value={formData.address?.neighborhood || ''}
                       onChange={(e) => handleAddressChange('neighborhood', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     />
                   </div>
 
@@ -1022,7 +1023,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                         // Limpar cidade quando mudar o estado
                         handleAddressChange('city', '');
                       }}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     >
                       <option value="">Selecione...</option>
                       {estados.map((estado) => (
@@ -1039,7 +1040,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       value={formData.address?.city || ''}
                       onChange={(e) => handleAddressChange('city', e.target.value)}
                       disabled={!formData.address?.state || loadingCities}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="">{loadingCities ? 'Carregando cidades...' : 'Selecione...'}</option>
                       {availableCities.map((cidade) => (
@@ -1068,7 +1069,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                     <select
                       value={formData.insurance || 'Particular'}
                       onChange={(e) => handleInputChange('insurance', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all"
                     >
                       <option value="Particular">Particular</option>
                       <option value="Unimed">Unimed</option>
@@ -1087,7 +1088,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       value={formData.insuranceNumber || ''}
                       onChange={(e) => handleInputChange('insuranceNumber', e.target.value)}
                       disabled={formData.insurance === 'Particular'}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all disabled:opacity-50"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all disabled:opacity-50"
                     />
                   </div>
 
@@ -1099,7 +1100,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleInputChange('insuranceValidity', e.target.value)}
                       placeholder="MM/AAAA"
                       disabled={formData.insurance === 'Particular'}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all disabled:opacity-50"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -1119,7 +1120,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleInputChange('allergies', e.target.value)}
                       rows={2}
                       placeholder="Informe alergias conhecidas..."
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all resize-none"
                     />
                   </div>
 
@@ -1130,7 +1131,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleInputChange('medications', e.target.value)}
                       rows={2}
                       placeholder="Liste medicamentos de uso contínuo..."
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all resize-none"
                     />
                   </div>
 
@@ -1141,24 +1142,24 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       onChange={(e) => handleInputChange('observations', e.target.value)}
                       rows={3}
                       placeholder="Observações gerais sobre o paciente..."
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all resize-none"
                     />
                   </div>
                 </div>
               </div>
 
               {/* LGPD */}
-              <div className={`p-5 border ${formErrors.lgpd ? 'bg-red-50 border-red-300' : 'bg-blue-50 border-blue-200'}`}>
+              <div className={`p-5 border ${formErrors.lgpd ? 'bg-red-50 border-red-300' : 'bg-pink-50 border-pink-200'}`}>
                 <div className="flex items-start gap-4">
                   <input
                     type="checkbox"
                     checked={formData.lgpdConsent || false}
                     onChange={(e) => handleInputChange('lgpdConsent', e.target.checked)}
-                    className="mt-1 w-5 h-5 border-blue-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 w-5 h-5 border-pink-300 text-pink-600 focus:ring-2 focus:ring-pink-500"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <Shield className="w-4 h-4 text-blue-600" />
+                      <Shield className="w-4 h-4 text-pink-600" />
                       <span className="text-sm text-gray-900">Consentimento LGPD *</span>
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed">
@@ -1189,7 +1190,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
               <button
                 onClick={handleSavePatient}
                 disabled={saving}
-                className="px-6 py-2.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-6 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {saving ? (
                   <>

@@ -11,6 +11,7 @@ import type { ScheduleAppointment } from './AppContext';
 import { useApp } from './AppContext';
 import { BackToPatientBanner } from './BackToPatientBanner';
 import { toastInfo } from '../utils/toastService';
+import { sendEvolutionMessage } from '../utils/api';
 import { AgendaSidebar } from './AgendaSidebar';
 import {
   WaitingListModal,
@@ -40,7 +41,22 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
     professionals, insurances,
     addAuditEntry, currentUser,
     financialPayments, setFinancialPayments,
+    selectedClinicId, addCommunicationMessage,
   } = useApp();
+
+  const sendStatusWhatsApp = (phone: string | undefined, patientName: string, text: string) => {
+    if (!phone || !selectedClinicId) return;
+    const msg = addCommunicationMessage({
+      type: 'reminder',
+      patientName,
+      channel: 'whatsapp',
+      subject: 'Atualização de agendamento',
+      body: text,
+      status: 'pending',
+    });
+    sendEvolutionMessage({ clinicId: selectedClinicId, messageId: msg.id, phone, text })
+      .catch(() => {});
+  };
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
@@ -385,7 +401,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       case 'cancelado':
         return 'text-red-600 bg-red-50';
       case 'realizado':
-        return 'text-blue-600 bg-blue-50';
+        return 'text-pink-600 bg-pink-50';
       default:
         return 'text-gray-600 bg-gray-50';
     }
@@ -473,14 +489,29 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       }
     }
 
+    if (apt) {
+      sendStatusWhatsApp(
+        apt.patientPhone,
+        apt.patientName,
+        `Olá ${apt.patientName}! Sua consulta em ${apt.date} às ${apt.time} com ${apt.doctorName} foi confirmada. Até breve!`,
+      );
+    }
     showNotificationMessage('Consulta confirmada!');
     setSelectedAppointment(null);
   };
 
   const handleCancelAppointment = (id: string) => {
-    setAppointments(appointments.map(apt =>
-      apt.id === id ? { ...apt, status: 'cancelado' as const } : apt
+    const apt = appointments.find(a => a.id === id);
+    setAppointments(appointments.map(a =>
+      a.id === id ? { ...a, status: 'cancelado' as const } : a
     ));
+    if (apt) {
+      sendStatusWhatsApp(
+        apt.patientPhone,
+        apt.patientName,
+        `Olá ${apt.patientName}! Sua consulta em ${apt.date} às ${apt.time} foi cancelada. Entre em contato para remarcar.`,
+      );
+    }
     showNotificationMessage('Consulta cancelada!', 'info');
     setSelectedAppointment(null);
   };
@@ -495,6 +526,11 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       });
       setShowFinishAppointmentModal(true);
     } else {
+      sendStatusWhatsApp(
+        appointment.patientPhone,
+        appointment.patientName,
+        `Obrigado, ${appointment.patientName}! Sua consulta com ${appointment.doctorName} foi concluída. Até a próxima!`,
+      );
       setAppointments(appointments.map(apt =>
         apt.id === appointment.id ? { ...apt, status: 'realizado' as const } : apt
       ));
@@ -566,6 +602,11 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
         }
       }
       
+      sendStatusWhatsApp(
+        selectedAppointment.patientPhone,
+        selectedAppointment.patientName,
+        `Obrigado, ${selectedAppointment.patientName}! Sua consulta com ${selectedAppointment.doctorName} foi concluída. Até a próxima!`,
+      );
       addNotification({
         type: 'payment',
         title: 'Pagamento registrado',
@@ -694,6 +735,11 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       message: `${newAppointment.patientName} — ${newAppointment.date} às ${newAppointment.time} com ${newAppointment.doctorName}.`,
       urgent: false,
     });
+    sendStatusWhatsApp(
+      newAppointment.patientPhone,
+      newAppointment.patientName,
+      `Olá ${newAppointment.patientName}! Sua consulta foi agendada para o dia ${newAppointment.date} às ${newAppointment.time} com ${newAppointment.doctorName}. Aguardamos você!`,
+    );
     showNotificationMessage('Consulta agendada com sucesso!');
     setShowNewAppointmentModal(false);
     setPatientQuery('');
@@ -755,7 +801,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       case 'pendente':
         return 'bg-yellow-50 border-yellow-500';
       case 'confirmado':
-        return 'bg-blue-50 border-blue-500';
+        return 'bg-pink-50 border-pink-500';
       case 'em atendimento':
         return 'bg-green-50 border-green-500';
       case 'realizado':
@@ -765,7 +811,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       case 'faltou':
         return 'bg-gray-100 border-gray-500';
       default:
-        return 'bg-blue-50 border-blue-500';
+        return 'bg-pink-50 border-pink-500';
     }
   };
 
@@ -784,7 +830,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
         <div className={`fixed top-4 right-4 z-50 px-6 py-4 border ${
           notificationType === 'success' ? 'bg-green-50 border-green-600 text-green-900' :
           notificationType === 'error' ? 'bg-red-50 border-red-600 text-red-900' :
-          'bg-blue-50 border-blue-600 text-blue-900'
+          'bg-pink-50 border-pink-600 text-pink-900'
         } shadow-lg`}>
           <div className="flex items-center gap-3">
             {notificationType === 'success' ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
@@ -808,7 +854,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={`px-4 py-2 text-sm transition-colors ${
-                    viewMode === mode ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                    viewMode === mode ? 'bg-pink-600 text-white' : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   {mode === 'day' ? 'Dia' : mode === 'week' ? 'Semana' : 'Mês'}
@@ -818,7 +864,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
 
             <button
               onClick={() => setShowNewAppointmentModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Nova Consulta
@@ -842,7 +888,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
           {[
-            { label: 'Total', value: stats.total, color: 'text-blue-600' },
+            { label: 'Total', value: stats.total, color: 'text-pink-600' },
             { label: 'Confirmadas', value: stats.confirmed, color: 'text-green-600' },
             { label: 'Pendentes', value: stats.pending, color: 'text-orange-600' },
             { label: 'Telemedicina', value: stats.telemedicine, color: 'text-purple-600' },
@@ -865,13 +911,13 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
             placeholder="Buscar paciente, médico, especialidade..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-4 py-2.5 border text-sm transition-colors ${
-            showFilters ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+            showFilters ? 'bg-pink-50 border-pink-200 text-pink-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
           <Filter className="w-4 h-4" />
@@ -897,7 +943,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               <select
                 value={filters.doctor}
                 onChange={(e) => setFilters({ ...filters, doctor: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
               >
                 <option value="">Todos</option>
                 {doctorOptions.map(d => <option key={d} value={d}>{d}</option>)}
@@ -908,7 +954,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               <select
                 value={filters.specialty}
                 onChange={(e) => setFilters({ ...filters, specialty: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
               >
                 <option value="">Todas</option>
                 {specialtyOptions.map(s => <option key={s} value={s}>{s}</option>)}
@@ -919,7 +965,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
               >
                 <option value="">Todos</option>
                 <option value="confirmado">Confirmado</option>
@@ -933,7 +979,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               <select
                 value={filters.type}
                 onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
               >
                 <option value="">Todos</option>
                 <option value="presencial">Presencial</option>
@@ -943,7 +989,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
           </div>
           <button
             onClick={() => setFilters({ doctor: '', specialty: '', status: '', type: '' })}
-            className="mt-3 text-xs text-blue-600 hover:underline"
+            className="mt-3 text-xs text-pink-600 hover:underline"
           >
             Limpar filtros
           </button>
@@ -1035,12 +1081,12 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     return (
                       <div
                         key={i}
-                        className={`px-2 py-3 text-center border-l border-gray-100 ${isToday ? 'bg-blue-50' : ''}`}
+                        className={`px-2 py-3 text-center border-l border-gray-100 ${isToday ? 'bg-pink-50' : ''}`}
                       >
                         <p className="text-xs text-gray-500">
                           {day.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase()}
                         </p>
-                        <p className={`text-sm ${isToday ? 'text-blue-600 font-semibold' : 'text-gray-700'}`}>
+                        <p className={`text-sm ${isToday ? 'text-pink-600 font-semibold' : 'text-gray-700'}`}>
                           {day.getDate()}
                         </p>
                         <p className="text-xs text-gray-400">
@@ -1108,7 +1154,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                       }`}
                     >
                       <p className={`text-xs w-6 h-6 flex items-center justify-center mb-1 ${
-                        isToday ? 'bg-blue-600 text-white rounded-full' : isCurrentMonth ? 'text-gray-700' : 'text-gray-300'
+                        isToday ? 'bg-pink-600 text-white rounded-full' : isCurrentMonth ? 'text-gray-700' : 'text-gray-300'
                       }`}>
                         {day.getDate()}
                       </p>
@@ -1146,7 +1192,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     key={tab.id}
                     onClick={() => setRightPanelView(tab.id as any)}
                     className={`px-3 py-1 text-xs transition-colors ${
-                      rightPanelView === tab.id ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                      rightPanelView === tab.id ? 'bg-pink-600 text-white' : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
                     {tab.label}
@@ -1162,7 +1208,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               {/* Patient info */}
               <div>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm">
+                  <div className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center text-white text-sm">
                     {selectedAppointment.patientName.split(' ').map(n => n[0]).slice(0, 2).join('')}
                   </div>
                   <div>
@@ -1247,7 +1293,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                 {selectedAppointment.status !== 'realizado' && selectedAppointment.status !== 'cancelado' && (
                   <button
                     onClick={() => handleFinishAppointment(selectedAppointment)}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors"
                   >
                     <FileCheck className="w-4 h-4" />
                     Finalizar Consulta
@@ -1321,7 +1367,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                         }}
                         onFocus={() => setShowPatientDropdown(true)}
                         onBlur={() => setTimeout(() => setShowPatientDropdown(false), 150)}
-                        className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                         placeholder="Busque pelo nome ou CPF..."
                         autoComplete="off"
                       />
@@ -1348,7 +1394,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                               setPatientQuery('');
                               setShowPatientDropdown(false);
                             }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0"
+                            className="w-full text-left px-3 py-2.5 hover:bg-pink-50 text-sm border-b border-gray-100 last:border-0"
                           >
                             <p className="text-gray-900 font-medium">{p.name}</p>
                             <p className="text-xs text-gray-500">{p.cpf || 'CPF não informado'} {p.phone ? `• ${p.phone}` : ''}</p>
@@ -1371,7 +1417,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                       type="text"
                       value={newAppointmentForm.patientCPF}
                       onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, patientCPF: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                       placeholder="000.000.000-00"
                     />
                   </div>
@@ -1381,7 +1427,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                       type="text"
                       value={newAppointmentForm.patientPhone}
                       onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, patientPhone: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                       placeholder="(00) 00000-0000"
                     />
                   </div>
@@ -1408,7 +1454,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                           room: doctor?.room || '',
                         });
                       }}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     >
                       <option value="">Selecione...</option>
                       {doctorOptions.map(d => <option key={d} value={d}>{d}</option>)}
@@ -1421,7 +1467,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                       onChange={(e) => {
                         setNewAppointmentForm({ ...newAppointmentForm, specialty: e.target.value });
                       }}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     >
                       <option value="">Selecione...</option>
                       {specialtyOptions.map(s => <option key={s} value={s}>{s}</option>)}
@@ -1433,7 +1479,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                       type="date"
                       value={newAppointmentForm.date}
                       onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, date: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                   </div>
                   <div>
@@ -1441,7 +1487,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     <select
                       value={newAppointmentForm.time}
                       onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, time: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     >
                       <option value="">Selecione...</option>
                       {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1452,7 +1498,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     <select
                       value={newAppointmentForm.type}
                       onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, type: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     >
                       <option value="presencial">Presencial</option>
                       <option value="telemedicina">Telemedicina</option>
@@ -1463,7 +1509,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     <select
                       value={newAppointmentForm.room}
                       onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, room: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     >
                       <option value="">Selecione...</option>
                       {rooms.map(r => <option key={r} value={r}>{r}</option>)}
@@ -1483,7 +1529,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     <select
                       value={newAppointmentForm.paymentType}
                       onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, paymentType: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     >
                       <option value="particular">Particular</option>
                       <option value="convenio">Convênio</option>
@@ -1495,7 +1541,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                       type="number"
                       value={newAppointmentForm.consultationValue}
                       onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, consultationValue: Number(e.target.value) })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                   </div>
                   {newAppointmentForm.paymentType === 'convenio' && (
@@ -1504,7 +1550,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                       <select
                         value={newAppointmentForm.insuranceName}
                         onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, insuranceName: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                       >
                         <option value="">Selecione...</option>
                         {insuranceOptions.map(i => <option key={i} value={i}>{i}</option>)}
@@ -1525,7 +1571,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     type="text"
                     value={newAppointmentForm.tussCode}
                     onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, tussCode: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                     placeholder="Ex: 10101012"
                   />
                 </div>
@@ -1535,7 +1581,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     value={newAppointmentForm.notes}
                     onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, notes: e.target.value })}
                     rows={1}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
                     placeholder="Observações..."
                   />
                 </div>
@@ -1552,7 +1598,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               <button
                 onClick={handleCreateAppointment}
                 disabled={!newAppointmentForm.patientName || !newAppointmentForm.doctorName || !newAppointmentForm.date || !newAppointmentForm.time}
-                className="px-5 py-2.5 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Agendar Consulta
               </button>
@@ -1572,7 +1618,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+              <div className="bg-pink-50 border border-pink-200 p-3 text-sm text-pink-800">
                 Consulta de <strong>{selectedAppointment.patientName}</strong> com{' '}
                 <strong>{selectedAppointment.doctorName}</strong>
               </div>
@@ -1589,7 +1635,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                 <select
                   value={paymentForm.paymentMethod}
                   onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="pix">PIX</option>
                   <option value="credito">Cartão de Crédito</option>
@@ -1604,7 +1650,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                   type="number"
                   value={paymentForm.paidAmount}
                   onChange={(e) => setPaymentForm({ ...paymentForm, paidAmount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                 />
               </div>
 
@@ -1614,7 +1660,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                   <select
                     value={paymentForm.installments}
                     onChange={(e) => setPaymentForm({ ...paymentForm, installments: Number(e.target.value) })}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     {[1,2,3,4,6,12].map(n => (
                       <option key={n} value={n}>{n}x de R$ {((selectedAppointment.consultationValue || 0) / n).toFixed(2)}</option>
@@ -1632,7 +1678,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               </button>
               <button
                 onClick={handleSavePayment}
-                className="px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors flex items-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 Finalizar e Registrar Pagamento
@@ -1658,7 +1704,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                 <select
                   value={paymentForm.paymentMethod}
                   onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                 >
                   <option value="pix">PIX</option>
                   <option value="credito">Cartão de Crédito</option>
@@ -1672,7 +1718,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                   type="number"
                   value={paymentForm.paidAmount}
                   onChange={(e) => setPaymentForm({ ...paymentForm, paidAmount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                 />
               </div>
             </div>

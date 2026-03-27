@@ -27,7 +27,7 @@ export function TemplatesModule({ userRole }: TemplatesModuleProps) {
   });
 
   const categoryLabel = (c: string) => ({ prescription: 'Prescrição', certificate: 'Atestado', record: 'Prontuário', report: 'Relatório' }[c] || c);
-  const categoryColor = (c: string) => ({ prescription: 'bg-blue-100 text-blue-700', certificate: 'bg-green-100 text-green-700', record: 'bg-purple-100 text-purple-700', report: 'bg-orange-100 text-orange-700' }[c] || 'bg-gray-100 text-gray-600');
+  const categoryColor = (c: string) => ({ prescription: 'bg-pink-100 text-pink-700', certificate: 'bg-green-100 text-green-700', record: 'bg-purple-100 text-purple-700', report: 'bg-orange-100 text-orange-700' }[c] || 'bg-gray-100 text-gray-600');
 
   const openAdd = () => { setEditingId(null); setFormData({ category: 'prescription', specialty: 'Geral', isFavorite: false, content: '' }); setShowModal(true); };
   const openEdit = (t: AppTemplate) => { setEditingId(t.id); setFormData({ ...t }); setShowModal(true); };
@@ -118,7 +118,7 @@ export function TemplatesModule({ userRole }: TemplatesModuleProps) {
             </button>
           )}
           {canCreate && (
-            <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700">
+            <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700">
               <Plus className="w-4 h-4" /> Novo Template
             </button>
           )}
@@ -129,7 +129,7 @@ export function TemplatesModule({ userRole }: TemplatesModuleProps) {
       <div className="flex gap-2 overflow-x-auto pb-1">
         {[{ id: 'all', label: 'Todos' }, { id: 'prescription', label: 'Prescrições' }, { id: 'certificate', label: 'Atestados' }, { id: 'record', label: 'Prontuários' }, { id: 'report', label: 'Relatórios' }].map(c => (
           <button key={c.id} onClick={() => setActiveCategory(c.id as any)}
-            className={`px-4 py-2 text-sm whitespace-nowrap border transition-colors ${activeCategory === c.id ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
+            className={`px-4 py-2 text-sm whitespace-nowrap border transition-colors ${activeCategory === c.id ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
             {c.label}
           </button>
         ))}
@@ -209,9 +209,9 @@ export function TemplatesModule({ userRole }: TemplatesModuleProps) {
                         <button onClick={() => handleToggleFavorite(t.id)} className="p-1.5 text-gray-400 hover:text-yellow-500 rounded">
                           {t.isFavorite ? <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" /> : <StarOff className="w-4 h-4" />}
                         </button>
-                        <button onClick={() => setPreviewId(t.id)} className="p-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded"><FileText className="w-4 h-4" /></button>
+                        <button onClick={() => setPreviewId(t.id)} className="p-1.5 text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded"><FileText className="w-4 h-4" /></button>
                         <button onClick={() => handleCopy(t.content, t.name)} className="p-1.5 text-gray-600 hover:bg-green-50 hover:text-green-600 rounded"><Copy className="w-4 h-4" /></button>
-                        <button onClick={() => handleUse(t)} className="px-3 py-1.5 bg-blue-600 text-white text-xs hover:bg-blue-700 flex items-center gap-1">
+                        <button onClick={() => handleUse(t)} className="px-3 py-1.5 bg-pink-600 text-white text-xs hover:bg-pink-700 flex items-center gap-1">
                           <Download className="w-3 h-3" /> Usar
                         </button>
                         {canUpdate && (
@@ -246,7 +246,7 @@ export function TemplatesModule({ userRole }: TemplatesModuleProps) {
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => handleCopy(previewTemplate.content, previewTemplate.name)} className="px-4 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm flex items-center gap-2"><Copy className="w-4 h-4" /> Copiar</button>
-              <button onClick={() => { handleUse(previewTemplate); setPreviewId(null); }} className="px-4 py-2.5 bg-blue-600 text-white text-sm hover:bg-blue-700 flex items-center gap-2"><Download className="w-4 h-4" /> Usar Template</button>
+              <button onClick={() => { handleUse(previewTemplate); setPreviewId(null); }} className="px-4 py-2.5 bg-pink-600 text-white text-sm hover:bg-pink-700 flex items-center gap-2"><Download className="w-4 h-4" /> Usar Template</button>
             </div>
           </div>
         </div>
@@ -296,7 +296,7 @@ export function TemplatesModule({ userRole }: TemplatesModuleProps) {
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50">Cancelar</button>
-              <button onClick={handleSave} className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700">
+              <button onClick={handleSave} className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700">
                 {editingId ? 'Salvar' : 'Criar Template'}
               </button>
             </div>

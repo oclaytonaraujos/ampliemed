@@ -302,7 +302,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           value={anamnesis.chiefComplaint}
           onChange={(e) => setAnamnesis({ ...anamnesis, chiefComplaint: e.target.value })}
           rows={2}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Ex: Dor torácica há 3 dias..."
         />
       </div>
@@ -315,7 +315,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           value={anamnesis.historyOfPresentIllness}
           onChange={(e) => setAnamnesis({ ...anamnesis, historyOfPresentIllness: e.target.value })}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Descreva a evolução dos sintomas, duração, fatores agravantes e atenuantes..."
         />
       </div>
@@ -329,7 +329,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={anamnesis.pastMedicalHistory}
             onChange={(e) => setAnamnesis({ ...anamnesis, pastMedicalHistory: e.target.value })}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Doenças prévias, cirurgias, hospitalizações..."
           />
         </div>
@@ -342,7 +342,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={anamnesis.medications}
             onChange={(e) => setAnamnesis({ ...anamnesis, medications: e.target.value })}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Liste as medicações atuais, doses e frequência..."
           />
         </div>
@@ -355,7 +355,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={anamnesis.allergies}
             onChange={(e) => setAnamnesis({ ...anamnesis, allergies: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Medicamentos, alimentos, outras substâncias..."
           />
         </div>
@@ -368,7 +368,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={anamnesis.familyHistory}
             onChange={(e) => setAnamnesis({ ...anamnesis, familyHistory: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Doenças em familiares próximos..."
           />
         </div>
@@ -382,7 +382,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           value={anamnesis.socialHistory}
           onChange={(e) => setAnamnesis({ ...anamnesis, socialHistory: e.target.value })}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Tabagismo, etilismo, atividade física, ocupação..."
         />
       </div>
@@ -392,8 +392,8 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
   const renderPhysicalExam = () => (
     <div className="space-y-6">
       {/* Vital Signs */}
-      <div className="bg-blue-50 border border-blue-200 p-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-3 flex items-center gap-2">
+      <div className="bg-pink-50 border border-pink-200 p-4">
+        <h3 className="text-sm font-medium text-pink-900 mb-3 flex items-center gap-2">
           <Heart className="w-4 h-4" />
           Sinais Vitais
         </h3>
@@ -404,7 +404,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={vitalSigns.bloodPressure}
               onChange={(e) => setVitalSigns({ ...vitalSigns, bloodPressure: e.target.value })}
-              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               placeholder="120/80"
             />
           </div>
@@ -414,7 +414,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={vitalSigns.heartRate}
               onChange={(e) => setVitalSigns({ ...vitalSigns, heartRate: e.target.value })}
-              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               placeholder="72"
             />
           </div>
@@ -424,7 +424,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={vitalSigns.temperature}
               onChange={(e) => setVitalSigns({ ...vitalSigns, temperature: e.target.value })}
-              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               placeholder="36.5"
             />
           </div>
@@ -434,7 +434,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={vitalSigns.respiratoryRate}
               onChange={(e) => setVitalSigns({ ...vitalSigns, respiratoryRate: e.target.value })}
-              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               placeholder="16"
             />
           </div>
@@ -444,7 +444,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={vitalSigns.oxygenSaturation}
               onChange={(e) => setVitalSigns({ ...vitalSigns, oxygenSaturation: e.target.value })}
-              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               placeholder="98"
             />
           </div>
@@ -454,7 +454,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={vitalSigns.weight}
               onChange={(e) => setVitalSigns({ ...vitalSigns, weight: e.target.value })}
-              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               placeholder="70"
             />
           </div>
@@ -464,7 +464,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={vitalSigns.height}
               onChange={(e) => setVitalSigns({ ...vitalSigns, height: e.target.value })}
-              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               placeholder="170"
             />
           </div>
@@ -474,7 +474,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={vitalSigns.bmi}
               onChange={(e) => setVitalSigns({ ...vitalSigns, bmi: e.target.value })}
-              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-2 py-1 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               placeholder="24.2"
             />
           </div>
@@ -491,7 +491,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={physicalExam.generalAppearance}
             onChange={(e) => setPhysicalExam({ ...physicalExam, generalAppearance: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Estado geral, nível de consciência, hidratação..."
           />
         </div>
@@ -504,7 +504,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={physicalExam.cardiovascular}
             onChange={(e) => setPhysicalExam({ ...physicalExam, cardiovascular: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Ausculta cardíaca, pulsos, edemas..."
           />
         </div>
@@ -517,7 +517,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={physicalExam.respiratory}
             onChange={(e) => setPhysicalExam({ ...physicalExam, respiratory: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Ausculta pulmonar, padrão respiratório..."
           />
         </div>
@@ -530,7 +530,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={physicalExam.abdomen}
             onChange={(e) => setPhysicalExam({ ...physicalExam, abdomen: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Inspeção, palpação, ausculta abdominal..."
           />
         </div>
@@ -543,7 +543,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={physicalExam.neurological}
             onChange={(e) => setPhysicalExam({ ...physicalExam, neurological: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Estado mental, força, sensibilidade, reflexos..."
           />
         </div>
@@ -556,7 +556,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             value={physicalExam.musculoskeletal}
             onChange={(e) => setPhysicalExam({ ...physicalExam, musculoskeletal: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Articulações, mobilidade, deformidades..."
           />
         </div>
@@ -570,7 +570,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           value={physicalExam.other}
           onChange={(e) => setPhysicalExam({ ...physicalExam, other: e.target.value })}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Achados adicionais relevantes..."
         />
       </div>
@@ -587,7 +587,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           value={diagnosis.hypothesis}
           onChange={(e) => setDiagnosis({ ...diagnosis, hypothesis: e.target.value })}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Descreva a hipótese diagnóstica principal..."
         />
       </div>
@@ -601,17 +601,17 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             type="text"
             value={diagnosis.cid10Code}
             onChange={(e) => setDiagnosis({ ...diagnosis, cid10Code: e.target.value })}
-            className="w-32 px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="w-32 px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="I10"
           />
           <input
             type="text"
             value={diagnosis.cid10Description}
             onChange={(e) => setDiagnosis({ ...diagnosis, cid10Description: e.target.value })}
-            className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            className="flex-1 px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             placeholder="Descrição do CID-10"
           />
-          <button className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-2">
+          <button className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors flex items-center gap-2">
             <Search className="w-4 h-4" />
             Buscar CID
           </button>
@@ -630,7 +630,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           value={diagnosis.observations}
           onChange={(e) => setDiagnosis({ ...diagnosis, observations: e.target.value })}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
           placeholder="Diagnósticos diferenciais, prognóstico, orientações..."
         />
       </div>
@@ -643,7 +643,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
         <h3 className="text-sm font-medium text-gray-900">Prescrição de Medicamentos</h3>
         <button
           onClick={handleAddPrescription}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+          className="flex items-center gap-2 px-3 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm"
         >
           <Plus className="w-4 h-4" />
           Adicionar Medicamento
@@ -681,7 +681,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="Ex: Losartana 50mg"
                   />
                 </div>
@@ -697,7 +697,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="Ex: 1 comprimido"
                   />
                 </div>
@@ -713,7 +713,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="Ex: 1x ao dia"
                   />
                 </div>
@@ -729,7 +729,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="Ex: 30 dias"
                   />
                 </div>
@@ -745,7 +745,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setPrescriptions(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="Ex: Tomar pela manhã, em jejum"
                   />
                 </div>
@@ -761,7 +761,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             <Printer className="w-4 h-4" />
             Imprimir Receita
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
             <Signature className="w-4 h-4" />
             Assinar com ICP-Brasil
           </button>
@@ -776,7 +776,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
         <h3 className="text-sm font-medium text-gray-900">Solicitação de Exames</h3>
         <button
           onClick={handleAddExam}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+          className="flex items-center gap-2 px-3 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm"
         >
           <Plus className="w-4 h-4" />
           Adicionar Exame
@@ -814,7 +814,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setExamRequests(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="Ex: Hemograma completo"
                   />
                 </div>
@@ -829,7 +829,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setExamRequests(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                   >
                     <option value="routine">Rotina</option>
                     <option value="urgent">Urgente</option>
@@ -848,7 +848,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       setExamRequests(updated);
                     }}
                     rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="Motivo da solicitação..."
                   />
                 </div>
@@ -864,7 +864,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             <Printer className="w-4 h-4" />
             Imprimir Pedido
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
             <Signature className="w-4 h-4" />
             Assinar com ICP-Brasil
           </button>
@@ -901,7 +901,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                   type="number"
                   value={certificateDays}
                   onChange={(e) => setCertificateDays(e.target.value)}
-                  className="w-32 px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                  className="w-32 px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                   min="1"
                 />
               </div>
@@ -911,7 +911,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                   value={certificateText}
                   onChange={(e) => setCertificateText(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                  className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                   placeholder="Motivo do afastamento..."
                 />
               </div>
@@ -920,7 +920,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                   <Eye className="w-4 h-4" />
                   Visualizar
                 </button>
-                <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm">
+                <button className="flex items-center gap-2 px-3 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm">
                   <Signature className="w-4 h-4" />
                   Assinar e Gerar
                 </button>
@@ -932,15 +932,15 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
         {/* Other Documents */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <button className="flex items-center gap-2 px-4 py-3 border border-gray-300 hover:bg-gray-50 transition-colors">
-            <FileCheck className="w-5 h-5 text-blue-600" />
+            <FileCheck className="w-5 h-5 text-pink-600" />
             <span className="text-sm text-gray-900">Laudo Médico</span>
           </button>
           <button className="flex items-center gap-2 px-4 py-3 border border-gray-300 hover:bg-gray-50 transition-colors">
-            <FileText className="w-5 h-5 text-blue-600" />
+            <FileText className="w-5 h-5 text-pink-600" />
             <span className="text-sm text-gray-900">Declaração de Comparecimento</span>
           </button>
           <button className="flex items-center gap-2 px-4 py-3 border border-gray-300 hover:bg-gray-50 transition-colors">
-            <Printer className="w-5 h-5 text-blue-600" />
+            <Printer className="w-5 h-5 text-pink-600" />
             <span className="text-sm text-gray-900">Relatório Médico</span>
           </button>
         </div>
@@ -981,7 +981,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
         <h3 className="text-sm font-medium text-gray-900">Procedimentos Realizados (TUSS)</h3>
         <button
           onClick={handleAddProcedure}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+          className="flex items-center gap-2 px-3 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm"
         >
           <Plus className="w-4 h-4" />
           Adicionar Procedimento
@@ -1021,7 +1021,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                         );
                         setProcedures(updated);
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                      className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                       placeholder="10101012"
                     />
                     <button className="px-2 bg-gray-200 hover:bg-gray-300">
@@ -1041,7 +1041,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setProcedures(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="Consulta médica em consultório"
                   />
                 </div>
@@ -1057,7 +1057,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setProcedures(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     min="1"
                   />
                 </div>
@@ -1073,7 +1073,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                       );
                       setProcedures(updated);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
                     placeholder="R$ 0,00"
                   />
                 </div>
@@ -1082,10 +1082,10 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           ))}
 
           {/* Total */}
-          <div className="bg-blue-50 border border-blue-200 p-4">
+          <div className="bg-pink-50 border border-pink-200 p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-900">Valor Total da Consulta:</span>
-              <span className="text-lg font-bold text-blue-600">
+              <span className="text-lg font-bold text-pink-600">
                 R$ {calculateTotal().toFixed(2).replace('.', ',')}
               </span>
             </div>
@@ -1134,7 +1134,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
       {/* Payment */}
       <div className="border border-gray-300 p-4">
         <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-blue-600" />
+          <DollarSign className="w-5 h-5 text-pink-600" />
           Pagamento da Consulta
         </h3>
         
@@ -1145,7 +1145,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               type="text"
               value={paymentValue || `R$ ${calculateTotal().toFixed(2).replace('.', ',')}`}
               onChange={(e) => setPaymentValue(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
             />
           </div>
           
@@ -1154,7 +1154,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
             >
               <option value="insurance">Convênio</option>
               <option value="cash">Dinheiro</option>
@@ -1181,7 +1181,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
       {/* Follow-up */}
       <div className="border border-gray-300 p-4">
         <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
-          <CalendarPlus className="w-5 h-5 text-blue-600" />
+          <CalendarPlus className="w-5 h-5 text-pink-600" />
           Reagendamento
         </h3>
         
@@ -1206,7 +1206,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                 type="date"
                 value={followUpDate}
                 onChange={(e) => setFollowUpDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               />
             </div>
             <div>
@@ -1215,7 +1215,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                 type="time"
                 value={followUpTime}
                 onChange={(e) => setFollowUpTime(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:border-pink-600"
               />
             </div>
           </div>
@@ -1223,15 +1223,15 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
       </div>
 
       {/* Digital Signature */}
-      <div className="bg-blue-50 border border-blue-200 p-4">
+      <div className="bg-pink-50 border border-pink-200 p-4">
         <div className="flex items-start gap-3">
-          <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <Shield className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-blue-900 mb-1">Assinatura Digital ICP-Brasil</p>
-            <p className="text-xs text-blue-700 mb-3">
+            <p className="text-sm font-medium text-pink-900 mb-1">Assinatura Digital ICP-Brasil</p>
+            <p className="text-xs text-pink-700 mb-3">
               Ao finalizar, o prontuário será assinado digitalmente garantindo autenticidade e validade jurídica
             </p>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm">
+            <button className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm">
               <Signature className="w-4 h-4" />
               Assinar Prontuário
             </button>
@@ -1312,11 +1312,11 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                   <button
                     onClick={() => setCurrentStep(step.id as Step)}
                     className={`flex flex-col items-center gap-1 px-3 py-2 transition-colors ${
-                      isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                      isActive ? 'text-pink-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
                     }`}
                   >
                     <div className={`w-8 h-8 flex items-center justify-center border-2 transition-colors ${
-                      isActive ? 'border-blue-600 bg-blue-50' : isCompleted ? 'border-green-600 bg-green-50' : 'border-gray-300'
+                      isActive ? 'border-pink-600 bg-pink-50' : isCompleted ? 'border-green-600 bg-green-50' : 'border-gray-300'
                     }`}>
                       {isCompleted ? (
                         <CheckCircle className="w-5 h-5" />
@@ -1380,7 +1380,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             ) : (
               <button
                 onClick={handleNext}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
               >
                 Próximo
                 <ChevronRight className="w-4 h-4" />
@@ -1411,7 +1411,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
               </button>
               <button
                 onClick={() => { setShowDraftConfirm(false); onClose(); }}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors"
+                className="flex-1 px-4 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors"
               >
                 Confirmar
               </button>

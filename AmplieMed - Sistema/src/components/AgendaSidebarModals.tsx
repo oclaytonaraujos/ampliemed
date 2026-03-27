@@ -74,7 +74,7 @@ export function WaitingListModal({ isOpen, onClose }: WaitingListModalProps) {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          className="px-3 py-1 bg-blue-600 text-white text-xs hover:bg-blue-700 transition-colors"
+                          className="px-3 py-1 bg-pink-600 text-white text-xs hover:bg-pink-700 transition-colors"
                           title="Confirmar agendamento"
                         >
                           Confirmar
@@ -122,9 +122,9 @@ export function PatientsWaitingModal({ isOpen, onClose }: PatientsWaitingModalPr
       <div className="bg-white w-full max-w-3xl mx-4 shadow-lg max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-blue-600" />
+            <Clock className="w-5 h-5 text-pink-600" />
             <h3 className="text-lg font-semibold text-gray-900">Pacientes Esperando</h3>
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium">
+            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs font-medium">
               {waitingPatients.length}
             </span>
           </div>
@@ -154,7 +154,7 @@ export function PatientsWaitingModal({ isOpen, onClose }: PatientsWaitingModalPr
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                          <div className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                             {patient.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                           </div>
                           <div>
@@ -243,7 +243,7 @@ export function ScaleConfigModal({ isOpen, onClose }: ScaleConfigModalProps) {
               <select
                 value={selectedDoctor}
                 onChange={(e) => setSelectedDoctor(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500"
               >
                 <option value="">Selecione um médico...</option>
                 {doctors.map(doc => (
@@ -295,11 +295,11 @@ export function ScaleConfigModal({ isOpen, onClose }: ScaleConfigModalProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-900 mb-2">Duração Padrão (min)</label>
-                    <input type="number" defaultValue="30" className="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="number" defaultValue="30" className="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-900 mb-2">Intervalo entre Consultas (min)</label>
-                    <input type="number" defaultValue="0" className="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="number" defaultValue="0" className="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500" />
                   </div>
                 </div>
               </>
@@ -319,7 +319,7 @@ export function ScaleConfigModal({ isOpen, onClose }: ScaleConfigModalProps) {
             Cancelar
           </button>
           {selectedDoctor && (
-            <button className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+            <button className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
               Salvar Escala
             </button>
           )}
@@ -365,7 +365,7 @@ export function MessagesModal({ isOpen, onClose }: MessagesModalProps) {
       <div className="bg-white w-full max-w-2xl mx-4 shadow-lg max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
-            <MessageSquare className="w-5 h-5 text-blue-600" />
+            <MessageSquare className="w-5 h-5 text-pink-600" />
             <h3 className="text-lg font-semibold text-gray-900">Recados da Equipe</h3>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
@@ -407,11 +407,11 @@ export function MessagesModal({ isOpen, onClose }: MessagesModalProps) {
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               placeholder="Digite seu recado..."
-              className="flex-1 px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500"
             />
             <button
               onClick={handleSendMessage}
-              className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors flex items-center gap-2"
             >
               <Send className="w-4 h-4" />
               Enviar

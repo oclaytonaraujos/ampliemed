@@ -124,11 +124,24 @@ serve(async (req: Request) => {
       );
     }
 
-    // 3. Create auth user
+    // 3. Create auth user (with metadata so profile displays correctly)
+    const adminName = data.email.split("@")[0];
+    const initials = adminName.split(/[\s._-]+/).map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: data.email,
       password: data.password,
       email_confirm: true, // Auto-confirm to allow immediate login
+      user_metadata: {
+        name: adminName,
+        full_name: adminName,
+        role: "admin",
+        specialty: data.specialty || "",
+        crm: "",
+        crm_uf: "",
+        phone: data.phone || "",
+        status: "active",
+        initials,
+      },
     });
 
     if (authError || !authData.user) {
@@ -172,7 +185,48 @@ serve(async (req: Request) => {
       );
     }
 
-    // 5. Create clinic_memberships record (admin role)
+    // 5. Create profile record
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: userId,
+        name: adminName,
+        email: data.email,
+        role: "admin",
+        specialty: data.specialty || "",
+        crm: "",
+        crm_uf: "",
+        phone: data.phone || "",
+        initials,
+        status: "active",
+      });
+
+    if (profileError && !profileError.message?.includes("duplicate") && profileError.code !== "23505") {
+      console.error("Profile creation error:", profileError);
+    }
+
+    // 6. Create clinic_settings with correct clinic name
+    const fullAddress = data.address
+      ? [data.address.street, data.address.number, data.address.neighborhood, data.address.city, data.address.state].filter(Boolean).join(", ")
+      : "";
+
+    const { error: settingsError } = await supabase
+      .from("clinic_settings")
+      .insert({
+        clinic_id: clinicData.id,
+        owner_id: userId,
+        clinic_name: data.clinicName,
+        cnpj: data.cnpj || "",
+        address: fullAddress,
+        phone: data.phone,
+        email: data.email,
+      });
+
+    if (settingsError) {
+      console.error("Clinic settings creation error:", settingsError);
+    }
+
+    // 7. Create clinic_memberships record (admin role)
     const { error: membershipError } = await supabase
       .from("clinic_memberships")
       .insert({
@@ -193,7 +247,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // 6. Log audit entry
+    // 8. Log audit entry
     await supabase.from("audit_log").insert({
       owner_id: userId,
       clinic_id: clinicData.id,

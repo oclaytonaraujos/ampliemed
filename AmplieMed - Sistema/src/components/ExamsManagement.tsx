@@ -44,7 +44,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
   const statusInfo = (s: string) => {
     switch (s) {
       case 'concluido': return { color: 'bg-green-100 text-green-700', label: 'Concluído', icon: <CheckCircle className="w-4 h-4" /> };
-      case 'em_andamento': return { color: 'bg-blue-100 text-blue-700', label: 'Em Andamento', icon: <Clock className="w-4 h-4" /> };
+      case 'em_andamento': return { color: 'bg-pink-100 text-pink-700', label: 'Em Andamento', icon: <Clock className="w-4 h-4" /> };
       case 'atrasado': return { color: 'bg-red-100 text-red-700', label: 'Atrasado', icon: <AlertCircle className="w-4 h-4" /> };
       default: return { color: 'bg-orange-100 text-orange-700', label: 'Solicitado', icon: <FileText className="w-4 h-4" /> };
     }
@@ -163,7 +163,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
                 className="w-full pl-7 pr-3 bg-gray-50 border-0 text-sm focus:outline-none" />
             </div>
             <button onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm ${showFilters ? 'bg-blue-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm ${showFilters ? 'bg-pink-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
               <Filter className="w-4 h-4 text-gray-600" />
             </button>
             {showFilters && (
@@ -171,7 +171,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
                 <div className="grid grid-cols-2 gap-2">
                   {['todos', 'solicitado', 'em_andamento', 'concluido', 'atrasado'].map(s => (
                     <button key={s} onClick={() => { setFilterStatus(s); setShowFilters(false); }}
-                      className={`px-3 py-2 border text-sm ${filterStatus === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
+                      className={`px-3 py-2 border text-sm ${filterStatus === s ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
                       {s === 'todos' ? 'Todos' : statusInfo(s).label}
                     </button>
                   ))}
@@ -187,7 +187,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
           )}
           {canCreate && (
             <button onClick={openAdd}
-              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+              className="flex items-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
               <Plus className="w-4 h-4" /> Novo Exame
             </button>
           )}
@@ -197,7 +197,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total', value: stats.total, color: 'bg-blue-600' },
+          { label: 'Total', value: stats.total, color: 'bg-pink-600' },
           { label: 'Concluídos', value: stats.concluido, color: 'bg-green-600' },
           { label: 'Em Andamento', value: stats.em_andamento, color: 'bg-yellow-500' },
           { label: 'Atrasados', value: stats.atrasado, color: 'bg-red-600' },
@@ -260,13 +260,13 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-2">
                         {getAttachmentsByEntity('exam', exam.id).length > 0 && (
-                          <span className="flex items-center gap-1 text-xs text-blue-600">
+                          <span className="flex items-center gap-1 text-xs text-pink-600">
                             <Paperclip className="w-3 h-3" />
                             {getAttachmentsByEntity('exam', exam.id).length}
                           </span>
                         )}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => openEdit(exam)} className="p-1.5 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded"><Eye className="w-4 h-4" /></button>
+                          <button onClick={() => openEdit(exam)} className="p-1.5 text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded"><Eye className="w-4 h-4" /></button>
                           {userRole === 'admin' && (
                             <button onClick={() => handleDelete(exam.id, exam.patientName)} className="p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded"><Trash2 className="w-4 h-4" /></button>
                           )}
@@ -297,7 +297,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
                   <select value={formData.patientId || ''} onChange={(e) => {
                     const p = patients.find(pt => pt.id === e.target.value);
                     if (p) setFormData(prev => ({ ...prev, patientId: p.id, patientName: p.name }));
-                  }} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  }} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500">
                     <option value="">Selecionar paciente...</option>
                     {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
@@ -314,14 +314,14 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
                   <input type="text" placeholder="Buscar por nome ou código TUSS..." value={tussSearch}
                     onChange={(e) => { setTussSearch(e.target.value); setShowTussDropdown(true); setFormData(prev => ({ ...prev, examType: e.target.value })); }}
                     onFocus={() => setShowTussDropdown(true)}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  {formData.tussCode && <p className="text-xs text-blue-600 mt-0.5">TUSS: {formData.tussCode}</p>}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500" />
+                  {formData.tussCode && <p className="text-xs text-pink-600 mt-0.5">TUSS: {formData.tussCode}</p>}
                   {showTussDropdown && filteredTuss.length > 0 && (
                     <div className="absolute z-20 left-0 right-0 bg-white border border-gray-200 shadow-lg mt-1 max-h-48 overflow-y-auto">
                       {filteredTuss.map(t => (
                         <button key={t.code} onClick={() => { setFormData(prev => ({ ...prev, examType: t.description, tussCode: t.code })); setTussSearch(t.description); setShowTussDropdown(false); }}
-                          className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0">
-                          <span className="font-mono text-blue-700 text-xs">{t.code}</span>
+                          className="w-full text-left px-3 py-2.5 hover:bg-pink-50 border-b border-gray-100 last:border-0">
+                          <span className="font-mono text-pink-700 text-xs">{t.code}</span>
                           <span className="text-gray-800 text-sm ml-2">{t.description}</span>
                           <span className="text-gray-400 text-xs ml-1">— R$ {t.value.toFixed(2)}</span>
                         </button>
@@ -335,7 +335,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
                   <select
                     value={formData.requestedBy || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, requestedBy: e.target.value }))}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   >
                     <option value="">Selecione um profissional...</option>
                     {professionals.filter(p => p.role === 'doctor').map(p => (
@@ -390,7 +390,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
                     <Paperclip className="w-4 h-4 text-gray-600" />
                     <label className="text-sm text-gray-700">Laudos e Resultados</label>
                     {getAttachmentsByEntity('exam', editingExam.id).length > 0 && (
-                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700">
+                      <span className="text-xs px-2 py-0.5 bg-pink-100 text-pink-700">
                         {getAttachmentsByEntity('exam', editingExam.id).length}
                       </span>
                     )}
@@ -421,7 +421,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50">Cancelar</button>
               <button onClick={handleSave} disabled={!formData.patientName || !formData.examType}
-                className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+                className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50">
                 {editingExam ? 'Salvar Alterações' : 'Solicitar Exame'}
               </button>
             </div>

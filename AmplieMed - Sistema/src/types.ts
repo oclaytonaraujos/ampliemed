@@ -466,6 +466,7 @@ export interface PatientInput {
   lastVisit?: string;
   totalVisits: number;
   responsible?: ResponsiblePerson;
+  createdAt?: string;
 }
 
 /**

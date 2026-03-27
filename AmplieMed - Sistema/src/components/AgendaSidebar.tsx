@@ -102,7 +102,7 @@ export function AgendaSidebar({
       .no-print { display: none !important; }
       @page { margin: 12mm; size: A4 portrait; }
     }
-    .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 12px; }
+    .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ec4899; padding-bottom: 12px; }
     .header h1 { font-size: 20px; color: #1e40af; margin-bottom: 4px; }
     .header .subtitle { font-size: 13px; color: #6b7280; }
     .header .date { font-size: 16px; font-weight: 600; color: #111827; margin-top: 6px; text-transform: capitalize; }
@@ -125,7 +125,7 @@ export function AgendaSidebar({
     .phone { color: #6b7280; font-size: 11px; }
     .notes { color: #9ca3af; font-size: 11px; font-style: italic; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 10px; }
-    .print-btn { display: block; margin: 20px auto; padding: 10px 30px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .print-btn { display: block; margin: 20px auto; padding: 10px 30px; background: #ec4899; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
     .print-btn:hover { background: #2563eb; }
   </style>
 </head>
@@ -305,7 +305,7 @@ export function AgendaSidebar({
         <div className="p-4 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-700">Agendamento(s)</span>
-            <span className="px-3 py-1 bg-blue-600 text-white text-sm font-medium">
+            <span className="px-3 py-1 bg-pink-600 text-white text-sm font-medium">
               {appointmentCount}
             </span>
           </div>
@@ -318,7 +318,7 @@ export function AgendaSidebar({
             <button
               onClick={() => onToggleValidOnly(!validOnly)}
               className={`relative inline-flex h-6 w-11 items-center transition-colors ${
-                validOnly ? 'bg-blue-600' : 'bg-gray-200'
+                validOnly ? 'bg-pink-600' : 'bg-gray-200'
               }`}
             >
               <span
@@ -359,7 +359,7 @@ export function AgendaSidebar({
               <span className="text-sm text-gray-700">Pacientes Esperando</span>
             </div>
             {patientsWaitingCount > 0 && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium">
+              <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs font-medium">
                 {patientsWaitingCount}
               </span>
             )}
@@ -418,8 +418,8 @@ export function AgendaSidebar({
                     className={`
                       text-center py-1.5 text-sm transition-colors
                       ${!day.isCurrentMonth ? 'text-gray-400' : 'text-gray-900'}
-                      ${isToday ? 'border border-blue-600' : ''}
-                      ${isSelected ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}
+                      ${isToday ? 'border border-pink-600' : ''}
+                      ${isSelected ? 'bg-pink-600 text-white' : 'hover:bg-gray-100'}
                     `}
                   >
                     {day.date.getDate()}
@@ -464,7 +464,7 @@ export function AgendaSidebar({
               className="w-6 h-6 flex items-center justify-center hover:opacity-70 transition-opacity cursor-pointer"
               title="Legendas dos Status"
             >
-              <Info className="w-4 h-4 text-blue-600" />
+              <Info className="w-4 h-4 text-pink-600" />
             </button>
           </div>
         </div>
@@ -544,7 +544,7 @@ export function AgendaSidebar({
                     <span className="text-sm text-gray-600">Agendamento criado, aguardando confirmação</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium">confirmado</span>
+                    <span className="px-2 py-1 bg-pink-100 text-pink-800 text-xs font-medium">confirmado</span>
                     <span className="text-sm text-gray-600">Paciente confirmou presença</span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -577,7 +577,7 @@ export function AgendaSidebar({
                     <span className="text-sm text-gray-600">Pagamento realizado</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium">reembolsado</span>
+                    <span className="px-2 py-1 bg-pink-100 text-pink-800 text-xs font-medium">reembolsado</span>
                     <span className="text-sm text-gray-600">Valor devolvido ao paciente</span>
                   </div>
                 </div>
@@ -601,7 +601,7 @@ export function AgendaSidebar({
               <div className="space-y-3">
                 <button className="w-full flex items-center justify-between p-4 border border-gray-200 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                    <FileText className="w-5 h-5 text-pink-600" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900">Termo de Consentimento</p>
                       <p className="text-xs text-gray-500">Documento padrão de consentimento informado</p>
@@ -611,7 +611,7 @@ export function AgendaSidebar({
                 </button>
                 <button className="w-full flex items-center justify-between p-4 border border-gray-200 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                    <FileText className="w-5 h-5 text-pink-600" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900">Termo de Responsabilidade</p>
                       <p className="text-xs text-gray-500">Documento de responsabilização do paciente</p>
@@ -621,7 +621,7 @@ export function AgendaSidebar({
                 </button>
                 <button className="w-full flex items-center justify-between p-4 border border-gray-200 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                    <FileText className="w-5 h-5 text-pink-600" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900">Anamnese Padrão</p>
                       <p className="text-xs text-gray-500">Formulário de avaliação inicial do paciente</p>
@@ -631,7 +631,7 @@ export function AgendaSidebar({
                 </button>
                 <button className="w-full flex items-center justify-between p-4 border border-gray-200 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                    <FileText className="w-5 h-5 text-pink-600" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-gray-900">Contrato de Prestação de Serviços</p>
                       <p className="text-xs text-gray-500">Contrato padrão entre clínica e paciente</p>
@@ -642,7 +642,7 @@ export function AgendaSidebar({
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-              <button onClick={() => setShowTermsModal(false)} className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+              <button onClick={() => setShowTermsModal(false)} className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
                 Fechar
               </button>
             </div>

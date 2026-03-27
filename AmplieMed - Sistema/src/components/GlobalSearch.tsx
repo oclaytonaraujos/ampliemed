@@ -115,7 +115,7 @@ export function GlobalSearch({ isOpen, onClose, onNavigate }: GlobalSearchProps)
     professional: 'Profissional', financial: 'Financeiro', stock: 'Estoque', exam: 'Exame',
   };
   const typeColor: Record<string, string> = {
-    patient: 'text-blue-600 bg-blue-50', appointment: 'text-green-600 bg-green-50',
+    patient: 'text-pink-600 bg-pink-50', appointment: 'text-green-600 bg-green-50',
     record: 'text-purple-600 bg-purple-50', professional: 'text-orange-600 bg-orange-50',
     financial: 'text-emerald-600 bg-emerald-50', stock: 'text-gray-600 bg-gray-50',
     exam: 'text-pink-600 bg-pink-50',
@@ -182,7 +182,7 @@ export function GlobalSearch({ isOpen, onClose, onNavigate }: GlobalSearchProps)
                     const isSelected = index === selectedIndex;
                     return (
                       <button key={result.id} onClick={result.action}
-                        className={`w-full flex items-start gap-3 px-3 py-3 transition-colors text-left ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                        className={`w-full flex items-start gap-3 px-3 py-3 transition-colors text-left ${isSelected ? 'bg-pink-50' : 'hover:bg-gray-50'}`}
                         onMouseEnter={() => setSelectedIndex(index)}>
                         <div className={`p-2 ${typeColor[result.type] || 'bg-gray-50 text-gray-600'}`}>
                           <Icon className="w-4 h-4" />

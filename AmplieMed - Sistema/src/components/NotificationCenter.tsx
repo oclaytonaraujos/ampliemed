@@ -42,7 +42,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
   const getIconColor = (type: Notification['type']) => {
     switch (type) {
       case 'appointment':
-        return 'bg-blue-600 text-white';
+        return 'bg-pink-600 text-white';
       case 'payment':
         return 'bg-green-600 text-white';
       case 'document':
@@ -67,7 +67,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
             <h3 className="text-gray-900 flex items-center gap-2">
               Notificações
               {unreadNotificationCount > 0 && (
-                <span className="px-2 py-0.5 bg-blue-600 text-white text-xs">
+                <span className="px-2 py-0.5 bg-pink-600 text-white text-xs">
                   {unreadNotificationCount}
                 </span>
               )}
@@ -77,7 +77,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
             {unreadNotificationCount > 0 && (
               <button 
                 onClick={markAllNotificationsRead}
-                className="text-xs text-blue-600 hover:text-blue-700"
+                className="text-xs text-pink-600 hover:text-pink-700"
               >
                 Marcar todas como lidas
               </button>
@@ -101,7 +101,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
                 <div
                   key={notification.id}
                   className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors group ${
-                    !notification.read ? 'bg-blue-50/30' : ''
+                    !notification.read ? 'bg-pink-50/30' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -159,7 +159,7 @@ export function NotificationCenter({ onClose }: NotificationCenterProps) {
 
         {/* Footer */}
         <div className="p-3 border-t border-gray-200">
-          <button className="w-full py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors">
+          <button className="w-full py-2 text-sm text-pink-600 hover:bg-pink-50 transition-colors">
             Ver todas as notificações
           </button>
         </div>

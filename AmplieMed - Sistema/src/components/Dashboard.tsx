@@ -98,7 +98,7 @@ export function Dashboard({ userRole }: DashboardProps) {
     }));
   })();
 
-  const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2'];
+  const COLORS = ['#ec4899', '#db2777', '#f472b6', '#be185d', '#f9a8d4', '#9d174d'];
 
   return (
     <div className="space-y-6">
@@ -111,10 +111,10 @@ export function Dashboard({ userRole }: DashboardProps) {
       {/* KPI Cards — Row 1 */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { id: 'kpi-patients', label: 'Pacientes Ativos', value: activePatients, sub: `${patients.length} total`, icon: Users, color: 'bg-blue-600', alert: false },
-          { id: 'kpi-appointments', label: 'Consultas Hoje', value: todayCount, sub: `${confirmedToday} confirmadas`, icon: Calendar, color: 'bg-green-600', alert: false },
-          { id: 'kpi-revenue', label: 'Receita Mensal', value: `R$ ${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sub: 'mês atual', icon: DollarSign, color: 'bg-blue-600', alert: false },
-          { id: 'kpi-occupancy', label: 'Taxa de Ocupação', value: `${occupancy}%`, sub: 'hoje', icon: Activity, color: 'bg-blue-600', alert: false },
+          { id: 'kpi-patients', label: 'Pacientes Ativos', value: activePatients, sub: `${patients.length} total`, icon: Users, color: 'bg-pink-600', alert: false },
+          { id: 'kpi-appointments', label: 'Consultas Hoje', value: todayCount, sub: `${confirmedToday} confirmadas`, icon: Calendar, color: 'bg-pink-600', alert: false },
+          { id: 'kpi-revenue', label: 'Receita Mensal', value: `R$ ${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sub: 'mês atual', icon: DollarSign, color: 'bg-pink-600', alert: false },
+          { id: 'kpi-occupancy', label: 'Taxa de Ocupação', value: `${occupancy}%`, sub: 'hoje', icon: Activity, color: 'bg-pink-600', alert: false },
         ].map(k => { const Icon = k.icon; return (
           <div key={k.id} className="bg-white border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-3"><div className={`w-10 h-10 ${k.color} flex items-center justify-center`}><Icon className="w-5 h-5 text-white" /></div><span className="text-xs text-gray-400">{k.sub}</span></div>
@@ -127,10 +127,10 @@ export function Dashboard({ userRole }: DashboardProps) {
       {/* KPI Cards — Row 2 */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { id: 'kpi-records', label: 'Prontuários', value: totalRecords, sub: `${signedRecords} assinados`, icon: CheckCircle, color: signedRecords === totalRecords && totalRecords > 0 ? 'bg-green-600' : 'bg-orange-500', alert: totalRecords > signedRecords },
-          { id: 'kpi-exams', label: 'Exames Pendentes', value: pendingExams, sub: `${exams.length} total`, icon: Activity, color: pendingExams > 5 ? 'bg-orange-500' : 'bg-gray-600', alert: pendingExams > 0 },
-          { id: 'kpi-stock', label: 'Estoque Crítico', value: criticalStock, sub: `${stockItems.length} itens`, icon: TrendingDown, color: criticalStock > 0 ? 'bg-red-600' : 'bg-green-600', alert: criticalStock > 0 },
-          { id: 'kpi-overdue', label: 'A Receber Vencido', value: overdueReceivables, sub: 'contas vencidas', icon: Clock, color: overdueReceivables > 0 ? 'bg-red-600' : 'bg-green-600', alert: overdueReceivables > 0 },
+          { id: 'kpi-records', label: 'Prontuários', value: totalRecords, sub: `${signedRecords} assinados`, icon: CheckCircle, color: 'bg-pink-600', alert: totalRecords > signedRecords },
+          { id: 'kpi-exams', label: 'Exames Pendentes', value: pendingExams, sub: `${exams.length} total`, icon: Activity, color: 'bg-pink-600', alert: pendingExams > 0 },
+          { id: 'kpi-stock', label: 'Estoque Crítico', value: criticalStock, sub: `${stockItems.length} itens`, icon: TrendingDown, color: 'bg-pink-600', alert: criticalStock > 0 },
+          { id: 'kpi-overdue', label: 'A Receber Vencido', value: overdueReceivables, sub: 'contas vencidas', icon: Clock, color: 'bg-pink-600', alert: overdueReceivables > 0 },
         ].map(k => { const Icon = k.icon; return (
           <div key={k.id} className={`bg-white border p-5 ${k.alert ? 'border-orange-200' : 'border-gray-200'}`}>
             <div className="flex items-center justify-between mb-3"><div className={`w-10 h-10 ${k.color} flex items-center justify-center`}><Icon className="w-5 h-5 text-white" /></div><span className="text-xs text-gray-400">{k.sub}</span></div>
@@ -164,7 +164,7 @@ export function Dashboard({ userRole }: DashboardProps) {
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '0px' }} />
                 <Legend />
-                <Area key="area-receita" type="monotone" dataKey="receita" stackId="1" stroke="#2563eb" fill="#2563eb" fillOpacity={0.6} name="Receita" />
+                <Area key="area-receita" type="monotone" dataKey="receita" stackId="1" stroke="#ec4899" fill="#ec4899" fillOpacity={0.6} name="Receita" />
                 <Area key="area-despesas" type="monotone" dataKey="despesas" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} name="Despesas" />
               </AreaChart>
             </ResponsiveContainer>
@@ -192,7 +192,7 @@ export function Dashboard({ userRole }: DashboardProps) {
                 <YAxis stroke="#6b7280" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '0px' }} />
                 <Legend />
-                <Bar key="bar-consultas" dataKey="consultas" fill="#2563eb" name="Consultas" />
+                <Bar key="bar-consultas" dataKey="consultas" fill="#ec4899" name="Consultas" />
                 <Bar key="bar-faltas" dataKey="faltas" fill="#ef4444" name="Faltas" />
               </BarChart>
             </ResponsiveContainer>
@@ -268,7 +268,7 @@ export function Dashboard({ userRole }: DashboardProps) {
                       apt.status === 'confirmado' ? 'bg-green-100 text-green-700' :
                       apt.status === 'pendente' ? 'bg-orange-100 text-orange-700' :
                       apt.status === 'cancelado' ? 'bg-red-100 text-red-700' :
-                      'bg-blue-100 text-blue-700'
+                      'bg-pink-100 text-pink-700'
                     }`}>
                       {apt.status}
                     </span>

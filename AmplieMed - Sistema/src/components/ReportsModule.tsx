@@ -74,7 +74,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
   medicalRecords.filter(r => r.cid10 && r.cid10 !== '-').forEach(r => { const code = r.cid10.split(' - ')[0]; cid10Map[code] = (cid10Map[code] || 0) + 1; });
   const diagnosisData = Object.entries(cid10Map).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, value]) => ({ name, value }));
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+  const COLORS = ['#ec4899', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
   const handleExport = () => {
     const label = reportType === 'financial' ? 'Financeiro' : reportType === 'operational' ? 'Operacional' : 'Clínico';
@@ -164,7 +164,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
         {[
           { label: 'Receita Total', value: `R$ ${totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-green-600', sub: `${financialPayments.filter(p => p.status === 'received').length} recebimentos` },
           { label: 'Despesas', value: `R$ ${totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-red-600', sub: `${financialPayables.filter(p => p.status === 'paid').length} pagamentos` },
-          { label: 'Lucro Líquido', value: `R$ ${netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: netProfit >= 0 ? 'text-blue-600' : 'text-red-600', sub: `Margem: ${marginPct}%` },
+          { label: 'Lucro Líquido', value: `R$ ${netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: netProfit >= 0 ? 'text-pink-600' : 'text-red-600', sub: `Margem: ${marginPct}%` },
           { label: 'A Receber', value: `R$ ${totalReceivables.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: Activity, color: 'text-orange-600', sub: `${financialReceivables.filter(r => r.status === 'pending').length} pendências` },
         ].map(k => { const Icon = k.icon; return (
           <div key={k.label} className="bg-white border border-gray-200 p-4">
@@ -197,7 +197,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total de Consultas', value: totalAppointments, icon: Calendar, color: 'text-blue-600', sub: 'No período' },
+          { label: 'Total de Consultas', value: totalAppointments, icon: Calendar, color: 'text-pink-600', sub: 'No período' },
           { label: 'Realizadas', value: completedAppointments, icon: Activity, color: 'text-green-600', sub: `Taxa: ${occupancyRate}%` },
           { label: 'Cancelamentos', value: cancelledAppointments, icon: TrendingDown, color: 'text-red-600', sub: `${totalAppointments > 0 ? Math.round(cancelledAppointments / totalAppointments * 100) : 0}% do total` },
           { label: 'Exames Pendentes', value: pendingExams, icon: BarChart3, color: 'text-orange-600', sub: `${urgentExams} urgentes` },
@@ -219,7 +219,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
               <XAxis dataKey="status" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Bar dataKey="value" fill="#3b82f6" name="Consultas" />
+              <Bar dataKey="value" fill="#ec4899" name="Consultas" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -245,7 +245,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Pacientes Ativos', value: activePatients, icon: Users, color: 'text-blue-600', sub: `${totalPatients} total` },
+          { label: 'Pacientes Ativos', value: activePatients, icon: Users, color: 'text-pink-600', sub: `${totalPatients} total` },
           { label: 'Prontuários', value: totalRecords, icon: FileText, color: 'text-purple-600', sub: `${signedRecords} assinados` },
           { label: 'Exames Realizados', value: exams.filter(e => e.status === 'concluido').length, icon: Activity, color: 'text-green-600', sub: `${pendingExams} pendentes` },
           { label: 'Estoque OK', value: stockItems.filter(s => s.status === 'ok').length, icon: BarChart3, color: 'text-gray-600', sub: `${stockItems.filter(s => s.status === 'critico').length} críticos` },
@@ -284,7 +284,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
           <p className="text-sm text-gray-500">Análise completa e exportação de dados</p>
         </div>
         {reportType !== 'doctor' && (
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors" onClick={handleExport}>
+        <button className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors" onClick={handleExport}>
           <Download className="w-4 h-4" />
           Exportar Relatório
         </button>
@@ -307,7 +307,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
               onClick={() => setReportType(tab.key)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 active
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-pink-600 text-pink-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -327,7 +327,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
             <select
               value={dateRange.start}
               onChange={(e) => setDateRange({ start: e.target.value, end: dateRange.end })}
-              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600"
             >
               <option value="2026-01-01">Janeiro 2026</option>
               <option value="2026-02-01">Fevereiro 2026</option>
@@ -346,7 +346,7 @@ export function ReportsModule({ userRole }: ReportsModuleProps) {
 
           <div className="flex-1">
             <label className="block text-xs font-medium text-gray-700 mb-1">Formato de Exportação</label>
-            <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as any)} className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600">
+            <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value as any)} className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
               <option value="pdf">PDF</option>
               <option value="csv">CSV / Excel</option>
             </select>

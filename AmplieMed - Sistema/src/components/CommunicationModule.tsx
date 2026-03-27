@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, Send, Clock, CheckCircle, Bot, Users, Bell, Plus, X, Phone, Mail, Calendar, Filter, User } from 'lucide-react';
+import { MessageSquare, Send, Clock, CheckCircle, Users, Bell, Plus, X, Phone, Mail, Calendar, Filter, User } from 'lucide-react';
 import { useLocation } from 'react-router';
 import type { UserRole } from '../App';
 import type { Campaign } from './AppContext';
 import { useApp } from './AppContext';
 import { BackToPatientBanner } from './BackToPatientBanner';
 import { toastSuccess, toastInfo, toastError } from '../utils/toastService';
+import { sendEvolutionMessage } from '../utils/api';
 
 interface CommunicationModuleProps { userRole: UserRole; }
 
@@ -32,16 +33,26 @@ interface NewCampaignForm {
 
 export function CommunicationModule({ userRole }: CommunicationModuleProps) {
   const {
-    appointments, patients, communicationMessages,
+    appointments, patients, communicationMessages, setCommunicationMessages,
     addNotification, addCommunicationMessage, addAuditEntry, currentUser,
     campaigns, addCampaign, updateCampaign, deleteCampaign,
+    selectedClinicId,
   } = useApp();
-  const [activeTab, setActiveTab] = useState<'reminders' | 'chatbot' | 'campaigns' | 'direct'>('reminders');
+  const [activeTab, setActiveTab] = useState<'reminders' | 'campaigns' | 'direct'>('reminders');
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [newCampaign, setNewCampaign] = useState<NewCampaignForm>({ name: '', message: '', channel: 'email', type: 'custom' });
 
   // Direct message state (pre-filled from PatientDetailView)
   const [directMessage, setDirectMessage] = useState({ patientName: '', phone: '', email: '', channel: 'whatsapp' as 'whatsapp' | 'sms' | 'email', message: '' });
+  const [patientQuery, setPatientQuery] = useState('');
+  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+
+  const filteredPatients = patientQuery.trim().length >= 1
+    ? patients.filter(p =>
+        p.name.toLowerCase().includes(patientQuery.toLowerCase()) ||
+        p.phone?.includes(patientQuery)
+      ).slice(0, 8)
+    : [];
   const [preselectedPatientInfo, setPreselectedPatientInfo] = useState<{ id: string; name: string } | null>(null);
   const location = useLocation();
   useEffect(() => {
@@ -89,26 +100,77 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
     };
   });
 
-  const handleSendReminder = (reminder: Reminder) => {
-    addNotification({
-      type: 'info',
-      title: `Lembrete ${reminder.channel.toUpperCase()} enviado`,
-      message: `Lembrete de consulta enviado para ${reminder.patientName} via ${reminder.channel} — ${reminder.date} às ${reminder.time}`,
-      urgent: false,
+  const handleSendReminder = async (reminder: Reminder) => {
+    const text = `Olá ${reminder.patientName}! Lembramos sua consulta com ${reminder.doctorName} em ${reminder.date} às ${reminder.time}. Responda SIM para confirmar.`;
+
+    // Save message record with pending status
+    const msg = addCommunicationMessage({
+      type: 'reminder',
+      patientName: reminder.patientName,
+      channel: reminder.channel,
+      subject: `Lembrete de consulta — ${reminder.date}`,
+      body: text,
+      status: 'pending',
     });
-    toastSuccess(`Lembrete enviado para ${reminder.patientName}`);
+
+    if (reminder.channel === 'whatsapp' && reminder.phone && selectedClinicId) {
+      try {
+        await sendEvolutionMessage({
+          clinicId: selectedClinicId,
+          messageId: msg.id,
+          phone: reminder.phone,
+          text,
+        });
+        setCommunicationMessages(prev =>
+          prev.map(m => m.id === msg.id ? { ...m, status: 'sent', sentAt: new Date().toISOString() } : m),
+        );
+        addNotification({
+          type: 'info',
+          title: 'Lembrete WhatsApp enviado',
+          message: `Lembrete enviado para ${reminder.patientName} — ${reminder.date} às ${reminder.time}`,
+          urgent: false,
+        });
+        toastSuccess(`Lembrete WhatsApp enviado para ${reminder.patientName}`);
+      } catch (err: any) {
+        setCommunicationMessages(prev =>
+          prev.map(m => m.id === msg.id ? { ...m, status: 'failed' } : m),
+        );
+        toastError(`Falha ao enviar lembrete WhatsApp: ${err.message}`);
+      }
+    } else {
+      // SMS or email — not yet integrated with external provider
+      setCommunicationMessages(prev =>
+        prev.map(m => m.id === msg.id ? { ...m, status: 'sent', sentAt: new Date().toISOString() } : m),
+      );
+      addNotification({
+        type: 'info',
+        title: `Lembrete ${reminder.channel.toUpperCase()} registrado`,
+        message: `Lembrete registrado para ${reminder.patientName} via ${reminder.channel} — ${reminder.date} às ${reminder.time}`,
+        urgent: false,
+      });
+      toastSuccess(`Lembrete registrado para ${reminder.patientName}`);
+    }
   };
 
-  const handleSendAllPending = () => {
+  const handleSendAllPending = async () => {
     const pending = reminders.filter(r => r.status === 'pending');
     if (pending.length === 0) return;
-    addNotification({
-      type: 'info',
-      title: 'Lembretes em massa enviados',
-      message: `${pending.length} lembretes de consulta enviados com sucesso`,
-      urgent: false,
-    });
-    toastSuccess(`${pending.length} lembretes enviados!`);
+    // Send sequentially to avoid hammering Evolution API
+    let sent = 0;
+    let failed = 0;
+    for (const reminder of pending) {
+      try {
+        await handleSendReminder(reminder);
+        sent++;
+      } catch {
+        failed++;
+      }
+    }
+    if (failed === 0) {
+      toastSuccess(`${sent} lembretes enviados com sucesso!`);
+    } else {
+      toastError(`${sent} enviados, ${failed} falharam. Verifique as configurações do WhatsApp.`);
+    }
   };
 
   const handleToggleCampaign = (id: string, currentStatus: Campaign['status']) => {
@@ -162,7 +224,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
           <p className="text-gray-600">Lembretes automáticos, chatbot de confirmação e campanhas</p>
         </div>
         {activeTab === 'reminders' && reminders.filter(r => r.status === 'pending').length > 0 && (
-          <button onClick={handleSendAllPending} className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white hover:bg-blue-700">
+          <button onClick={handleSendAllPending} className="flex items-center gap-2 px-4 py-2.5 bg-pink-600 text-white hover:bg-pink-700">
             <Send className="w-4 h-4" /> Enviar Todos Pendentes ({reminders.filter(r => r.status === 'pending').length})
           </button>
         )}
@@ -171,7 +233,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Consultas próximas 7 dias', value: upcomingAppointments.length, icon: Calendar, color: 'bg-blue-600' },
+          { label: 'Consultas próximas 7 dias', value: upcomingAppointments.length, icon: Calendar, color: 'bg-pink-600' },
           { label: 'Lembretes pendentes', value: reminders.filter(r => r.status === 'pending').length, icon: Clock, color: 'bg-orange-500' },
           { label: 'Taxa de confirmação', value: `${confirmationRate}%`, icon: CheckCircle, color: 'bg-green-600' },
           { label: 'Pacientes cadastrados', value: patients.length, icon: Users, color: 'bg-gray-600' },
@@ -188,11 +250,11 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
       <div className="bg-white border border-gray-200">
         <div className="border-b border-gray-200">
           <div className="flex">
-            {[{ id: 'reminders', label: 'Lembretes Automáticos', icon: Bell }, { id: 'direct', label: 'Mensagem Direta', icon: MessageSquare }, { id: 'chatbot', label: 'Chatbot', icon: Bot }, { id: 'campaigns', label: 'Campanhas', icon: Users }].map(t => {
+            {[{ id: 'reminders', label: 'Lembretes Automáticos', icon: Bell }, { id: 'direct', label: 'Mensagem Direta', icon: MessageSquare }, { id: 'campaigns', label: 'Campanhas', icon: Users }].map(t => {
               const Icon = t.icon;
               return (
                 <button key={t.id} onClick={() => setActiveTab(t.id as any)}
-                  className={`flex items-center gap-2 px-5 py-4 text-sm border-b-2 transition-all ${activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>
+                  className={`flex items-center gap-2 px-5 py-4 text-sm border-b-2 transition-all ${activeTab === t.id ? 'border-pink-600 text-pink-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}>
                   <Icon className="w-4 h-4" />{t.label}
                 </button>
               );
@@ -203,11 +265,11 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
         <div className="p-5">
           {activeTab === 'reminders' && (
             <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 p-4 flex items-start gap-3">
-                <Bell className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="bg-pink-50 border border-pink-200 p-4 flex items-start gap-3">
+                <Bell className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900">Lembretes automáticos baseados na agenda</p>
-                  <p className="text-xs text-blue-700 mt-1">Os lembretes são gerados automaticamente para consultas nos próximos 7 dias. Integre com WhatsApp Business API para envio real.</p>
+                  <p className="text-sm font-medium text-pink-900">Lembretes automáticos baseados na agenda</p>
+                  <p className="text-xs text-pink-700 mt-1">Os lembretes são gerados automaticamente para consultas nos próximos 7 dias. Integre com WhatsApp Business API para envio real.</p>
                 </div>
               </div>
 
@@ -225,7 +287,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-1">
                             <p className="text-sm font-medium text-gray-900">{r.patientName}</p>
-                            <span className={`text-xs px-2 py-0.5 ${r.daysBeforeAppointment <= 1 ? 'bg-red-100 text-red-700' : r.daysBeforeAppointment <= 3 ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                            <span className={`text-xs px-2 py-0.5 ${r.daysBeforeAppointment <= 1 ? 'bg-red-100 text-red-700' : r.daysBeforeAppointment <= 3 ? 'bg-orange-100 text-orange-700' : 'bg-pink-100 text-pink-700'}`}>
                               {r.daysBeforeAppointment === 0 ? 'Hoje' : r.daysBeforeAppointment === 1 ? 'Amanhã' : `Em ${r.daysBeforeAppointment} dias`}
                             </span>
                           </div>
@@ -240,45 +302,12 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                             className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-xs hover:bg-green-700">
                             <MessageSquare className="w-3 h-3" /> WhatsApp
                           </button>
-                          <button onClick={() => handleSendReminder({ ...r, channel: 'sms' })}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs hover:bg-blue-700">
-                            <Phone className="w-3 h-3" /> SMS
-                          </button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-          )}
-
-          {activeTab === 'chatbot' && (
-            <div className="space-y-4">
-              <div className="bg-purple-50 border border-purple-200 p-4 flex items-start gap-3">
-                <Bot className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-purple-900">Chatbot Híbrido de Confirmação</p>
-                  <p className="text-xs text-purple-700 mt-1">O chatbot envia mensagens automáticas e aguarda resposta do paciente. Respostas "SIM" confirmam automaticamente o agendamento. Integração com WhatsApp Business API necessária.</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { step: 1, title: 'Envio Automático', desc: 'D-1 antes da consulta: "Olá [NOME], lembramos sua consulta amanhã às [HORA] com [MÉDICO]. Confirme respondendo SIM."' },
-                  { step: 2, title: 'Processamento', desc: 'Resposta "SIM" → status confirmado automaticamente. Resposta "NÃO" → contato para reagendar.' },
-                  { step: 3, title: 'Escalada Humana', desc: 'Dúvidas complexas são transferidas para atendente humano com histórico da conversa.' },
-                ].map(s => (
-                  <div key={s.step} className="border border-gray-200 p-4">
-                    <div className="w-8 h-8 bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm mb-3">{s.step}</div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">{s.title}</h4>
-                    <p className="text-xs text-gray-600">{s.desc}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="bg-gray-50 border border-gray-200 p-4 text-center">
-                <p className="text-sm text-gray-600">Para ativar o chatbot real, configure a chave da API do <strong>WhatsApp Business</strong> em Configurações → Sistema → Integrações.</p>
-                <button className="mt-3 px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700">Ir para Configurações</button>
-              </div>
             </div>
           )}
 
@@ -294,12 +323,47 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
 
               <div className="border border-gray-200 p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="relative">
                     <label className="block text-sm text-gray-700 mb-1.5">Paciente</label>
-                    <input type="text" value={directMessage.patientName}
-                      onChange={e => setDirectMessage(prev => ({ ...prev, patientName: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-blue-500"
-                      placeholder="Nome do paciente" />
+                    <input
+                      type="text"
+                      value={patientQuery || directMessage.patientName}
+                      onChange={e => {
+                        setPatientQuery(e.target.value);
+                        setDirectMessage(prev => ({ ...prev, patientName: e.target.value, phone: '', email: '' }));
+                        setShowPatientDropdown(true);
+                      }}
+                      onFocus={() => setShowPatientDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowPatientDropdown(false), 150)}
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-pink-500"
+                      placeholder="Buscar paciente cadastrado..."
+                      autoComplete="off"
+                    />
+                    {showPatientDropdown && filteredPatients.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 shadow-lg max-h-48 overflow-y-auto">
+                        {filteredPatients.map(p => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onMouseDown={() => {
+                              setDirectMessage(prev => ({
+                                ...prev,
+                                patientName: p.name,
+                                phone: p.phone || '',
+                                email: p.email || '',
+                                channel: p.phone ? 'whatsapp' : 'email',
+                              }));
+                              setPatientQuery('');
+                              setShowPatientDropdown(false);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-pink-50 text-sm"
+                          >
+                            <span className="font-medium text-gray-900">{p.name}</span>
+                            {p.phone && <span className="ml-2 text-xs text-gray-500">{p.phone}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm text-gray-700 mb-1.5">Canal</label>
@@ -307,7 +371,6 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                       onChange={e => setDirectMessage(prev => ({ ...prev, channel: e.target.value as any }))}
                       className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none">
                       <option value="whatsapp">WhatsApp</option>
-                      <option value="sms">SMS</option>
                       <option value="email">E-mail</option>
                     </select>
                   </div>
@@ -317,14 +380,14 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                     <label className="block text-sm text-gray-700 mb-1.5">Telefone</label>
                     <input type="text" value={directMessage.phone}
                       onChange={e => setDirectMessage(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-blue-500"
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-pink-500"
                       placeholder="(00) 00000-0000" />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-700 mb-1.5">E-mail</label>
                     <input type="text" value={directMessage.email}
                       onChange={e => setDirectMessage(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-blue-500"
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-pink-500"
                       placeholder="paciente@email.com" />
                   </div>
                 </div>
@@ -332,31 +395,65 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                   <label className="block text-sm text-gray-700 mb-1.5">Mensagem *</label>
                   <textarea rows={4} value={directMessage.message}
                     onChange={e => setDirectMessage(prev => ({ ...prev, message: e.target.value }))}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none resize-none focus:border-blue-500"
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none resize-none focus:border-pink-500"
                     placeholder={`Olá ${directMessage.patientName || '[NOME]'}, ...`} />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setDirectMessage({ patientName: '', phone: '', email: '', channel: 'whatsapp', message: '' })}
+                  <button onClick={() => { setDirectMessage({ patientName: '', phone: '', email: '', channel: 'whatsapp', message: '' }); setPatientQuery(''); }}
                     className="px-4 py-2 text-sm border border-gray-200 text-gray-700 hover:bg-gray-50">Limpar</button>
-                  <button onClick={() => {
+                  <button onClick={async () => {
                     if (!directMessage.patientName || !directMessage.message) return;
-                    const dest = directMessage.channel === 'email' ? directMessage.email : directMessage.phone;
-                    addCommunicationMessage({
+
+                    // Save record with pending status immediately
+                    const msg = addCommunicationMessage({
                       type: 'reminder',
                       patientName: directMessage.patientName,
                       channel: directMessage.channel,
                       subject: `Mensagem direta para ${directMessage.patientName}`,
                       body: directMessage.message,
-                      status: 'sent',
-                      sentAt: new Date().toISOString(),
+                      status: 'pending',
                     });
-                    addNotification({
-                      type: 'info',
-                      title: `Mensagem ${directMessage.channel.toUpperCase()} enviada`,
-                      message: `Mensagem enviada para ${directMessage.patientName} via ${directMessage.channel} (${dest})`,
-                      urgent: false,
-                    });
-                    toastSuccess(`Mensagem enviada para ${directMessage.patientName} via ${directMessage.channel}`);
+
+                    if (directMessage.channel === 'whatsapp' && directMessage.phone && selectedClinicId) {
+                      try {
+                        await sendEvolutionMessage({
+                          clinicId: selectedClinicId,
+                          messageId: msg.id,
+                          phone: directMessage.phone,
+                          text: directMessage.message,
+                        });
+                        setCommunicationMessages(prev =>
+                          prev.map(m => m.id === msg.id ? { ...m, status: 'sent', sentAt: new Date().toISOString() } : m),
+                        );
+                        addNotification({
+                          type: 'info',
+                          title: 'Mensagem WhatsApp enviada',
+                          message: `Mensagem enviada para ${directMessage.patientName} via WhatsApp (${directMessage.phone})`,
+                          urgent: false,
+                        });
+                        toastSuccess(`Mensagem WhatsApp enviada para ${directMessage.patientName}`);
+                      } catch (err: any) {
+                        setCommunicationMessages(prev =>
+                          prev.map(m => m.id === msg.id ? { ...m, status: 'failed' } : m),
+                        );
+                        toastError(`Falha ao enviar WhatsApp: ${err.message}`);
+                        return; // keep the form filled so user can retry
+                      }
+                    } else {
+                      // SMS or email — mark as sent (external providers not yet integrated)
+                      setCommunicationMessages(prev =>
+                        prev.map(m => m.id === msg.id ? { ...m, status: 'sent', sentAt: new Date().toISOString() } : m),
+                      );
+                      const dest = directMessage.channel === 'email' ? directMessage.email : directMessage.phone;
+                      addNotification({
+                        type: 'info',
+                        title: `Mensagem ${directMessage.channel.toUpperCase()} registrada`,
+                        message: `Mensagem registrada para ${directMessage.patientName} via ${directMessage.channel} (${dest})`,
+                        urgent: false,
+                      });
+                      toastSuccess(`Mensagem registrada para ${directMessage.patientName} via ${directMessage.channel}`);
+                    }
+
                     addAuditEntry({
                       user: currentUser?.name || 'Sistema',
                       userRole: currentUser?.role || 'admin',
@@ -366,7 +463,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                       status: 'success',
                     });
                     setDirectMessage(prev => ({ ...prev, message: '' }));
-                  }} className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700">
+                  }} className="flex items-center gap-2 px-5 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700">
                     <Send className="w-4 h-4" /> Enviar
                   </button>
                 </div>
@@ -395,7 +492,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
           {activeTab === 'campaigns' && (
             <div className="space-y-4">
               <div className="flex justify-end">
-                <button onClick={() => setShowCampaignModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700">
+                <button onClick={() => setShowCampaignModal(true)} className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700">
                   <Plus className="w-4 h-4" /> Nova Campanha
                 </button>
               </div>
@@ -416,7 +513,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                             <span className={`text-xs px-2 py-0.5 ${c.status === 'active' ? 'bg-green-100 text-green-700' : c.status === 'paused' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
                               {c.status === 'active' ? 'Ativa' : c.status === 'paused' ? 'Pausada' : 'Rascunho'}
                             </span>
-                            <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700">{c.channel.toUpperCase()}</span>
+                            <span className="text-xs px-2 py-0.5 bg-pink-50 text-pink-700">{c.channel.toUpperCase()}</span>
                           </div>
                           <p className="text-xs text-gray-500 line-clamp-1">{c.message}</p>
                           <p className="text-xs text-gray-400 mt-1">
@@ -459,7 +556,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                   type="text"
                   value={newCampaign.name}
                   onChange={e => setNewCampaign(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:border-pink-500"
                   placeholder="Ex: Retorno anual"
                 />
               </div>
@@ -481,7 +578,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                   rows={3}
                   value={newCampaign.message}
                   onChange={e => setNewCampaign(prev => ({ ...prev, message: e.target.value }))}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none resize-none focus:border-blue-500"
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none resize-none focus:border-pink-500"
                   placeholder="Olá [NOME], gostaríamos de convidá-lo para..."
                 />
               </div>
@@ -493,7 +590,6 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none"
                 >
                   <option value="whatsapp">WhatsApp</option>
-                  <option value="sms">SMS</option>
                   <option value="email">E-mail</option>
                 </select>
               </div>
@@ -501,7 +597,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowCampaignModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50">Cancelar</button>
-              <button onClick={handleCreateCampaign} className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700">Criar e Salvar</button>
+              <button onClick={handleCreateCampaign} className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700">Criar e Salvar</button>
             </div>
           </div>
         </div>

@@ -34,7 +34,7 @@ function getTypeIcon(type: string) {
 
 function getCategoryColor(type: string) {
   switch (type) {
-    case 'patient': return 'bg-blue-50 text-blue-600';
+    case 'patient': return 'bg-pink-50 text-pink-600';
     case 'appointment': return 'bg-green-50 text-green-600';
     case 'record': return 'bg-purple-50 text-purple-600';
     case 'financial': return 'bg-emerald-50 text-emerald-600';
@@ -130,7 +130,7 @@ export function RecentActions({ isOpen, onClose, onNavigate }: RecentActionsProp
           <div className="p-3 bg-gray-50 border-t border-gray-200 text-center">
             <button
               onClick={() => { onNavigate('audit'); onClose(); }}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-pink-600 hover:text-pink-700 font-medium"
             >
               Ver Histórico Completo
             </button>

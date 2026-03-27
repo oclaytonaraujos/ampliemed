@@ -1,9 +1,9 @@
 /**
  * JWT Configuration & Utilities
- * 
- * Provides utilities for JWT token management
- * Note: JWT_SECRET secrets should only be used on the backend/Edge Functions
- * This file provides type-safe access to JWT configuration
+ *
+ * Provides frontend-safe utilities for JWT token management.
+ * JWT secrets are NEVER available in the frontend — they exist only
+ * in Edge Functions via Deno.env.get("JWT_SECRET").
  */
 
 import { JWT as jwtConfig } from './envConfig';
@@ -11,26 +11,16 @@ import { JWT as jwtConfig } from './envConfig';
 // Type definitions
 export interface JWTConfig {
   accessTokenExpiry: number; // in seconds
-  hasSecrets: boolean;
 }
 
 /**
  * Get JWT configuration (safe for frontend)
- * Only exports expiry time, not the actual secrets
+ * Only exports expiry time — secrets are backend-only.
  */
 export function getJWTConfig(): JWTConfig {
   return {
     accessTokenExpiry: jwtConfig.accessTokenExpiry,
-    hasSecrets: !!jwtConfig.secret,
   };
-}
-
-/**
- * Check if JWT secrets are configured
- * Returns true if at least the primary secret is configured
- */
-export function isJWTConfigured(): boolean {
-  return !!jwtConfig.secret;
 }
 
 /**
@@ -59,20 +49,17 @@ export function wouldExpireWithin(seconds: number): boolean {
 
 /**
  * Frontend-safe information about JWT configuration
- * Use this to display info or make decisions about auth
  */
 export function getJWTInfo() {
   return {
     expirySeconds: jwtConfig.accessTokenExpiry,
     expiryMinutes: Math.round(jwtConfig.accessTokenExpiry / 60),
     expiryHours: Math.round(jwtConfig.accessTokenExpiry / 3600),
-    isConfigured: isJWTConfigured(),
   };
 }
 
 export default {
   getJWTConfig,
-  isJWTConfigured,
   getTokenExpiryMs,
   getAbsoluteExpiryTime,
   wouldExpireWithin,

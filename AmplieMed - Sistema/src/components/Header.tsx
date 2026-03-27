@@ -1,10 +1,11 @@
 import {
-  Users, Calendar, FileText, MessageSquare, Shield,
+  Users, Calendar, FileText, MessageSquare,
   LayoutDashboard, Menu, X, Bell, Settings, ChevronDown,
   Stethoscope, ClipboardList, Phone, LogOut, User,
   Calculator, Activity, Cloud, CloudOff, Loader2, Building2,
+  Shield, KeyRound,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import type { UserRole } from '../App';
 import { NotificationCenter } from './NotificationCenter';
@@ -41,14 +42,23 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [clinicDropdownOpen, setClinicDropdownOpen] = useState(false);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setUserMenuOpen(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   const userRole: UserRole = currentUser?.role || 'admin';
   const userName = currentUser?.name || 'Usuário';
   const userInitials = currentUser?.initials || 'U';
+
+  const avatarColors = ['bg-pink-600', 'bg-violet-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600'];
+  const avatarColor = avatarColors[userInitials.charCodeAt(0) % avatarColors.length];
   const userEmail = currentUser?.email || '';
   const userCRM = currentUser?.crm || '';
-  const clinicName = clinicSettings.clinicName || 'AmplieMed';
+  const clinicName = clinicSettings.clinicName || 'Minha Clínica';
   const clinicAddress = clinicSettings.address || '';
 
   // Current path → active module detection
@@ -107,19 +117,8 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
       icon: Phone,
       roles: ['admin', 'receptionist'],
       items: [
-        { id: 'communication', label: 'WhatsApp/SMS', roles: ['admin', 'receptionist'] },
+        { id: 'communication', label: 'WhatsApp', roles: ['admin', 'receptionist'] },
         { id: 'portal', label: 'Portal Paciente', roles: ['admin'] },
-      ],
-    },
-    {
-      id: 'sistema',
-      label: 'Sistema',
-      icon: Shield,
-      roles: ['admin'],
-      items: [
-        { id: 'access', label: 'Controle de Acesso', roles: ['admin'] },
-        { id: 'audit', label: 'Auditoria', roles: ['admin'] },
-        { id: 'analysis', label: 'Análise Técnica', roles: ['admin'] },
       ],
     },
   ];
@@ -184,7 +183,7 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
             <div className="flex items-center gap-2">
               {/* Sync Status Indicator */}
               <button className={`flex items-center justify-center w-10 h-10 rounded-full transition-all hover:bg-gray-50 ${
-                syncStatus === 'syncing' ? 'text-blue-600' :
+                syncStatus === 'syncing' ? 'text-pink-600' :
                 syncStatus === 'synced'  ? 'text-green-600' :
                 syncStatus === 'error'   ? 'text-red-600' :
                 'text-gray-400'
@@ -218,103 +217,67 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
               <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
+                  aria-expanded={userMenuOpen}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${avatarColor} text-white ${userMenuOpen ? 'ring-2 ring-offset-2 ring-pink-400' : 'hover:opacity-90'}`}
                 >
-                  <span className="text-sm font-medium text-gray-700">{userInitials}</span>
+                  <span className="text-sm font-semibold">{userInitials}</span>
                 </button>
 
                 {userMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 shadow-lg z-50">
-                      <div className="p-4 border-b border-gray-200">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-base text-gray-700">{userInitials}</span>
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                      <div className="border-b border-gray-200">
+                        <div className="p-4 flex items-center gap-3">
+                          <div className={`w-12 h-12 ${avatarColor} rounded-full flex items-center justify-center flex-shrink-0`}>
+                            <span className="text-base font-semibold text-white">{userInitials}</span>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900">{userName}</p>
-                            <p className="text-xs text-gray-500">{userEmail}</p>
+                            <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+                            {userCRM && <p className="text-xs text-gray-400">{userCRM}</p>}
                           </div>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {userCRM && <p>{userCRM}</p>}
-                          <p className="capitalize">Perfil: {roleLabel}</p>
+                        <div className="mx-4 mb-3 px-3 py-2 bg-pink-50 border border-pink-100 rounded-md flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-pink-500 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-pink-400">Clínica ativa</p>
+                            <p className="text-sm font-semibold text-pink-700 truncate">{clinicName}</p>
+                          </div>
                         </div>
                       </div>
 
                       <div className="p-2">
-                        {/* Clinic Dropdown Button */}
-                        <button
-                          onClick={(e) => { 
-                            e.stopPropagation();
-                            setClinicDropdownOpen(!clinicDropdownOpen);
-                          }}
-                          className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-sm text-blue-600 hover:bg-blue-50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Building2 className="w-4 h-4" />
-                            <span>{clinicName}</span>
-                          </div>
-                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${clinicDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {/* Clinic Dropdown Content */}
-                        {clinicDropdownOpen && (
-                          <div className="mt-1 bg-gray-50 border border-gray-200">
-                            <div className="p-2">
-                              <p className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                Unidade Ativa
-                              </p>
-
-                              {/* Single clinic card */}
-                              <div className="px-3 py-3 flex items-center gap-3 bg-blue-50 border border-blue-200 mx-1 mb-1">
-                                <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-blue-900 truncate">{clinicName}</p>
-                                  {clinicAddress && (
-                                    <p className="text-xs text-blue-600 truncate">{clinicAddress}</p>
-                                  )}
-                                </div>
-                                <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
-                              </div>
-
-                              {!clinicSettings.clinicName && (
-                                <p className="px-3 py-2 text-xs text-amber-600">
-                                  Configure o nome da clínica em Configurações.
-                                </p>
-                              )}
-                            </div>
-
-                            <div className="border-t border-gray-200 p-2 bg-white">
-                              <button
-                                onClick={() => {
-                                  navigate('/configuracoes');
-                                  setUserMenuOpen(false);
-                                  setClinicDropdownOpen(false);
-                                }}
-                                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-                              >
-                                <Settings className="w-4 h-4" />
-                                <span>Configurações da Clínica</span>
-                              </button>
-                            </div>
-                          </div>
-                        )}
 
                         <button
                           onClick={() => { navigate('/configuracoes'); setUserMenuOpen(false); }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                         >
                           <User className="w-4 h-4" />
                           Meu Perfil
                         </button>
+
+                        {userRole === 'admin' && (
+                          <>
+                            <div className="my-1 border-t border-gray-100" />
+                            <p className="px-3 py-1.5 text-xs font-medium text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                              <Shield className="w-3 h-3" /> Sistema
+                            </p>
+                            <button
+                              onClick={() => { goToModule('access'); setUserMenuOpen(false); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                            >
+                              <KeyRound className="w-4 h-4" />
+                              Controle de Acesso
+                            </button>
+                          </>
+                        )}
                       </div>
 
                       <div className="border-t border-gray-200 p-2">
                         <button
                           onClick={() => { logout(); setUserMenuOpen(false); navigate('/login'); }}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
                           Sair do Sistema
@@ -355,12 +318,12 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
                   key={item.id}
                   onClick={() => goToModule(item.id)}
                   className={`relative flex items-center gap-2 px-5 py-4 transition-all duration-200 whitespace-nowrap ${
-                    isActive ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                    isActive ? 'text-pink-600' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   <Icon className="w-4 h-4" strokeWidth={2} />
                   <span className="text-sm">{item.label}</span>
-                  {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+                  {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-pink-600" />}
                 </button>
               );
             })}
@@ -376,13 +339,13 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
                   <button
                     onClick={() => toggleDropdown(category.id)}
                     className={`relative flex items-center gap-2 px-5 py-4 transition-all duration-200 whitespace-nowrap ${
-                      isActive ? 'text-blue-600' : 'text-gray-600 hover:text-gray-900'
+                      isActive ? 'text-pink-600' : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
                     <Icon className="w-4 h-4" strokeWidth={2} />
                     <span className="text-sm">{category.label}</span>
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                    {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />}
+                    {isActive && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-pink-600" />}
                   </button>
 
                   {isOpen && (
@@ -397,7 +360,7 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
                               key={item.id}
                               onClick={() => goToModule(item.id)}
                               className={`w-full text-left px-5 py-3 text-sm transition-colors ${
-                                isItemActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                                isItemActive ? 'bg-pink-50 text-pink-600' : 'text-gray-700 hover:bg-gray-50'
                               }`}
                             >
                               {item.label}
@@ -420,8 +383,8 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
           <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4">
             {/* User Info Mobile */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-100 md:hidden">
-              <div className="w-11 h-11 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-sm text-gray-700">{userInitials}</span>
+              <div className={`w-11 h-11 ${avatarColor} rounded-full flex items-center justify-center`}>
+                <span className="text-sm font-semibold text-white">{userInitials}</span>
               </div>
               <div>
                 <p className="text-sm text-gray-900">{userName}</p>
@@ -439,7 +402,7 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
                     key={item.id}
                     onClick={() => goToModule(item.id)}
                     className={`flex items-center gap-3 px-4 py-3 transition-all ${
-                      isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                      isActive ? 'bg-pink-50 text-pink-600' : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="w-5 h-5" strokeWidth={2} />
@@ -475,7 +438,7 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
                               key={item.id}
                               onClick={() => goToModule(item.id)}
                               className={`w-full text-left px-12 py-2.5 text-sm transition-colors ${
-                                isItemActive ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-gray-900'
+                                isItemActive ? 'text-pink-600 bg-pink-50' : 'text-gray-700 hover:text-gray-900'
                               }`}
                             >
                               {item.label}

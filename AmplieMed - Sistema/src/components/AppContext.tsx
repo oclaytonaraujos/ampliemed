@@ -806,6 +806,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCampaigns(data.campaigns);
         setFileAttachments(data.fileAttachments);
         setClinicSettings(data.clinicSettings || DEFAULT_SETTINGS);
+        if (data.clinicId) setSelectedClinicId(data.clinicId);
 
         dataLoadedRef.current = true;
         console.log('[Data] All tables loaded successfully');
@@ -1164,6 +1165,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCurrentUser(user);
         setIsAuthenticated(true);
         dataLoadedRef.current = false;
+        if (result.clinic?.id) setSelectedClinicId(result.clinic.id);
 
         const entry: AuditEntry = {
           id: crypto.randomUUID(),

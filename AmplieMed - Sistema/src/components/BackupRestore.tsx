@@ -143,7 +143,7 @@ export function BackupRestore() {
       {/* Storage stats */}
       <div className="bg-white border border-gray-200 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <HardDrive className="w-5 h-5 text-blue-600" />
+          <HardDrive className="w-5 h-5 text-pink-600" />
           <h3 className="text-sm font-medium text-gray-900">Uso do Armazenamento (Supabase)</h3>
         </div>
         <div className="flex items-center gap-4 mb-3">
@@ -198,12 +198,12 @@ export function BackupRestore() {
       <div className="bg-white border border-gray-200 p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-blue-600" />
+            <RefreshCw className="w-5 h-5 text-pink-600" />
             <h3 className="text-sm font-medium text-gray-900">Auto-Backup (Sessão)</h3>
           </div>
           <button
             onClick={handleAutoBackup}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs border border-blue-300 text-blue-700 hover:bg-blue-50 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs border border-pink-300 text-pink-700 hover:bg-pink-50 transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Criar agora
@@ -217,7 +217,7 @@ export function BackupRestore() {
           <div className="space-y-2">
             {autoBackups.map(backup => (
               <div key={backup.id} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100">
-                <Clock className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <Clock className="w-4 h-4 text-pink-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-800">{formatDate(backup.createdAt)}</p>
                   <p className="text-xs text-gray-500">{backup.records} registros • {formatSize(backup.size)}</p>
@@ -266,11 +266,11 @@ export function BackupRestore() {
       </div>
 
       {/* LGPD note */}
-      <div className="bg-blue-50 border border-blue-200 p-4 flex items-start gap-3">
-        <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+      <div className="bg-pink-50 border border-pink-200 p-4 flex items-start gap-3">
+        <Shield className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-xs font-medium text-blue-900">Conformidade LGPD — Retenção de Dados</p>
-          <p className="text-xs text-blue-700 mt-0.5">
+          <p className="text-xs font-medium text-pink-900">Conformidade LGPD — Retenção de Dados</p>
+          <p className="text-xs text-pink-700 mt-0.5">
             Dados de saúde devem ser retidos por no mínimo 20 anos (CFM). Mantenha backups regulares
             em local seguro. Os dados são persistidos no Supabase com sincronização automática.
           </p>

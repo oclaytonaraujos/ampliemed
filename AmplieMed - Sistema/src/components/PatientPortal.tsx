@@ -43,14 +43,14 @@ export function PatientPortal() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-blue-600 text-white p-8">
+      <div className="bg-pink-600 text-white p-8">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-white mb-2">
                 Bem-vindo{patientData.name ? `, ${patientData.name.split(' ')[0]}` : ' ao Portal do Paciente'}
               </h1>
-              <p className="text-blue-100">Acesse seu histórico médico, consultas e muito mais</p>
+              <p className="text-pink-100">Acesse seu histórico médico, consultas e muito mais</p>
             </div>
             <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
               {patientData.name ? (
@@ -70,7 +70,7 @@ export function PatientPortal() {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 -mt-8 mb-6">
           <div className="bg-white border border-gray-200 p-5">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-blue-600 flex items-center justify-center">
+              <div className="w-10 h-10 bg-indigo-700 flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
               <p className="text-2xl font-semibold text-gray-900">{upcomingAppointments.length}</p>
@@ -80,7 +80,7 @@ export function PatientPortal() {
 
           <div className="bg-white border border-gray-200 p-5">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-green-600 flex items-center justify-center">
+              <div className="w-10 h-10 bg-indigo-700 flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <p className="text-2xl font-semibold text-gray-900">{patientMedicalRecords.length}</p>
@@ -90,7 +90,7 @@ export function PatientPortal() {
 
           <div className="bg-white border border-gray-200 p-5">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-orange-600 flex items-center justify-center">
+              <div className="w-10 h-10 bg-indigo-700 flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-white" />
               </div>
               <p className="text-2xl font-semibold text-gray-900">
@@ -102,7 +102,7 @@ export function PatientPortal() {
 
           <div className="bg-white border border-gray-200 p-5">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 bg-indigo-700 flex items-center justify-center">
                 <Video className="w-5 h-5 text-white" />
               </div>
               <p className="text-2xl font-semibold text-gray-900">
@@ -143,7 +143,7 @@ export function PatientPortal() {
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`flex items-center gap-2 px-6 py-4 text-sm border-b-2 transition-all whitespace-nowrap ${
                       activeTab === tab.id
-                        ? 'border-blue-600 text-blue-600'
+                        ? 'border-pink-600 text-pink-600'
                         : 'border-transparent text-gray-600 hover:text-gray-900'
                     }`}
                   >
@@ -161,7 +161,7 @@ export function PatientPortal() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-gray-900">Próximas Consultas</h3>
-                  <button className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+                  <button className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
                     Agendar Nova Consulta
                   </button>
                 </div>
@@ -256,7 +256,7 @@ export function PatientPortal() {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <FileText className="w-5 h-5 text-blue-600" />
+                            <FileText className="w-5 h-5 text-pink-600" />
                             <h4 className="text-gray-900">{record.type}</h4>
                             {record.signed && (
                               <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700">Assinado</span>
@@ -334,7 +334,7 @@ export function PatientPortal() {
                             </td>
                             <td className="px-6 py-4 text-right">
                               {payment.status === 'pending' ? (
-                                <button className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm">
+                                <button className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm">
                                   Pagar Agora
                                 </button>
                               ) : (
@@ -390,15 +390,15 @@ export function PatientPortal() {
                   </div>
                 </div>
 
-                <div className="p-5 bg-blue-50 border border-blue-200">
+                <div className="p-5 bg-pink-50 border border-pink-200">
                   <div className="flex items-start gap-3">
-                    <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <Shield className="w-5 h-5 text-pink-600 mt-0.5" />
                     <div>
                       <h4 className="text-sm font-medium text-gray-900 mb-2">Privacidade e Proteção de Dados</h4>
                       <p className="text-xs text-gray-600 mb-3">
                         Seus dados estão protegidos pela Lei Geral de Proteção de Dados (LGPD). Você tem direito a acessar, corrigir e solicitar a exclusão de suas informações.
                       </p>
-                      <button className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                      <button className="text-xs text-pink-600 hover:text-pink-700 font-medium">
                         Gerenciar Consentimentos LGPD →
                       </button>
                     </div>

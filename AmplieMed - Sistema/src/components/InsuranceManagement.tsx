@@ -111,13 +111,13 @@ export function InsuranceManagement({ userRole }: InsuranceManagementProps) {
           <div className="flex border border-gray-200 bg-white">
             {[{ id: 'list', label: 'Convênios' }, { id: 'procedures', label: 'Procedimentos TUSS' }, { id: 'authorizations', label: 'Autorizações' }].map(v => (
               <button key={v.id} onClick={() => setActiveView(v.id as any)}
-                className={`px-4 py-2.5 text-sm border-r last:border-0 border-gray-200 transition-colors ${activeView === v.id ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
+                className={`px-4 py-2.5 text-sm border-r last:border-0 border-gray-200 transition-colors ${activeView === v.id ? 'bg-pink-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}>
                 {v.label}
               </button>
             ))}
           </div>
           {activeView === 'list' && (
-            <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700">
+            <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700">
               <Plus className="w-4 h-4" /> Novo Convênio
             </button>
           )}
@@ -144,10 +144,10 @@ export function InsuranceManagement({ userRole }: InsuranceManagementProps) {
           ) : (
             <div className="space-y-3">
               {filteredInsurances.map(ins => (
-                <div key={ins.id} className="bg-white border border-gray-200 p-6 hover:border-blue-300 transition-colors">
+                <div key={ins.id} className="bg-white border border-gray-200 p-6 hover:border-pink-300 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
-                      <div className="p-3 bg-blue-50"><CreditCard className="w-6 h-6 text-blue-600" /></div>
+                      <div className="p-3 bg-pink-50"><CreditCard className="w-6 h-6 text-pink-600" /></div>
                       <div>
                         <div className="flex items-center gap-3 mb-2 flex-wrap">
                           <h3 className="font-medium text-gray-900">{ins.name}</h3>
@@ -173,10 +173,10 @@ export function InsuranceManagement({ userRole }: InsuranceManagementProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button onClick={() => { setSelectedInsuranceId(ins.id); setActiveView('procedures'); }} className="px-3 py-1.5 text-xs text-blue-600 border border-blue-200 hover:bg-blue-50">
+                      <button onClick={() => { setSelectedInsuranceId(ins.id); setActiveView('procedures'); }} className="px-3 py-1.5 text-xs text-pink-600 border border-pink-200 hover:bg-pink-50">
                         Ver Tabela TUSS
                       </button>
-                      <button onClick={() => openEdit(ins)} className="p-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => openEdit(ins)} className="p-2 text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded"><Edit className="w-4 h-4" /></button>
                       {userRole === 'admin' && (
                         <button onClick={() => handleDelete(ins)} className="p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded"><Trash2 className="w-4 h-4" /></button>
                       )}
@@ -199,7 +199,7 @@ export function InsuranceManagement({ userRole }: InsuranceManagementProps) {
                 {insurances.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
             )}
-            <button onClick={() => setActiveView('list')} className="text-sm text-blue-600 hover:underline">← Voltar</button>
+            <button onClick={() => setActiveView('list')} className="text-sm text-pink-600 hover:underline">← Voltar</button>
           </div>
           <div className="bg-white border border-gray-200">
             <div className="px-5 py-4 border-b border-gray-200 bg-gray-50">
@@ -218,7 +218,7 @@ export function InsuranceManagement({ userRole }: InsuranceManagementProps) {
                 <tbody className="divide-y divide-gray-100">
                   {tussDatabase.slice(0, 20).map(t => (
                     <tr key={t.code} className="hover:bg-gray-50">
-                      <td className="px-5 py-3 font-mono text-xs text-blue-700">{t.code}</td>
+                      <td className="px-5 py-3 font-mono text-xs text-pink-700">{t.code}</td>
                       <td className="px-5 py-3 text-sm text-gray-800">{t.description}</td>
                       <td className="px-5 py-3 text-xs text-gray-500">{t.category}</td>
                       <td className="px-5 py-3"><span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 capitalize">{t.type}</span></td>
@@ -234,12 +234,12 @@ export function InsuranceManagement({ userRole }: InsuranceManagementProps) {
 
       {activeView === 'authorizations' && (
         <div className="space-y-4">
-          <button onClick={() => setActiveView('list')} className="text-sm text-blue-600 hover:underline">← Voltar</button>
+          <button onClick={() => setActiveView('list')} className="text-sm text-pink-600 hover:underline">← Voltar</button>
           <div className="bg-white border border-gray-200 p-12 text-center">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">Nenhuma autorização pendente</p>
             <p className="text-sm text-gray-400 mt-1">As solicitações de autorização prévia aparecem aqui conforme criadas.</p>
-            <button className="mt-4 px-5 py-2.5 bg-blue-600 text-white text-sm hover:bg-blue-700">Nova Solicitação</button>
+            <button className="mt-4 px-5 py-2.5 bg-pink-600 text-white text-sm hover:bg-pink-700">Nova Solicitação</button>
           </div>
         </div>
       )}
@@ -268,7 +268,7 @@ export function InsuranceManagement({ userRole }: InsuranceManagementProps) {
                   <label className="block text-sm text-gray-700 mb-1.5">{f.label}</label>
                   <input type={f.type} placeholder={(f as any).placeholder || ''} value={(formData as any)[f.key] || ''}
                     onChange={(e) => setFormData(p => ({ ...p, [f.key]: f.type === 'number' ? parseInt(e.target.value) || 0 : e.target.value }))}
-                    className={`w-full px-3 py-2.5 bg-gray-50 border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white ${errors[f.key] ? 'border-red-400' : 'border-gray-200'}`} />
+                    className={`w-full px-3 py-2.5 bg-gray-50 border focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white ${errors[f.key] ? 'border-red-400' : 'border-gray-200'}`} />
                   {errors[f.key] && <p className="text-xs text-red-600 mt-1">{errors[f.key]}</p>}
                 </div>
               ))}
@@ -292,7 +292,7 @@ export function InsuranceManagement({ userRole }: InsuranceManagementProps) {
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowAddModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50">Cancelar</button>
-              <button onClick={handleSave} className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700">
+              <button onClick={handleSave} className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700">
                 {editingId ? 'Salvar Alterações' : 'Cadastrar Convênio'}
               </button>
             </div>

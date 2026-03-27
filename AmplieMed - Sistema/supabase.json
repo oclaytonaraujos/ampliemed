@@ -12,6 +12,14 @@
     {
       "slug": "clinic-invite",
       "importMap": "shared/import_map.json"
+    },
+    {
+      "slug": "evolution_send_message",
+      "importMap": "shared/import_map.json"
+    },
+    {
+      "slug": "evolution_webhook",
+      "importMap": "shared/import_map.json"
     }
   ]
 }

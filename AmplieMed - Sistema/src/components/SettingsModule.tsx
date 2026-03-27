@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { UserRole } from '../App';
 import { useApp } from './AppContext';
-import { CheckCircle, User, Lock, Bell, Palette, Settings, Shield, Mail, Phone, Globe, Database, Trash2, AlertTriangle, Download, Upload, X } from 'lucide-react';
+import { CheckCircle, User, Lock, Bell, Palette, Settings, Shield, Mail, Phone, Globe, Database, Trash2, AlertTriangle, Download, Upload, X, MessageSquare, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { medicalToast } from '../utils/toastService';
 import { BackupRestore } from './BackupRestore';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { FileUpload } from './FileUpload';
 import { useAvatarUrl } from '../hooks/useFileUrl';
@@ -15,7 +15,10 @@ interface SettingsModuleProps {
 }
 
 export function SettingsModule({ userRole }: SettingsModuleProps) {
-  const [activeTab, setActiveTab] = useState('profile');
+  const [searchParams] = useSearchParams();
+  const validTabs = ['profile', 'security', 'notifications', 'appearance', 'system', 'whatsapp', 'privacy'];
+  const initialTab = validTabs.includes(searchParams.get('tab') ?? '') ? searchParams.get('tab')! : 'profile';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const tabs = [
     { id: 'profile', label: 'Perfil', icon: User },
@@ -23,6 +26,7 @@ export function SettingsModule({ userRole }: SettingsModuleProps) {
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'appearance', label: 'Aparência', icon: Palette },
     { id: 'system', label: 'Sistema', icon: Settings },
+    { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
     { id: 'privacy', label: 'Privacidade', icon: Shield },
   ];
 
@@ -52,7 +56,7 @@ export function SettingsModule({ userRole }: SettingsModuleProps) {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${
                       activeTab === tab.id
-                        ? 'bg-blue-50 text-blue-600'
+                        ? 'bg-pink-50 text-pink-600'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
@@ -73,6 +77,7 @@ export function SettingsModule({ userRole }: SettingsModuleProps) {
             {activeTab === 'notifications' && <NotificationSettings />}
             {activeTab === 'appearance' && <AppearanceSettings />}
             {activeTab === 'system' && <SystemSettings />}
+            {activeTab === 'whatsapp' && <WhatsAppSettings />}
             {activeTab === 'privacy' && <PrivacySettings />}
           </div>
         </div>
@@ -89,7 +94,7 @@ function ProfileSettings() {
     email: currentUser?.email || '',
     phone: currentUser?.phone || '',
     specialty: currentUser?.specialty || 'Clínica Geral',
-    clinicName: clinicSettings.clinicName || 'AmplieMed Clínica',
+    clinicName: clinicSettings.clinicName || '',
     clinicCNPJ: clinicSettings.cnpj || '',
     clinicPhone: clinicSettings.phone || '',
     clinicAddress: clinicSettings.address || '',
@@ -117,11 +122,11 @@ function ProfileSettings() {
       <h3 className="text-gray-900 mb-6">Informações do Perfil</h3>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 bg-blue-100 flex items-center justify-center overflow-hidden">
+          <div className="w-20 h-20 bg-pink-100 flex items-center justify-center overflow-hidden">
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-2xl text-blue-700">{currentUser?.initials || '?'}</span>
+              <span className="text-2xl text-pink-700">{currentUser?.initials || '?'}</span>
             )}
           </div>
           <div>
@@ -142,13 +147,13 @@ function ProfileSettings() {
               <div key={f.key}>
                 <label className="block text-sm text-gray-700 mb-2">{f.label}</label>
                 <input type={f.type} value={(form as any)[f.key]} onChange={(e) => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600" />
+                  className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600" />
               </div>
             ))}
             <div className="md:col-span-2">
               <label className="block text-sm text-gray-700 mb-2">Especialidade</label>
               <select value={form.specialty} onChange={(e) => setForm(p => ({ ...p, specialty: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600">
+                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600">
                 {['Clínica Geral', 'Cardiologia', 'Dermatologia', 'Ortopedia', 'Pediatria', 'Ginecologia', 'Neurologia', 'Psiquiatria', 'Endocrinologia', 'Oncologia'].map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
@@ -167,7 +172,7 @@ function ProfileSettings() {
               <div key={f.key}>
                 <label className="block text-sm text-gray-700 mb-2">{f.label}</label>
                 <input type={f.type} value={(form as any)[f.key]} onChange={(e) => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600" />
+                  className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600" />
               </div>
             ))}
           </div>
@@ -222,7 +227,7 @@ function ProfileSettings() {
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
           <button className="px-6 py-2 border border-gray-200 text-gray-700 text-sm hover:bg-gray-50 transition-colors">Cancelar</button>
-          <button onClick={handleSave} className="px-6 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">Salvar Alterações</button>
+          <button onClick={handleSave} className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">Salvar Alterações</button>
         </div>
       </div>
     </div>
@@ -243,21 +248,21 @@ function SecuritySettings() {
               <label className="block text-sm text-gray-700 mb-2">Senha Atual</label>
               <input
                 type="password"
-                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600"
               />
             </div>
             <div>
               <label className="block text-sm text-gray-700 mb-2">Nova Senha</label>
               <input
                 type="password"
-                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600"
               />
             </div>
             <div>
               <label className="block text-sm text-gray-700 mb-2">Confirmar Nova Senha</label>
               <input
                 type="password"
-                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600"
+                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600"
               />
             </div>
           </div>
@@ -272,7 +277,7 @@ function SecuritySettings() {
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-checked:bg-blue-600 transition-colors">
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-checked:bg-pink-600 transition-colors">
                 <div className="h-6 w-5 bg-white border border-gray-300 transition-transform peer-checked:translate-x-6"></div>
               </div>
             </label>
@@ -297,7 +302,7 @@ function SecuritySettings() {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button className="px-6 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">
+          <button className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">
             Salvar Alterações
           </button>
         </div>
@@ -325,17 +330,17 @@ function NotificationSettings() {
           <h4 className="text-sm font-medium text-gray-900 mb-4">Canais de Notificação</h4>
           <div className="space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600" />
+              <input type="checkbox" defaultChecked className="w-4 h-4 text-pink-600" />
               <Mail className="w-4 h-4 text-gray-600" />
               <span className="text-sm text-gray-700">E-mail</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600" />
+              <input type="checkbox" defaultChecked className="w-4 h-4 text-pink-600" />
               <Phone className="w-4 h-4 text-gray-600" />
               <span className="text-sm text-gray-700">SMS</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" defaultChecked className="w-4 h-4 text-blue-600" />
+              <input type="checkbox" defaultChecked className="w-4 h-4 text-pink-600" />
               <Bell className="w-4 h-4 text-gray-600" />
               <span className="text-sm text-gray-700">Notificações Push</span>
             </label>
@@ -354,7 +359,7 @@ function NotificationSettings() {
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" defaultChecked className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-checked:bg-blue-600 transition-colors">
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-checked:bg-pink-600 transition-colors">
                     <div className="h-6 w-5 bg-white border border-gray-300 transition-transform peer-checked:translate-x-6"></div>
                   </div>
                 </label>
@@ -364,7 +369,7 @@ function NotificationSettings() {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button className="px-6 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">
+          <button className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">
             Salvar Preferências
           </button>
         </div>
@@ -383,7 +388,7 @@ function AppearanceSettings() {
         <div className="pb-6 border-b border-gray-200">
           <h4 className="text-sm font-medium text-gray-900 mb-4">Tema do Sistema</h4>
           <div className="grid grid-cols-3 gap-4">
-            <button className="p-4 border-2 border-blue-600 bg-blue-50 text-center transition-colors">
+            <button className="p-4 border-2 border-pink-600 bg-pink-50 text-center transition-colors">
               <div className="w-full h-20 bg-white border border-gray-200 mb-2"></div>
               <p className="text-sm text-gray-900">Claro</p>
             </button>
@@ -401,7 +406,7 @@ function AppearanceSettings() {
         {/* Language */}
         <div className="pb-6 border-b border-gray-200">
           <h4 className="text-sm font-medium text-gray-900 mb-4">Idioma do Sistema</h4>
-          <select className="w-full md:w-64 px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600">
+          <select className="w-full md:w-64 px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600">
             <option>Português (Brasil)</option>
             <option>English (US)</option>
             <option>Español</option>
@@ -413,7 +418,7 @@ function AppearanceSettings() {
           <h4 className="text-sm font-medium text-gray-900 mb-4">Fuso Horário</h4>
           <div className="flex items-center gap-3">
             <Globe className="w-5 h-5 text-gray-600" />
-            <select className="flex-1 md:flex-initial md:w-80 px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600">
+            <select className="flex-1 md:flex-initial md:w-80 px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600">
               <option>America/São_Paulo (GMT-3)</option>
               <option>America/New_York (GMT-5)</option>
               <option>Europe/London (GMT+0)</option>
@@ -422,7 +427,7 @@ function AppearanceSettings() {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button className="px-6 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">
+          <button className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">
             Salvar Alterações
           </button>
         </div>
@@ -443,7 +448,7 @@ function SystemSettings() {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200">
               <div className="flex items-center gap-3">
-                <Database className="w-5 h-5 text-blue-600" />
+                <Database className="w-5 h-5 text-pink-600" />
                 <div>
                   <p className="text-sm text-gray-900">Backup Automático</p>
                   <p className="text-xs text-gray-500">Último backup: Hoje, 03:00</p>
@@ -494,11 +499,152 @@ function SystemSettings() {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button className="px-6 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">
+          <button className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">
             Salvar Configurações
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function WhatsAppSettings() {
+  const { selectedClinicId } = useApp();
+  const [instanceId, setInstanceId] = useState('');
+  const [savedInstanceId, setSavedInstanceId] = useState<string | null>(null);
+  const [instanceStatus, setInstanceStatus] = useState<string>('disconnected');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!selectedClinicId) {
+      setLoading(false);
+      return;
+    }
+    getSupabase()
+      .from('clinics')
+      .select('evolution_instance_id, evolution_instance_status')
+      .eq('id', selectedClinicId)
+      .single()
+      .then(({ data, error: err }) => {
+        if (err) {
+          setError('Não foi possível carregar a configuração WhatsApp.');
+        } else {
+          setSavedInstanceId(data?.evolution_instance_id ?? null);
+          setInstanceId(data?.evolution_instance_id ?? '');
+          setInstanceStatus(data?.evolution_instance_status ?? 'disconnected');
+        }
+        setLoading(false);
+      });
+  }, [selectedClinicId]);
+
+  const handleSave = async () => {
+    if (!selectedClinicId) return;
+    setError('');
+    setSaving(true);
+    const { error: updateErr } = await getSupabase()
+      .from('clinics')
+      .update({ evolution_instance_id: instanceId.trim() || null })
+      .eq('id', selectedClinicId);
+    setSaving(false);
+    if (updateErr) {
+      setError('Erro ao salvar: ' + updateErr.message);
+    } else {
+      setSavedInstanceId(instanceId.trim() || null);
+      medicalToast.settingsSaved();
+    }
+  };
+
+  const isConnected = instanceStatus === 'connected';
+  const isConfigured = !!savedInstanceId;
+
+  return (
+    <div className="p-6">
+      <h3 className="text-gray-900 mb-1">Integração WhatsApp</h3>
+      <p className="text-sm text-gray-500 mb-6">Configure a instância Evolution API para envio de mensagens aos pacientes</p>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Carregando configuração...
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Status banner */}
+          <div className={`flex items-center gap-3 p-4 border ${isConnected ? 'bg-green-50 border-green-200' : isConfigured ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}`}>
+            {isConnected
+              ? <Wifi className="w-5 h-5 text-green-600 flex-shrink-0" />
+              : <WifiOff className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            }
+            <div>
+              <p className={`text-sm font-medium ${isConnected ? 'text-green-800' : 'text-gray-700'}`}>
+                {isConnected ? 'Instância conectada' : isConfigured ? 'Instância configurada — aguardando conexão' : 'WhatsApp não configurado'}
+              </p>
+              {savedInstanceId && (
+                <p className="text-xs text-gray-500 mt-0.5 font-mono">{savedInstanceId}</p>
+              )}
+            </div>
+            {isConfigured && (
+              <span className={`ml-auto text-xs px-2 py-1 font-medium ${isConnected ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                {isConnected ? 'CONECTADO' : instanceStatus.toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {/* Instance name field */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Configuração da Instância</h4>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-700 mb-2">
+                  Nome da Instância Evolution API
+                </label>
+                <input
+                  type="text"
+                  value={instanceId}
+                  onChange={(e) => setInstanceId(e.target.value)}
+                  placeholder="ex: ampliemed"
+                  className="w-full md:w-96 px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600 font-mono text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Nome exato da instância criada no painel Evolution API. Deixe em branco para desativar o WhatsApp nesta clínica.
+                </p>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-sm text-red-700">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Deploy instructions */}
+          <div className="bg-pink-50 border border-pink-200 p-4">
+            <p className="text-xs font-medium text-pink-900 mb-2">Pré-requisitos para funcionamento</p>
+            <ol className="text-xs text-pink-800 space-y-1 list-decimal list-inside">
+              <li>Preencher <span className="font-mono">EVOLUTION_API_URL</span>, <span className="font-mono">EVOLUTION_API_KEY</span>, <span className="font-mono">EVOLUTION_INSTANCE_NAME</span> e <span className="font-mono">EVOLUTION_WEBHOOK_SECRET</span> no <span className="font-mono">.env</span></li>
+              <li>Executar <span className="font-mono">supabase secrets set --env-file .env</span></li>
+              <li>Executar <span className="font-mono">supabase functions deploy evolution_send_message</span> e <span className="font-mono">evolution_webhook</span></li>
+              <li>Aplicar a migration <span className="font-mono">20260327_evolution_api.sql</span> no banco de dados</li>
+              <li>Definir o nome da instância acima e salvar</li>
+            </ol>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button
+              onClick={handleSave}
+              disabled={saving || instanceId === (savedInstanceId ?? '')}
+              className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {saving ? 'Salvando...' : 'Salvar Configuração'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -577,12 +723,12 @@ function PrivacySettings() {
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" defaultChecked disabled className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-checked:bg-blue-600 opacity-50">
+                <div className="w-11 h-6 bg-gray-200 peer-checked:bg-pink-600 opacity-50">
                   <div className="h-6 w-5 bg-white border border-gray-300 peer-checked:translate-x-6"></div>
                 </div>
               </label>
             </div>
-            <p className="text-xs text-gray-500 bg-blue-50 p-3 border border-blue-200">
+            <p className="text-xs text-gray-500 bg-pink-50 p-3 border border-pink-200">
               <Shield className="w-4 h-4 inline mr-2" />
               Logs de auditoria são obrigatórios por conformidade com LGPD
             </p>
@@ -592,7 +738,7 @@ function PrivacySettings() {
         {/* Data Retention */}
         <div className="pb-6 border-b border-gray-200">
           <h4 className="text-sm font-medium text-gray-900 mb-4">Retenção de Dados</h4>
-          <select className="w-full md:w-64 px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-600">
+          <select className="w-full md:w-64 px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600">
             <option>5 anos (Padrão CFM)</option>
             <option>10 anos</option>
             <option>20 anos (Prontuários permanentes)</option>
@@ -644,7 +790,7 @@ function PrivacySettings() {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button className="px-6 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">
+          <button className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">
             Salvar Configurações
           </button>
         </div>

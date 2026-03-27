@@ -100,7 +100,7 @@ export function OnboardingTour({ isOpen, onClose }: OnboardingTourProps) {
           {/* Progress Bar */}
           <div className="h-1 bg-gray-200">
             <div
-              className="h-1 bg-blue-600 transition-all duration-300"
+              className="h-1 bg-pink-600 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -108,11 +108,11 @@ export function OnboardingTour({ isOpen, onClose }: OnboardingTourProps) {
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-50">
+              <div className="p-2 bg-pink-50">
                 {currentStep === steps.length - 1 ? (
-                  <CheckCircle className="w-5 h-5 text-blue-600" />
+                  <CheckCircle className="w-5 h-5 text-pink-600" />
                 ) : (
-                  <span className="text-blue-600 font-bold">{currentStep + 1}/{steps.length}</span>
+                  <span className="text-pink-600 font-bold">{currentStep + 1}/{steps.length}</span>
                 )}
               </div>
               <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
@@ -130,8 +130,8 @@ export function OnboardingTour({ isOpen, onClose }: OnboardingTourProps) {
             <p className="text-gray-700 leading-relaxed">{step.description}</p>
 
             {currentStep === 0 && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200">
-                <p className="text-sm text-blue-900">
+              <div className="mt-4 p-4 bg-pink-50 border border-pink-200">
+                <p className="text-sm text-pink-900">
                   💡 <strong>Dica:</strong> Você pode acessar este tutorial novamente através do menu de Ajuda.
                 </p>
               </div>
@@ -159,7 +159,7 @@ export function OnboardingTour({ isOpen, onClose }: OnboardingTourProps) {
               )}
               <button
                 onClick={handleNext}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
               >
                 {currentStep === steps.length - 1 ? 'Concluir' : 'Próximo'}
                 {currentStep < steps.length - 1 && <ChevronRight className="w-4 h-4" />}

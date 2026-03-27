@@ -44,7 +44,7 @@ const EMPTY_FORM: Omit<Professional, 'id' | 'createdAt'> & { password?: string; 
 };
 
 export function ProfessionalManagement({ userRole }: ProfessionalManagementProps) {
-  const { professionals, addProfessional, updateProfessional, deleteProfessional, appointments, addNotification, addAuditEntry, currentUser } = useApp();
+  const { professionals, addProfessional, updateProfessional, deleteProfessional, appointments, addNotification, addAuditEntry, currentUser, addSystemUser, systemUsers } = useApp();
   const { canCreate, canUpdate, canDelete, canExport } = usePermission('professionals');
 
   const [view, setView] = useState<'list' | 'add' | 'edit' | 'details'>('list');
@@ -103,11 +103,11 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     fixed: 'Salário Fixo', percentage: 'Percentual', procedure: 'Por Procedimento', mixed: 'Misto',
   }[model || ''] || 'Não configurado');
 
-  const certColor = (t: string) => t === 'A1' ? 'bg-green-100 text-green-700' : t === 'A3' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500';
+  const certColor = (t: string) => t === 'A1' ? 'bg-green-100 text-green-700' : t === 'A3' ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-500';
 
   // Actions
   const handleViewDetails = (prof: Professional) => { setSelectedProf(prof); setView('details'); };
-  const handleEdit = (prof: Professional) => { setSelectedProf(prof); setForm({ ...prof }); setErrors({}); setView('edit'); };
+  const handleEdit = (prof: Professional) => { setSelectedProf(prof); setForm({ ...prof }); setErrors({}); setIsCreatingUser(false); setView('edit'); };
   const handleAdd = () => { setForm(EMPTY_FORM); setErrors({}); setIsCreatingUser(true); setView('add'); };
 
   const validate = () => {
@@ -117,7 +117,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     if (form.role === 'doctor' && !form.crm?.trim()) e.crm = 'CRM obrigatório para médicos';
     if (form.cpf && !validateCPF(form.cpf)) e.cpf = 'CPF inválido';
 
-    if (view === 'add' && isCreatingUser) {
+    if (isCreatingUser) {
         if (!form.password) e.password = 'Senha obrigatória';
         if (form.password && form.password.length < 6) e.password = 'A senha deve ter no mínimo 6 caracteres';
         if (!form.email) e.email = 'E-mail obrigatório';
@@ -131,11 +131,33 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     if (!validate()) return;
 
     if (view === 'edit' && selectedProf) {
-      updateProfessional(selectedProf.id, { ...form });
-      toastSuccess('Profissional atualizado!', { description: form.name });
-      addNotification({ type: 'info', title: 'Profissional atualizado', message: `Dados de ${form.name} atualizados`, urgent: false });
-      addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Profissionais', description: `Profissional editado: ${form.name}`, status: 'success' });
-      setView('list');
+      if (isCreatingUser) {
+        const { data, error } = await getSupabase().auth.signUp({
+          email: form.email,
+          password: form.password!,
+        });
+        if (error) {
+          toastError('Erro ao criar usuário', { description: error.message });
+          addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Profissionais', description: `Falha ao atribuir usuário: ${form.email}`, status: 'failure' });
+          return;
+        }
+        if (data.user) {
+          const { password, ...professionalData } = form;
+          updateProfessional(selectedProf.id, { ...professionalData });
+          const systemRole: import('../App').UserRole = 'doctor';
+          addSystemUser({ name: form.name, email: form.email, role: systemRole, status: 'active', lastLogin: '-', phone: form.phone });
+          toastSuccess('Usuário atribuído ao profissional!', { description: form.name });
+          addNotification({ type: 'info', title: 'Acesso atribuído', message: `${form.name} agora possui acesso ao sistema.`, urgent: false });
+          addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Profissionais', description: `Acesso de usuário atribuído a: ${form.name}`, status: 'success' });
+          setView('list');
+        }
+      } else {
+        updateProfessional(selectedProf.id, { ...form });
+        toastSuccess('Profissional atualizado!', { description: form.name });
+        addNotification({ type: 'info', title: 'Profissional atualizado', message: `Dados de ${form.name} atualizados`, urgent: false });
+        addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Profissionais', description: `Profissional editado: ${form.name}`, status: 'success' });
+        setView('list');
+      }
     } else if (view === 'add') {
         if (isCreatingUser) {
             const { data, error } = await getSupabase().auth.signUp({
@@ -151,6 +173,18 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             if (data.user) {
               const { password, ...professionalData } = form;
               addProfessional({ ...professionalData, id: data.user.id });
+
+              // Add to systemUsers so the professional appears in Access Control
+              const systemRole: import('../App').UserRole = 'doctor';
+              addSystemUser({
+                name: form.name,
+                email: form.email,
+                role: systemRole,
+                status: 'active',
+                lastLogin: '-',
+                phone: form.phone,
+              });
+
               toastSuccess('Profissional e Usuário cadastrados!', { description: `${form.name} — ${form.specialty}` });
               addNotification({ type: 'info', title: 'Novo profissional', message: `${form.name} (${getRoleLabel(form.role)}) cadastrado com acesso ao sistema.`, urgent: false });
               addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'create', module: 'Profissionais', description: `Profissional/usuário criado: ${form.name}`, status: 'success' });
@@ -206,10 +240,10 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     const hasUserAccess = prof.email && professionals.some(p => p.id === prof.id && p.email); // Heuristic
 
     return (
-      <div key={prof.id} className="border border-gray-200 bg-white p-5 hover:border-blue-400 transition-colors rounded-lg">
+      <div key={prof.id} className="border border-gray-200 bg-white p-5 hover:border-pink-400 transition-colors rounded-lg">
         <div className="flex items-start gap-4">
-          <div className={`w-12 h-12 ${isDoctor ? 'bg-blue-50 border-blue-200' : 'bg-purple-50 border-purple-200'} border flex items-center justify-center flex-shrink-0 rounded-lg`}>
-            {isDoctor ? <Stethoscope className="w-6 h-6 text-blue-600" /> : <User className="w-6 h-6 text-purple-600" />}
+          <div className={`w-12 h-12 ${isDoctor ? 'bg-pink-50 border-pink-200' : 'bg-purple-50 border-purple-200'} border flex items-center justify-center flex-shrink-0 rounded-lg`}>
+            {isDoctor ? <Stethoscope className="w-6 h-6 text-pink-600" /> : <User className="w-6 h-6 text-purple-600" />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
@@ -220,7 +254,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={`px-2 py-0.5 text-xs rounded ${isDoctor ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                <span className={`px-2 py-0.5 text-xs rounded ${isDoctor ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700'}`}>
                   {getRoleLabel(prof.role)}
                 </span>
                 <span className={`px-2 py-0.5 text-xs rounded border ${
@@ -260,7 +294,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                   <div>
                     <p className="text-gray-400">Consultas</p>
                     <p className="font-bold text-gray-900">{consultations}{goalC > 0 ? `/${goalC}` : ''}</p>
-                    {goalC > 0 && <div className="w-full bg-gray-200 h-1 mt-1 rounded"><div className="bg-blue-600 h-1 rounded" style={{ width: `${pctC}%` }} /></div>}
+                    {goalC > 0 && <div className="w-full bg-gray-200 h-1 mt-1 rounded"><div className="bg-pink-600 h-1 rounded" style={{ width: `${pctC}%` }} /></div>}
                   </div>
                   <div>
                     <p className="text-gray-400">Receita</p>
@@ -279,7 +313,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
 
             <div className="flex items-center gap-2">
               <button onClick={() => handleViewDetails(prof)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 text-white hover:bg-blue-700 rounded transition-colors">
+                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-pink-600 text-white hover:bg-pink-700 rounded transition-colors">
                 <Eye className="w-3 h-3" /> Detalhes
               </button>
               {canUpdate && (
@@ -322,7 +356,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
           )}
           {canCreate && (
             <button onClick={handleAdd}
-              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 text-sm rounded-lg transition-colors">
+              className="flex items-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 text-sm rounded-lg transition-colors">
               <Plus className="w-4 h-4" /> Novo Profissional
             </button>
           )}
@@ -355,20 +389,20 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
             placeholder="Buscar profissional..."
-            className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm" />
         </div>
         <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
-          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
           <option value="">Todos os tipos</option>
           {ROLES_PROF.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
         <select value={filterSpecialty} onChange={e => setFilterSpecialty(e.target.value)}
-          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
           <option value="">Todas as especialidades</option>
           {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
-          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
           <option value="all">Todos os status</option>
           <option value="active">Ativos</option>
           <option value="inactive">Inativos</option>
@@ -418,7 +452,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
           <div className="flex items-center gap-2">
             {canUpdate && (
               <button onClick={() => handleEdit(selectedProf)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm">
+                className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 rounded-lg text-sm">
                 <Edit className="w-4 h-4" /> Editar
               </button>
             )}
@@ -455,9 +489,9 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             <div className="border border-gray-200 p-6 rounded-lg bg-white">
               <h3 className="font-bold text-gray-900 mb-4">Performance — {now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3>
               <div className="grid grid-cols-3 gap-4 text-sm">
-                <div className="p-4 bg-blue-50 border border-blue-200 text-center rounded-lg">
-                  <p className="text-2xl font-bold text-blue-900">{consultations}</p>
-                  <p className="text-xs text-blue-600 mt-1">Consultas</p>
+                <div className="p-4 bg-pink-50 border border-pink-200 text-center rounded-lg">
+                  <p className="text-2xl font-bold text-pink-900">{consultations}</p>
+                  <p className="text-xs text-pink-600 mt-1">Consultas</p>
                 </div>
                 <div className="p-4 bg-green-50 border border-green-200 text-center rounded-lg">
                   <p className="text-2xl font-bold text-green-900">R$ {(revenue / 1000).toFixed(1)}k</p>
@@ -542,7 +576,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                 <button key={r.value} onClick={() => setForm({ ...form, role: r.value })}
                   className={`px-4 py-2.5 text-sm border rounded-lg transition-colors ${
                     form.role === r.value
-                      ? 'bg-blue-600 text-white border-blue-600'
+                      ? 'bg-pink-600 text-white border-pink-600'
                       : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                   }`}>
                   {r.label}
@@ -556,7 +590,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                   type="text"
                   value={form.otherProfessionalType || ''}
                   onChange={e => setForm({ ...form, otherProfessionalType: e.target.value })}
-                  className="w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-200"
+                  className="w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 border-gray-200"
                   placeholder="Ex: Fisioterapeuta"
                 />
               </div>
@@ -568,30 +602,37 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
               <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-400' : 'border-gray-200'}`}
+                className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.name ? 'border-red-400' : 'border-gray-200'}`}
                 placeholder="Nome completo" />
               {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
               <input type="text" value={form.cpf} onChange={e => setForm({ ...form, cpf: e.target.value })}
-                className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.cpf ? 'border-red-400' : 'border-gray-200'}`}
+                className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.cpf ? 'border-red-400' : 'border-gray-200'}`}
                 placeholder="000.000.000-00" />
               {errors.cpf && <p className="text-xs text-red-600 mt-1">{errors.cpf}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
               <input type="text" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 placeholder="(00) 00000-0000" />
             </div>
 
-            {view === 'add' && (
+            {(view === 'add' || view === 'edit') && (
                 <div className="md:col-span-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={isCreatingUser} onChange={() => setIsCreatingUser(!isCreatingUser)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="text-sm font-medium text-gray-700">Criar acesso de usuário</span>
-                    </label>
+                    {view === 'edit' && systemUsers.some(u => u.email === form.email && form.email) ? (
+                        <div className="flex items-center gap-2 text-sm text-green-700">
+                            <CheckCircle size={16} />
+                            <span>Profissional já possui acesso ao sistema</span>
+                        </div>
+                    ) : (
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={isCreatingUser} onChange={() => setIsCreatingUser(!isCreatingUser)} className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500" />
+                            <span className="text-sm font-medium text-gray-700">{view === 'add' ? 'Criar acesso de usuário' : 'Atribuir acesso de usuário'}</span>
+                        </label>
+                    )}
                 </div>
             )}
             
@@ -599,17 +640,17 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                 <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">{isCreatingUser || (view==='edit' && form.email) ? 'E-mail de Acesso *' : 'E-mail de Contato'}</label>
                     <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                        className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
+                        className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
                         placeholder="profissional@clinica.com" />
                     {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
                 </div>
             )}
 
-            {view === 'add' && isCreatingUser && (
+            {isCreatingUser && (
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Senha de Acesso *</label>
                 <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
+                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
                   placeholder="Mínimo 6 caracteres" />
                 {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
               </div>
@@ -623,14 +664,14 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">CRM *</label>
                   <input type="text" value={form.crm} onChange={e => setForm({ ...form, crm: e.target.value })}
-                    className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.crm ? 'border-red-400' : 'border-gray-200'}`}
+                    className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.crm ? 'border-red-400' : 'border-gray-200'}`}
                     placeholder="000000" />
                   {errors.crm && <p className="text-xs text-red-600 mt-1">{errors.crm}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">UF do CRM</label>
                   <select value={form.crmUf} onChange={e => setForm({ ...form, crmUf: e.target.value })}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
                     <option value="">Selecione</option>
                     {['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf => (
                       <option key={uf} value={uf}>{uf}</option>
@@ -643,7 +684,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Registro Profissional</label>
                 <input type="text" value={form.crm} onChange={e => setForm({ ...form, crm: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="COREN, CRP, CRN..." />
               </div>
             )}
@@ -651,13 +692,13 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
               <label className="block text-sm font-medium text-gray-700 mb-1">Especialidade *</label>
               {isDoctor ? (
                 <select value={form.specialty} onChange={e => setForm({ ...form, specialty: e.target.value })}
-                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.specialty ? 'border-red-400' : 'border-gray-200'}`}>
+                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.specialty ? 'border-red-400' : 'border-gray-200'}`}>
                   <option value="">Selecione</option>
                   {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               ) : (
                 <input type="text" value={form.specialty} onChange={e => setForm({ ...form, specialty: e.target.value })}
-                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.specialty ? 'border-red-400' : 'border-gray-200'}`}
+                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.specialty ? 'border-red-400' : 'border-gray-200'}`}
                   placeholder="Área de atuação" />
               )}
               {errors.specialty && <p className="text-xs text-red-600 mt-1">{errors.specialety}</p>}
@@ -665,13 +706,13 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Sala</label>
               <input type="text" value={form.room || ''} onChange={e => setForm({ ...form, room: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                 placeholder="Ex: Sala 10, Consultório 3" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Certificado Digital</label>
               <select value={form.digitalCertificate} onChange={e => setForm({ ...form, digitalCertificate: e.target.value as any })}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
                 <option value="none">Nenhum</option>
                 <option value="A1">A1 (Software)</option>
                 <option value="A3">A3 (Hardware/Token)</option>
@@ -680,12 +721,12 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Validade do Certificado</label>
               <input type="date" value={form.certificateExpiry} onChange={e => setForm({ ...form, certificateExpiry: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
               <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as any })}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
                 <option value="active">Ativo</option>
                 <option value="inactive">Inativo</option>
               </select>
@@ -697,7 +738,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Modelo de Pagamento</label>
               <select value={form.paymentModel || 'percentage'} onChange={e => setForm({ ...form, paymentModel: e.target.value as any })}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
                 <option value="fixed">Salário Fixo</option>
                 <option value="percentage">Percentual da Receita</option>
                 <option value="procedure">Por Procedimento</option>
@@ -708,25 +749,25 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Salário Fixo (R$)</label>
                 <input type="number" value={form.fixedSalary || ''} onChange={e => setForm({ ...form, fixedSalary: Number(e.target.value) })}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0.00" />
               </div>
             )}
             {(form.paymentModel === 'percentage' || form.paymentModel === 'mixed') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Percentual (%)</label>
                 <input type="number" value={form.revenuePercentage || ''} onChange={e => setForm({ ...form, revenuePercentage: Number(e.target.value) })}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="30" min={0} max={100} />
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="30" min={0} max={100} />
               </div>
             )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Meta Consultas/Mês</label>
               <input type="number" value={form.goalMonthlyConsultations || ''} onChange={e => setForm({ ...form, goalMonthlyConsultations: Number(e.target.value) })}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" min={0} />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" min={0} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Meta Receita/Mês (R$)</label>
               <input type="number" value={form.goalMonthlyRevenue || ''} onChange={e => setForm({ ...form, goalMonthlyRevenue: Number(e.target.value) })}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0" min={0} />
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" min={0} />
             </div>
           </div>
         </div>
@@ -737,7 +778,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
             Cancelar
           </button>
           <button onClick={handleSave}
-            className="px-6 py-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors">
+            className="px-6 py-2.5 bg-pink-600 text-white hover:bg-pink-700 rounded-lg transition-colors">
             {view === 'edit' ? 'Salvar Alterações' : 'Cadastrar Profissional'}
           </button>
         </div>

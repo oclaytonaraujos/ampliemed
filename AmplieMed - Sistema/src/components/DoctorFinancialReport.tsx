@@ -162,7 +162,7 @@ export function DoctorFinancialReport({ userRole }: DoctorFinancialReportProps) 
           </button>
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700"
           >
             <Download className="w-4 h-4" />
             Exportar PDF
@@ -186,7 +186,7 @@ export function DoctorFinancialReport({ userRole }: DoctorFinancialReportProps) 
               <select
                 value={selectedDoctorId}
                 onChange={(e) => setSelectedDoctorId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 bg-white focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 bg-white focus:outline-none focus:border-pink-600"
               >
                 <option value="">Todos os médicos</option>
                 {professionals.filter(p => p.role === 'doctor').map(doc => (
@@ -202,7 +202,7 @@ export function DoctorFinancialReport({ userRole }: DoctorFinancialReportProps) 
               <select
                 value={selectedClinicId}
                 onChange={(e) => setSelectedClinicId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 bg-white focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 bg-white focus:outline-none focus:border-pink-600"
               >
                 <option value="">Todas as clínicas</option>
                 {clinicSettings.clinicName && (
@@ -217,7 +217,7 @@ export function DoctorFinancialReport({ userRole }: DoctorFinancialReportProps) 
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 bg-white focus:outline-none focus:border-blue-600"
+                className="w-full px-3 py-2 border border-gray-300 bg-white focus:outline-none focus:border-pink-600"
               />
             </div>
           </div>
@@ -226,13 +226,13 @@ export function DoctorFinancialReport({ userRole }: DoctorFinancialReportProps) 
 
       {/* Cards de Resumo Geral */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-blue-50 border border-blue-200 p-4">
+        <div className="bg-pink-50 border border-pink-200 p-4">
           <div className="flex items-center justify-between mb-2">
-            <DollarSign className="w-8 h-8 text-blue-600" />
-            <TrendingUp className="w-5 h-5 text-blue-600" />
+            <DollarSign className="w-8 h-8 text-pink-600" />
+            <TrendingUp className="w-5 h-5 text-pink-600" />
           </div>
-          <p className="text-sm text-blue-700">Faturamento Total</p>
-          <p className="text-2xl font-bold text-blue-900">
+          <p className="text-sm text-pink-700">Faturamento Total</p>
+          <p className="text-2xl font-bold text-pink-900">
             R$ {totalBilled.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
         </div>
@@ -336,7 +336,7 @@ export function DoctorFinancialReport({ userRole }: DoctorFinancialReportProps) 
                       {!summary.paymentConfigured ? (
                         <span className="text-orange-500 text-xs">— não configurado</span>
                       ) : (
-                        <span className="text-blue-600">
+                        <span className="text-pink-600">
                           R$ {summary.totalHonorarium.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                       )}
@@ -382,7 +382,7 @@ export function DoctorFinancialReport({ userRole }: DoctorFinancialReportProps) 
                   <td className="px-4 py-3 text-right text-gray-900">
                     R$ {doctorsSummary.reduce((sum, s) => sum + s.totalRevenue, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </td>
-                  <td className="px-4 py-3 text-right text-blue-600">
+                  <td className="px-4 py-3 text-right text-pink-600">
                     R$ {doctorsSummary.reduce((sum, s) => sum + s.totalHonorarium, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </td>
                   <td className="px-4 py-3 text-right text-green-600">

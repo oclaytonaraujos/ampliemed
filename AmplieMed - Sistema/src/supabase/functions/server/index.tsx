@@ -155,7 +155,6 @@ app.post("/make-server-d4766610/admin/delete-all-users", async (c) => {
       'clinics',
       'communication_campaigns',
       'communication_messages',
-      'doctors',
       'exams',
       'file_attachments',
       'financial_billings',
@@ -193,7 +192,6 @@ app.post("/make-server-d4766610/admin/delete-all-users", async (c) => {
 
     // Tables with user_id foreign key
     const userIdTables = [
-      { table: 'doctors', column: 'user_id' },
       { table: 'professionals', column: 'user_id' },
     ];
 

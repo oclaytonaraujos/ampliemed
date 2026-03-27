@@ -50,7 +50,7 @@ export function AuditLog({ userRole }: AuditLogProps) {
   const actionColor = (a: string) => {
     switch (a) {
       case 'create': return 'bg-green-50 text-green-700 border-green-200';
-      case 'read': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'read': return 'bg-pink-50 text-pink-700 border-pink-200';
       case 'update': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'delete': return 'bg-red-50 text-red-700 border-red-200';
       case 'login': return 'bg-purple-50 text-purple-700 border-purple-200';
@@ -99,7 +99,7 @@ export function AuditLog({ userRole }: AuditLogProps) {
                 className="w-full pl-7 pr-3 bg-gray-50 border-0 text-sm focus:outline-none" />
             </div>
             <button onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm ${showFilters ? 'bg-blue-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm ${showFilters ? 'bg-pink-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
               <Filter className="w-4 h-4 text-gray-600" />
             </button>
           </div>
@@ -154,7 +154,7 @@ export function AuditLog({ userRole }: AuditLogProps) {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Total de Registros', value: auditLog.length, color: 'text-blue-600' },
+          { label: 'Total de Registros', value: auditLog.length, color: 'text-pink-600' },
           { label: 'Hoje', value: auditLog.filter(e => e.timestamp.startsWith(new Date().toLocaleDateString('pt-BR').split('/').reverse().join('-').slice(0, 10)) || e.timestamp.includes(new Date().toLocaleDateString('pt-BR').split('/').slice(0, 2).join('/'))).length, color: 'text-green-600' },
           { label: 'Ações de Exclusão', value: auditLog.filter(e => e.action === 'delete').length, color: 'text-red-600' },
           { label: 'Filtrados', value: filteredEntries.length, color: 'text-gray-600' },
@@ -167,9 +167,9 @@ export function AuditLog({ userRole }: AuditLogProps) {
       </div>
 
       {/* LGPD badge */}
-      <div className="bg-blue-50 border border-blue-200 p-4 flex items-center gap-3">
-        <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
-        <p className="text-sm text-blue-800">
+      <div className="bg-pink-50 border border-pink-200 p-4 flex items-center gap-3">
+        <Shield className="w-5 h-5 text-pink-600 flex-shrink-0" />
+        <p className="text-sm text-pink-800">
           <strong>Conformidade LGPD/CFM:</strong> Este log registra automaticamente todas as ações críticas do sistema — criação, edição, exclusão, login/logout e exportações. Dados de saúde devem ser retidos por mínimo de 20 anos (CFM 1638/2002).
         </p>
       </div>
