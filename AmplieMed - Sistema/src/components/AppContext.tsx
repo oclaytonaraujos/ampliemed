@@ -52,6 +52,7 @@ export interface Patient {
   lgpdConsent: boolean;
   lgpdConsentDate?: string;
   status: 'active' | 'inactive';
+  portalToken?: string;
   createdAt: string;
   lastVisit: string;
   totalVisits: number;

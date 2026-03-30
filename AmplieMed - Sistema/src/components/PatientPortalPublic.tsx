@@ -3,6 +3,7 @@ import {
   Calendar, FileText, CreditCard, Video, User, Shield, Phone,
   MapPin, Clock, Mail, Eye, EyeOff, LogOut, Loader2, AlertCircle,
   CheckCircle2, Download, Lock, Smartphone, Heart, Instagram, Building2,
+  Plus, Copy, Check, CalendarPlus, X, ChevronRight,
 } from 'lucide-react';
 import logoAmplieMed from '../assets/775bd1b6594b305b8d42a07d24da813913fe5060.png';
 import { getSupabase } from '../utils/supabaseClient';
@@ -77,8 +78,67 @@ interface Payment {
   status: string;
 }
 
+interface Professional {
+  id: string;
+  name: string;
+  specialty: string;
+}
+
+interface ScheduleForm {
+  doctorName: string;
+  specialty: string;
+  date: string;
+  time: string;
+  type: 'presencial' | 'telemedicina';
+  notes: string;
+}
+
+const EMPTY_SCHEDULE: ScheduleForm = {
+  doctorName: '', specialty: '', date: '', time: '', type: 'presencial', notes: '',
+};
+
+// Helper: map raw DB appointment row → local Appointment
+function mapRawApt(a: any): Appointment {
+  return {
+    id: a.id,
+    date: a.appointment_date,
+    time: a.appointment_time,
+    doctorName: a.doctor_name || '',
+    specialty: a.specialty || '',
+    type: a.type || 'presencial',
+    status: a.status || 'pendente',
+    room: a.room || undefined,
+    telemedLink: a.telemed_link || undefined,
+  };
+}
+
+// Helper: map raw DB medical_record row → local MedicalRecord
+function mapRawRecord(r: any): MedicalRecord {
+  return {
+    id: r.id,
+    date: r.record_date || r.created_at || '',
+    type: r.type || r.record_type || '',
+    doctorName: r.doctor_name || '',
+    cid10: r.cid10 || undefined,
+    chiefComplaint: r.chief_complaint || undefined,
+    signed: r.signed ?? false,
+  };
+}
+
+// Helper: map raw DB financial_payment row → local Payment
+function mapRawPayment(p: any): Payment {
+  return {
+    id: p.id,
+    date: p.payment_date || p.created_at || '',
+    type: p.payment_type || '',
+    amount: p.amount || 0,
+    method: p.payment_method || '',
+    status: p.status || '',
+  };
+}
+
 type AuthMode = 'login' | 'register';
-type Tab = 'appointments' | 'records' | 'payments' | 'profile';
+type Tab = 'appointments' | 'records' | 'payments' | 'profile' | 'schedule';
 
 const INPUT_CLASS =
   'w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400 transition-all placeholder:text-gray-400';
@@ -87,6 +147,22 @@ const INPUT_CLASS =
 
 export function PatientPortalPublic() {
   const supabase = getSupabase();
+
+  // Token mode (magic-link portal access — no auth required)
+  const [tokenMode, setTokenMode] = useState(false);
+  const [portalToken, setPortalToken] = useState('');
+
+  // Schedule modal
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [scheduleForm, setScheduleForm] = useState<ScheduleForm>(EMPTY_SCHEDULE);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleSuccess, setScheduleSuccess] = useState('');
+  const [scheduleError, setScheduleError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  // Cancel confirm
+  const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
 
   // Auth
   const [session, setSession] = useState<any>(null);
@@ -126,6 +202,16 @@ export function PatientPortalPublic() {
   useEffect(() => {
     loadClinicInfo();
 
+    // Check for magic-link portal token in URL (?t=<uuid>)
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('t');
+    if (token) {
+      setTokenMode(true);
+      setPortalToken(token);
+      loadPatientDataByToken(token);
+      return; // skip Supabase auth listener in token mode
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user?.email) loadPatientData(session.user.email);
@@ -164,6 +250,7 @@ export function PatientPortalPublic() {
         .maybeSingle();
 
       setPatientRecord(patient ?? null);
+      if (patient?.portal_token) setPortalToken(patient.portal_token);
 
       if (patient) {
         const [{ data: apts }, { data: records }, { data: pmts }] = await Promise.all([
@@ -193,6 +280,125 @@ export function PatientPortalPublic() {
       console.error('Erro ao carregar dados do paciente:', err);
     } finally {
       setDataLoading(false);
+    }
+  }
+
+  // ── Token-mode data loader ────────────────────────────────────────────────────
+
+  async function loadPatientDataByToken(token: string) {
+    setDataLoading(true);
+    try {
+      const { data: patientRaw } = await supabase
+        .rpc('get_patient_by_portal_token', { p_token: token });
+
+      if (!patientRaw) { setDataLoading(false); return; }
+
+      setPatientRecord({
+        id: patientRaw.id,
+        name: patientRaw.name,
+        cpf: patientRaw.cpf,
+        email: patientRaw.email,
+        phone: patientRaw.phone,
+        birthDate: patientRaw.birth_date,
+        insurance: patientRaw.insurance,
+      });
+
+      const [
+        { data: aptsRaw },
+        { data: recsRaw },
+        { data: pmtsRaw },
+        { data: profsRaw },
+      ] = await Promise.all([
+        supabase.rpc('get_appointments_by_portal_token', { p_token: token }),
+        supabase.rpc('get_records_by_portal_token',     { p_token: token }),
+        supabase.rpc('get_payments_by_portal_token',    { p_token: token }),
+        supabase.rpc('get_professionals_for_portal',    { p_token: token }),
+      ]);
+
+      setAppointments((aptsRaw ?? []).map(mapRawApt));
+      setMedicalRecords((recsRaw ?? []).map(mapRawRecord));
+      setPayments((pmtsRaw ?? []).map(mapRawPayment));
+      setProfessionals(profsRaw ?? []);
+    } catch (err) {
+      console.error('Erro ao carregar dados do portal:', err);
+    } finally {
+      setDataLoading(false);
+    }
+  }
+
+  // ── Cancel appointment (token mode) ──────────────────────────────────────────
+
+  async function handleCancelAppointment(aptId: string) {
+    const token = portalToken;
+    if (!token) return;
+    const { data: ok } = await supabase.rpc('cancel_appointment_portal', {
+      p_token: token,
+      p_appointment_id: aptId,
+    });
+    if (ok) {
+      setAppointments(prev => prev.filter(a => a.id !== aptId));
+    }
+    setCancelConfirmId(null);
+  }
+
+  // ── Schedule new appointment ──────────────────────────────────────────────────
+
+  async function handleOpenScheduleModal() {
+    setShowScheduleModal(true);
+    setScheduleForm(EMPTY_SCHEDULE);
+    setScheduleError('');
+    setScheduleSuccess('');
+    if (professionals.length === 0 && portalToken) {
+      const { data } = await supabase.rpc('get_professionals_for_portal', { p_token: portalToken });
+      setProfessionals(data ?? []);
+    }
+  }
+
+  async function handleScheduleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setScheduleError('');
+    if (!scheduleForm.doctorName || !scheduleForm.date || !scheduleForm.time) {
+      setScheduleError('Preencha médico, data e horário.');
+      return;
+    }
+    if (!portalToken) {
+      setScheduleError('Token do paciente não encontrado. Acesse pelo link do portal.');
+      return;
+    }
+    setScheduleLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('book_appointment_portal', {
+        p_token:       portalToken,
+        p_doctor_name: scheduleForm.doctorName,
+        p_specialty:   scheduleForm.specialty,
+        p_date:        scheduleForm.date,
+        p_time:        scheduleForm.time,
+        p_type:        scheduleForm.type,
+        p_notes:       scheduleForm.notes || null,
+      });
+      if (error || data?.error) {
+        setScheduleError(data?.error || error?.message || 'Erro ao agendar.');
+        return;
+      }
+      // Optimistically add to local list
+      const newApt: Appointment = {
+        id: data.id,
+        date: scheduleForm.date,
+        time: scheduleForm.time,
+        doctorName: scheduleForm.doctorName,
+        specialty: scheduleForm.specialty,
+        type: scheduleForm.type,
+        status: 'pendente',
+      };
+      setAppointments(prev =>
+        [...prev, newApt].sort((a, b) => a.date.localeCompare(b.date))
+      );
+      setScheduleSuccess('Consulta solicitada! Aguarde a confirmação da clínica.');
+      setScheduleForm(EMPTY_SCHEDULE);
+    } catch (err: any) {
+      setScheduleError(err.message || 'Erro ao agendar.');
+    } finally {
+      setScheduleLoading(false);
     }
   }
 
@@ -250,7 +456,7 @@ export function PatientPortalPublic() {
 
   // ── Derived values ─────────────────────────────────────────────────────────────
 
-  const isAuthenticated = !!session;
+  const isAuthenticated = !!session || (tokenMode && patientRecord !== null);
   const patientName =
     patientRecord?.name ||
     session?.user?.user_metadata?.name ||
@@ -291,6 +497,7 @@ export function PatientPortalPublic() {
                   {patientName.split(' ')[0]}
                 </span>
               </div>
+              {!tokenMode && (
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors ml-1"
@@ -298,6 +505,7 @@ export function PatientPortalPublic() {
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:block">Sair</span>
               </button>
+              )}
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -321,7 +529,7 @@ export function PatientPortalPublic() {
       {/* ── Content ───────────────────────────────────────────────────────────── */}
       <main className="flex-1">
 
-        {!isAuthenticated ? (
+        {isAuthenticated ? null : !tokenMode ? (
           /* ────────────── LANDING PAGE ────────────── */
           <>
             {/* Hero */}
@@ -558,8 +766,30 @@ export function PatientPortalPublic() {
               </div>
             </section>
           </>
-        ) : (
-          /* ────────────── PATIENT DASHBOARD ────────────── */
+        ) : null}
+
+        {/* ── Token mode: loading / invalid link ───────────────────────────── */}
+        {tokenMode && !isAuthenticated && (
+          <div className="flex flex-col items-center justify-center py-32 px-4">
+            {dataLoading ? (
+              <>
+                <Loader2 className="w-10 h-10 text-pink-600 animate-spin mb-4" />
+                <p className="text-gray-500 text-sm">Carregando seu portal...</p>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Link inválido ou expirado</h2>
+                <p className="text-sm text-gray-500 text-center max-w-sm">
+                  Este link do portal não foi reconhecido. Solicite um novo link à clínica.
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ────────────── PATIENT DASHBOARD ────────────── */}
+        {isAuthenticated && (
           <div className="bg-gray-50 min-h-full">
             {/* Dashboard hero */}
             <div className="bg-gradient-to-r from-pink-600 to-pink-500 text-white px-4 py-10 sm:py-12">
@@ -626,9 +856,10 @@ export function PatientPortalPublic() {
                       {(
                         [
                           { id: 'appointments', label: 'Consultas', icon: Calendar },
-                          { id: 'records', label: 'Prontuários', icon: FileText },
-                          { id: 'payments', label: 'Pagamentos', icon: CreditCard },
-                          { id: 'profile', label: 'Meu Perfil', icon: User },
+                          { id: 'schedule',     label: 'Agendar',   icon: CalendarPlus },
+                          { id: 'records',      label: 'Prontuários', icon: FileText },
+                          { id: 'payments',     label: 'Pagamentos', icon: CreditCard },
+                          { id: 'profile',      label: 'Meu Perfil', icon: User },
                         ] as const
                       ).map(({ id, label, icon: Icon }) => (
                         <button
@@ -654,7 +885,11 @@ export function PatientPortalPublic() {
                       <div>
                         <div className="flex items-center justify-between mb-5">
                           <h3 className="font-semibold text-gray-900">Próximas Consultas</h3>
-                          <button className="px-4 py-2 bg-pink-600 text-white text-sm rounded-xl hover:bg-pink-700 transition-colors font-medium">
+                          <button
+                            onClick={() => { setActiveTab('schedule'); handleOpenScheduleModal(); }}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-pink-600 text-white text-sm rounded-xl hover:bg-pink-700 transition-colors font-medium"
+                          >
+                            <Plus className="w-4 h-4" />
                             Agendar Nova
                           </button>
                         </div>
@@ -716,9 +951,29 @@ export function PatientPortalPublic() {
                                         Entrar
                                       </a>
                                     )}
-                                    <button className="px-3 py-1.5 border border-gray-200 text-gray-500 text-xs rounded-lg hover:bg-gray-50 transition-colors">
-                                      Cancelar
-                                    </button>
+                                    {cancelConfirmId === apt.id ? (
+                                      <div className="flex gap-1">
+                                        <button
+                                          onClick={() => handleCancelAppointment(apt.id)}
+                                          className="px-2 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+                                        >
+                                          Confirmar
+                                        </button>
+                                        <button
+                                          onClick={() => setCancelConfirmId(null)}
+                                          className="px-2 py-1.5 border border-gray-200 text-gray-500 text-xs rounded-lg hover:bg-gray-50 transition-colors"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => setCancelConfirmId(apt.id)}
+                                        className="px-3 py-1.5 border border-gray-200 text-gray-500 text-xs rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                                      >
+                                        Cancelar
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -890,6 +1145,148 @@ export function PatientPortalPublic() {
                             </button>
                           </div>
                         </div>
+                      </div>
+                    )}
+
+                    {/* ── Schedule ── */}
+                    {activeTab === 'schedule' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-5">
+                          <h3 className="font-semibold text-gray-900">Agendar Consulta</h3>
+                        </div>
+
+                        {scheduleSuccess ? (
+                          <div className="flex items-start gap-3 p-5 bg-green-50 border border-green-200 rounded-xl mb-5">
+                            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-green-800">{scheduleSuccess}</p>
+                              <button
+                                onClick={() => { setScheduleSuccess(''); setActiveTab('appointments'); }}
+                                className="text-xs text-green-700 mt-2 underline"
+                              >
+                                Ver minhas consultas →
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <form onSubmit={handleScheduleSubmit} className="space-y-4 max-w-lg">
+                            {scheduleError && (
+                              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                {scheduleError}
+                              </div>
+                            )}
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                                Médico / Profissional *
+                              </label>
+                              {professionals.length > 0 ? (
+                                <select
+                                  value={scheduleForm.doctorName}
+                                  onChange={e => {
+                                    const prof = professionals.find(p => p.name === e.target.value);
+                                    setScheduleForm(f => ({
+                                      ...f,
+                                      doctorName: e.target.value,
+                                      specialty: prof?.specialty || '',
+                                    }));
+                                  }}
+                                  required
+                                  className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400 transition-all"
+                                >
+                                  <option value="">Selecione o profissional</option>
+                                  {professionals.map(p => (
+                                    <option key={p.id} value={p.name}>
+                                      {p.name}{p.specialty ? ` — ${p.specialty}` : ''}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  type="text"
+                                  placeholder="Nome do médico"
+                                  value={scheduleForm.doctorName}
+                                  onChange={e => setScheduleForm(f => ({ ...f, doctorName: e.target.value }))}
+                                  required
+                                  className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400 transition-all"
+                                />
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5">Data *</label>
+                                <input
+                                  type="date"
+                                  value={scheduleForm.date}
+                                  min={new Date().toISOString().slice(0, 10)}
+                                  onChange={e => setScheduleForm(f => ({ ...f, date: e.target.value }))}
+                                  required
+                                  className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400 transition-all"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1.5">Horário *</label>
+                                <input
+                                  type="time"
+                                  value={scheduleForm.time}
+                                  onChange={e => setScheduleForm(f => ({ ...f, time: e.target.value }))}
+                                  required
+                                  className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400 transition-all"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1.5">Tipo de Consulta</label>
+                              <div className="flex gap-3">
+                                {(['presencial', 'telemedicina'] as const).map(t => (
+                                  <label key={t} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      name="type"
+                                      value={t}
+                                      checked={scheduleForm.type === t}
+                                      onChange={() => setScheduleForm(f => ({ ...f, type: t }))}
+                                      className="accent-pink-600"
+                                    />
+                                    <span className="text-sm text-gray-700 capitalize">{t}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1.5">Observações</label>
+                              <textarea
+                                value={scheduleForm.notes}
+                                onChange={e => setScheduleForm(f => ({ ...f, notes: e.target.value }))}
+                                placeholder="Descreva brevemente o motivo da consulta (opcional)"
+                                rows={3}
+                                className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-400 transition-all resize-none"
+                              />
+                            </div>
+
+                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
+                              <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                              <p className="text-xs text-amber-700">
+                                Sua solicitação ficará com status <strong>Pendente</strong> até ser confirmada pela clínica.
+                              </p>
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={scheduleLoading}
+                              className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-pink-600 text-white font-semibold rounded-xl hover:bg-pink-700 transition-colors disabled:opacity-60"
+                            >
+                              {scheduleLoading
+                                ? <><Loader2 className="w-4 h-4 animate-spin" />Enviando...</>
+                                : <><CalendarPlus className="w-4 h-4" />Solicitar Consulta</>
+                              }
+                            </button>
+                          </form>
+                        )}
                       </div>
                     )}
 

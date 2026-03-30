@@ -262,6 +262,7 @@ export function patientFromRow(row: PatientRow): PatientInput {
     lgpdConsent: row.lgpd_consent ?? false,
     lgpdConsentDate: row.lgpd_consent_date ? isoToBrDate(row.lgpd_consent_date) : undefined,
     status: row.status || 'active',
+    portalToken: (row as any).portal_token || undefined,
     lastVisit: row.last_visit ? isoToBrDate(row.last_visit) : '-',
     totalVisits: row.total_visits ?? 0,
     createdAt: row.created_at ? isoToBrDate(row.created_at) : undefined,

@@ -286,6 +286,29 @@ export function AccessControl({ userRole }: AccessControlProps) {
                       </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleToggleStatus(u)}
+                      className="p-2 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-colors"
+                      title={u.status === 'active' ? 'Desativar acesso' : 'Ativar acesso'}
+                    >
+                      {u.status === 'active' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => openEdit(u)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Editar permissões"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(u)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remover acesso do sistema"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
