@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Users, Calendar, DollarSign, Activity, TrendingUp, TrendingDown, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import type { UserRole } from '../App';
@@ -10,6 +11,7 @@ interface DashboardProps {
 
 export function Dashboard({ userRole }: DashboardProps) {
   const { patients, appointments, exams, stockItems, financialPayments, financialReceivables, financialPayables, medicalRecords, professionals } = useApp();
+  const navigate = useNavigate();
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -111,32 +113,34 @@ export function Dashboard({ userRole }: DashboardProps) {
       {/* KPI Cards — Row 1 */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { id: 'kpi-patients', label: 'Pacientes Ativos', value: activePatients, sub: `${patients.length} total`, icon: Users, color: 'bg-pink-600', alert: false },
-          { id: 'kpi-appointments', label: 'Consultas Hoje', value: todayCount, sub: `${confirmedToday} confirmadas`, icon: Calendar, color: 'bg-pink-600', alert: false },
-          { id: 'kpi-revenue', label: 'Receita Mensal', value: `R$ ${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sub: 'mês atual', icon: DollarSign, color: 'bg-pink-600', alert: false },
-          { id: 'kpi-occupancy', label: 'Taxa de Ocupação', value: `${occupancy}%`, sub: 'hoje', icon: Activity, color: 'bg-pink-600', alert: false },
+          { id: 'kpi-patients', label: 'Pacientes Ativos', value: activePatients, sub: `${patients.length} total`, icon: Users, color: 'bg-pink-600', alert: false, path: '/pacientes' },
+          { id: 'kpi-appointments', label: 'Consultas Hoje', value: todayCount, sub: `${confirmedToday} confirmadas`, icon: Calendar, color: 'bg-pink-600', alert: false, path: '/agenda' },
+          { id: 'kpi-revenue', label: 'Receita Mensal', value: `R$ ${monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sub: 'mês atual', icon: DollarSign, color: 'bg-pink-600', alert: false, path: '/financeiro' },
+          { id: 'kpi-occupancy', label: 'Taxa de Ocupação', value: `${occupancy}%`, sub: 'hoje', icon: Activity, color: 'bg-pink-600', alert: false, path: '/agenda' },
         ].map(k => { const Icon = k.icon; return (
-          <div key={k.id} className="bg-white border border-gray-200 p-5">
-            <div className="flex items-center justify-between mb-3"><div className={`w-10 h-10 ${k.color} flex items-center justify-center`}><Icon className="w-5 h-5 text-white" /></div><span className="text-xs text-gray-400">{k.sub}</span></div>
+          <button key={k.id} onClick={() => navigate(k.path)}
+            className="bg-white border border-gray-200 p-5 text-left hover:border-pink-300 hover:shadow-sm transition-all group">
+            <div className="flex items-center justify-between mb-3"><div className={`w-10 h-10 ${k.color} flex items-center justify-center`}><Icon className="w-5 h-5 text-white" /></div><span className="text-xs text-gray-400 group-hover:text-pink-500 transition-colors">{k.sub} →</span></div>
             <p className="text-2xl font-semibold text-gray-900 mb-1">{k.value}</p>
             <p className="text-sm text-gray-600">{k.label}</p>
-          </div>
+          </button>
         ); })}
       </div>
 
       {/* KPI Cards — Row 2 */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { id: 'kpi-records', label: 'Prontuários', value: totalRecords, sub: `${signedRecords} assinados`, icon: CheckCircle, color: 'bg-pink-600', alert: totalRecords > signedRecords },
-          { id: 'kpi-exams', label: 'Exames Pendentes', value: pendingExams, sub: `${exams.length} total`, icon: Activity, color: 'bg-pink-600', alert: pendingExams > 0 },
-          { id: 'kpi-stock', label: 'Estoque Crítico', value: criticalStock, sub: `${stockItems.length} itens`, icon: TrendingDown, color: 'bg-pink-600', alert: criticalStock > 0 },
-          { id: 'kpi-overdue', label: 'A Receber Vencido', value: overdueReceivables, sub: 'contas vencidas', icon: Clock, color: 'bg-pink-600', alert: overdueReceivables > 0 },
+          { id: 'kpi-records', label: 'Prontuários', value: totalRecords, sub: `${signedRecords} assinados`, icon: CheckCircle, color: 'bg-pink-600', alert: totalRecords > signedRecords, path: '/prontuarios' },
+          { id: 'kpi-exams', label: 'Exames Pendentes', value: pendingExams, sub: `${exams.length} total`, icon: Activity, color: 'bg-pink-600', alert: pendingExams > 0, path: '/exames' },
+          { id: 'kpi-stock', label: 'Estoque Crítico', value: criticalStock, sub: `${stockItems.length} itens`, icon: TrendingDown, color: 'bg-pink-600', alert: criticalStock > 0, path: '/estoque' },
+          { id: 'kpi-overdue', label: 'A Receber Vencido', value: overdueReceivables, sub: 'contas vencidas', icon: Clock, color: 'bg-pink-600', alert: overdueReceivables > 0, path: '/financeiro' },
         ].map(k => { const Icon = k.icon; return (
-          <div key={k.id} className={`bg-white border p-5 ${k.alert ? 'border-orange-200' : 'border-gray-200'}`}>
-            <div className="flex items-center justify-between mb-3"><div className={`w-10 h-10 ${k.color} flex items-center justify-center`}><Icon className="w-5 h-5 text-white" /></div><span className="text-xs text-gray-400">{k.sub}</span></div>
+          <button key={k.id} onClick={() => navigate(k.path)}
+            className={`bg-white border p-5 text-left hover:shadow-sm transition-all group ${k.alert ? 'border-orange-200 hover:border-orange-400' : 'border-gray-200 hover:border-pink-300'}`}>
+            <div className="flex items-center justify-between mb-3"><div className={`w-10 h-10 ${k.color} flex items-center justify-center`}><Icon className="w-5 h-5 text-white" /></div><span className={`text-xs transition-colors ${k.alert ? 'text-orange-400 group-hover:text-orange-600' : 'text-gray-400 group-hover:text-pink-500'}`}>{k.sub} →</span></div>
             <p className="text-2xl font-semibold text-gray-900 mb-1">{k.value}</p>
             <p className="text-sm text-gray-600">{k.label}</p>
-          </div>
+          </button>
         ); })}
       </div>
 

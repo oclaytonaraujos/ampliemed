@@ -2,6 +2,12 @@
  * Geradores de documentos médicos (PDF simulado e XML TISS)
  */
 
+interface OrgaoAutenticador {
+  nome: string;
+  tipo: 'ICP-Brasil' | 'outro';
+  identificacao?: string;
+}
+
 interface PrescriptionData {
   medication: string;
   dosage: string;
@@ -31,7 +37,8 @@ export function generatePrescriptionHTML(
   patientOrSimple: PatientData | { doctorName: string; crm: string; patientName: string; medications: any[] },
   doctorOrUndef?: DoctorData,
   prescriptions?: PrescriptionData[],
-  date?: string
+  date?: string,
+  orgaoAutenticador?: OrgaoAutenticador
 ): string {
   // Simplified call from TemplatesModule
   if ('doctorName' in patientOrSimple) {
@@ -40,17 +47,19 @@ export function generatePrescriptionHTML(
       { name: s.patientName, cpf: '', birthDate: '', age: 0 },
       { name: s.doctorName, crm: s.crm || '', specialty: '' },
       s.medications || [],
-      new Date().toLocaleDateString('pt-BR')
+      new Date().toLocaleDateString('pt-BR'),
+      orgaoAutenticador
     );
   }
-  return generatePrescriptionHTMLInternal(patientOrSimple as PatientData, doctorOrUndef!, prescriptions!, date!);
+  return generatePrescriptionHTMLInternal(patientOrSimple as PatientData, doctorOrUndef!, prescriptions!, date!, orgaoAutenticador);
 }
 
 function generatePrescriptionHTMLInternal(
   patient: PatientData,
   doctor: DoctorData,
   prescriptions: PrescriptionData[],
-  date: string
+  date: string,
+  orgaoAutenticador?: OrgaoAutenticador
 ): string {
   return `
 <!DOCTYPE html>
@@ -103,11 +112,12 @@ function generatePrescriptionHTMLInternal(
     </div>
   `).join('')}
 
+  ${orgaoAutenticador ? `
   <div class="digital-signature">
-    <strong>🔒 Assinatura Digital ICP-Brasil</strong><br>
-    <small>Certificado A1: ${doctor.crm} | Data/Hora: ${new Date().toLocaleString('pt-BR')}</small><br>
+    <strong>🔒 Assinatura via ${orgaoAutenticador.nome}</strong><br>
+    <small>${orgaoAutenticador.identificacao ? `ID: ${orgaoAutenticador.identificacao} | ` : ''}CRM: ${doctor.crm} | Data/Hora: ${new Date().toLocaleString('pt-BR')}</small><br>
     <small>Hash SHA-256: ${generateMockHash()}</small>
-  </div>
+  </div>` : ''}
 
   <div class="signature-section">
     <div class="signature-line">
@@ -117,8 +127,10 @@ function generatePrescriptionHTMLInternal(
   </div>
 
   <div class="footer">
-    Esta receita foi gerada eletronicamente e possui validade jurídica com assinatura digital ICP-Brasil.<br>
-    Verifique a autenticidade em: www.ampliemed.com.br/verificar
+    ${orgaoAutenticador
+      ? `Esta receita foi assinada digitalmente via ${orgaoAutenticador.nome} e possui validade jurídica.`
+      : `Esta receita foi assinada pelo médico ${doctor.name} — CRM: ${doctor.crm}.`
+    }
   </div>
 </body>
 </html>
@@ -133,13 +145,14 @@ export function generateCertificateHTML(
   doctorOrUndef?: DoctorData,
   days?: number,
   reason?: string,
-  date?: string
+  date?: string,
+  orgaoAutenticador?: OrgaoAutenticador
 ): string {
   if ('doctorName' in patientOrSimple) {
     const s = patientOrSimple as any;
-    return generateCertificateHTMLInternal({ name: s.patientName, cpf: '', birthDate: '', age: 0 }, { name: s.doctorName, crm: s.crm || '', specialty: '' }, 1, s.content || '', new Date().toLocaleDateString('pt-BR'));
+    return generateCertificateHTMLInternal({ name: s.patientName, cpf: '', birthDate: '', age: 0 }, { name: s.doctorName, crm: s.crm || '', specialty: '' }, 1, s.content || '', new Date().toLocaleDateString('pt-BR'), orgaoAutenticador);
   }
-  return generateCertificateHTMLInternal(patientOrSimple as PatientData, doctorOrUndef!, days!, reason!, date!);
+  return generateCertificateHTMLInternal(patientOrSimple as PatientData, doctorOrUndef!, days!, reason!, date!, orgaoAutenticador);
 }
 
 function generateCertificateHTMLInternal(
@@ -147,7 +160,8 @@ function generateCertificateHTMLInternal(
   doctor: DoctorData,
   days: number,
   reason: string,
-  date: string
+  date: string,
+  orgaoAutenticador?: OrgaoAutenticador
 ): string {
   const startDate = new Date();
   const endDate = new Date();
@@ -204,11 +218,12 @@ function generateCertificateHTMLInternal(
     São Paulo, ${date}
   </div>
 
+  ${orgaoAutenticador ? `
   <div class="digital-signature">
-    <strong>🔒 Documento assinado digitalmente com certificado ICP-Brasil</strong><br>
-    <small>Certificado A1: ${doctor.crm} | Data/Hora: ${new Date().toLocaleString('pt-BR')}</small><br>
+    <strong>🔒 Documento assinado via ${orgaoAutenticador.nome}</strong><br>
+    <small>${orgaoAutenticador.identificacao ? `ID: ${orgaoAutenticador.identificacao} | ` : ''}CRM: ${doctor.crm} | Data/Hora: ${new Date().toLocaleString('pt-BR')}</small><br>
     <small>Hash SHA-256: ${generateMockHash()}</small>
-  </div>
+  </div>` : ''}
 
   <div class="signature-section">
     <div class="signature-line">
@@ -218,8 +233,10 @@ function generateCertificateHTMLInternal(
   </div>
 
   <div class="footer">
-    Este atestado foi gerado eletronicamente e possui validade jurídica com assinatura digital ICP-Brasil.<br>
-    Verifique a autenticidade em: www.ampliemed.com.br/verificar
+    ${orgaoAutenticador
+      ? `Este atestado foi assinado digitalmente via ${orgaoAutenticador.nome} e possui validade jurídica.`
+      : `Este atestado foi assinado pelo médico ${doctor.name} — CRM: ${doctor.crm}.`
+    }
   </div>
 </body>
 </html>
@@ -408,17 +425,27 @@ export function downloadXML(xml: string, filename: string): void {
 }
 
 /**
- * Simulação de assinatura digital ICP-Brasil
+ * Assina um documento médico.
+ * Se orgaoAutenticador for fornecido, usa o órgão autenticador.
+ * Caso contrário, a autenticação é a assinatura manual do médico.
  */
-export function signDocumentICPBrasil(content: string, doctorName?: string, crm?: string): {
+export function signDocumentICPBrasil(
+  content: string,
+  doctorName?: string,
+  crm?: string,
+  orgaoAutenticador?: OrgaoAutenticador
+): {
   signed: boolean;
   certificate: string;
   timestamp: string;
   hash: string;
 } {
+  const certificate = orgaoAutenticador
+    ? `${orgaoAutenticador.nome}${orgaoAutenticador.identificacao ? ` (${orgaoAutenticador.identificacao})` : ''} — ${doctorName || 'Médico'}${crm ? ` CRM: ${crm}` : ''}`
+    : `Assinatura manual — ${doctorName || 'Médico'}${crm ? ` CRM: ${crm}` : ''}`;
   return {
     signed: true,
-    certificate: `ICP-Brasil A1 - ${doctorName || 'Médico'}${crm ? ` CRM: ${crm}` : ''}`,
+    certificate,
     timestamp: new Date().toISOString(),
     hash: generateMockHash(),
   };

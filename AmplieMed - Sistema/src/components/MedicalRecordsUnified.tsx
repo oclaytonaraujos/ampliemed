@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Search, Plus, Filter, Download, User, Eye, Printer, Lock, CheckCircle, AlertCircle, Activity, Brain, Pill, FileCheck, Stethoscope, Save, X, Upload, Calendar, Clock, Edit2, Trash2, CheckCircle2, FileSignature } from 'lucide-react';
+import { FileText, Search, Plus, Filter, Download, User, Eye, Printer, Lock, CheckCircle, AlertCircle, Activity, Brain, Pill, FileCheck, Stethoscope, Save, X, Upload, Calendar, Clock, Edit2, Trash2, CheckCircle2, FileSignature, ChevronDown } from 'lucide-react';
 import { useLocation } from 'react-router';
 import type { UserRole } from '../App';
 import { useApp } from './AppContext';
@@ -22,23 +22,26 @@ type RecordTab = 'anamnesis' | 'physical' | 'diagnosis' | 'prescription' | 'docu
 
 export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) {
   const { 
-    appointments, 
-    patients, 
-    currentUser, 
-    addNotification, 
-    medicalRecords, 
-    addMedicalRecord, 
-    updateMedicalRecord, 
-    deleteMedicalRecord, 
+    appointments,
+    patients,
+    currentUser,
+    addNotification,
+    medicalRecords,
+    addMedicalRecord,
+    updateMedicalRecord,
+    deleteMedicalRecord,
     addAuditEntry,
     addFileAttachment,
     getAttachmentsByEntity,
-    deleteFileAttachment
+    deleteFileAttachment,
+    clinicSettings
   } = useApp();
+  const orgaoAutenticador = clinicSettings.orgaoAutenticador;
   const { canCreate, canUpdate, canDelete, canExport, canSign } = usePermission('records');
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [statsExpanded, setStatsExpanded] = useState(false);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
 
   // Search & Filters (LIST VIEW)
@@ -354,25 +357,23 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
       return;
     }
     setIsSigned(true);
-    addNotification({ 
-      type: 'document', 
-      title: 'Prontuário assinado', 
-      message: `Prontuário de ${selectedPatient.name} assinado com certificado ICP-Brasil`, 
-      urgent: false 
-    });
+    const sigDesc = orgaoAutenticador
+      ? `Prontuário de ${selectedPatient.name} autenticado via ${orgaoAutenticador.nome}`
+      : `Prontuário de ${selectedPatient.name} assinado pelo médico`;
+    addNotification({ type: 'document', title: 'Prontuário assinado', message: sigDesc, urgent: false });
     addAuditEntry({
       user: currentUser?.name || 'Médico',
       userRole: currentUser?.role || 'doctor',
       action: 'sign',
       module: 'Prontuários',
-      description: `Assinatura digital ICP-Brasil aplicada: ${selectedPatient.name}`,
+      description: sigDesc,
       status: 'success',
     });
     medicalToast.recordSigned(selectedPatient.name);
   };
 
   const handleSignFromList = (recordId: string, patientName: string) => {
-    const signatureData = signDocumentICPBrasil(`prontuario_${recordId}`, currentUser?.name || 'Médico', currentUser?.crm || '');
+    const signatureData = signDocumentICPBrasil(`prontuario_${recordId}`, currentUser?.name || 'Médico', currentUser?.crm || '', orgaoAutenticador);
     updateMedicalRecord(recordId, { signed: true, signedAt: new Date().toLocaleString('pt-BR') });
     addNotification({ type: 'document', title: 'Prontuário assinado', message: `Prontuário de ${patientName} assinado com ${signatureData.certificate}`, urgent: false });
     addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'sign', module: 'Prontuários', description: `Prontuário assinado: ${patientName}`, status: 'success' });
@@ -399,7 +400,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
         { campo: 'Diagnóstico', valor: diagnosis.mainDiagnosis || '-' },
         { campo: 'CID-10', valor: diagnosis.cid10 || '-' },
         { campo: 'Plano de Conduta', valor: diagnosis.conductPlan || '-' },
-        { campo: 'Assinado', valor: isSigned ? 'Sim — ICP-Brasil' : 'Não' },
+        { campo: 'Assinado', valor: isSigned ? `Sim — ${orgaoAutenticador ? orgaoAutenticador.nome : 'Assinatura do médico'}` : 'Não' },
       ],
       `prontuario_${selectedPatient.name.replace(/\s+/g, '_')}`
     );
@@ -944,11 +945,15 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
         <div className="p-4 bg-green-50 border border-green-200 flex items-start gap-3">
           <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-green-900">Prescrição Assinada Digitalmente</p>
+            <p className="text-sm font-medium text-green-900">
+              {orgaoAutenticador ? `Documento Autenticado via ${orgaoAutenticador.nome}` : 'Documento Assinado pelo Médico'}
+            </p>
             <p className="text-xs text-green-700 mt-1">
               Assinado por {currentUser?.name || 'Médico'} {currentUser?.crm ? `(${currentUser.crm})` : ''} em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </p>
-            <p className="text-xs text-green-600 mt-1">Certificado ICP-Brasil verificado</p>
+            {orgaoAutenticador && (
+              <p className="text-xs text-green-600 mt-1">{orgaoAutenticador.nome} verificado</p>
+            )}
           </div>
         </div>
       )}
@@ -1200,7 +1205,7 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
             }`}
           >
             <Lock className="w-4 h-4" />
-            {isSigned ? 'Assinado' : 'Assinar ICP-Brasil'}
+            {isSigned ? 'Assinado' : orgaoAutenticador ? `Assinar via ${orgaoAutenticador.nome}` : 'Assinar'}
           </button>
           <div className="flex items-center gap-3">
             <button
@@ -1240,7 +1245,11 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
       <div className="flex items-start justify-between gap-4">
         <div className="w-1/2">
           <h2 className="text-gray-900 mb-2">Prontuários</h2>
-          <p className="text-gray-600">Registros médicos com assinatura digital ICP-Brasil</p>
+          <p className="text-gray-600">
+            {orgaoAutenticador
+              ? `Registros médicos autenticados via ${orgaoAutenticador.nome}`
+              : 'Registros médicos com assinatura do médico'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative bg-white border border-gray-200 flex items-stretch">
@@ -1282,17 +1291,28 @@ export function MedicalRecordsUnified({ userRole }: MedicalRecordsUnifiedProps) 
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Total', value: allRecords.length, icon: FileText, color: 'text-pink-600' },
-          { label: 'Assinados', value: allRecords.filter(r => r.signed).length, icon: CheckCircle2, color: 'text-green-600' },
-          { label: 'Pendentes', value: allRecords.filter(r => !r.signed).length, icon: FileSignature, color: 'text-orange-600' },
-        ].map(s => { const Icon = s.icon; return (
-          <div key={s.label} className="bg-white border border-gray-200 p-4 flex items-center gap-4">
-            <div className={`p-3 bg-gray-50 ${s.color}`}><Icon className="w-5 h-5" /></div>
-            <div><p className="text-xs text-gray-500">{s.label}</p><p className="text-2xl text-gray-900">{s.value}</p></div>
+      <div>
+        <button
+          onClick={() => setStatsExpanded(v => !v)}
+          className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsExpanded ? '' : '-rotate-90'}`} />
+          <span>Resumo — Total: <span className="text-pink-600 font-semibold">{allRecords.length}</span> · Assinados: <span className="text-green-600 font-semibold">{allRecords.filter(r => r.signed).length}</span> · Pendentes: <span className="text-orange-600 font-semibold">{allRecords.filter(r => !r.signed).length}</span></span>
+        </button>
+        {statsExpanded && (
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            {[
+              { label: 'Total', value: allRecords.length, color: 'text-pink-600' },
+              { label: 'Assinados', value: allRecords.filter(r => r.signed).length, color: 'text-green-600' },
+              { label: 'Pendentes', value: allRecords.filter(r => !r.signed).length, color: 'text-orange-600' },
+            ].map(s => (
+              <div key={s.label} className="bg-white border border-gray-200 p-3 text-center">
+                <p className={`text-2xl font-semibold ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+              </div>
+            ))}
           </div>
-        ); })}
+        )}
       </div>
 
       {/* Table */}

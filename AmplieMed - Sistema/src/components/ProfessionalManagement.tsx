@@ -2,14 +2,14 @@ import { useState } from 'react';
 import {
   Plus, Search, Edit, Trash2, Filter, X, CheckCircle, AlertCircle,
   Shield, Mail, Phone, User, Download, Eye, Stethoscope,
-  TrendingUp, DollarSign, Award, Calendar, KeyRound
+  TrendingUp, DollarSign, Award, Calendar, KeyRound, ChevronDown
 } from 'lucide-react';
 import type { UserRole } from '../App';
 import type { Professional } from './AppContext';
 import { useApp } from './AppContext';
 import { validateCPF } from '../utils/validators';
 import { toastSuccess, toastError, toastWarning } from '../utils/toastService';
-import { exportProfessionals } from '../utils/exportService';
+import { exportProfessionalsExcel } from '../utils/exportService';
 import { usePermission } from './PermissionGuard';
 import { getSupabase } from '../utils/supabaseClient';
 
@@ -56,6 +56,8 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
   const [form, setForm] = useState<Omit<Professional, 'id' | 'createdAt'> & { password?: string; otherProfessionalType?: string }>(EMPTY_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isCreatingUser, setIsCreatingUser] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [statsExpanded, setStatsExpanded] = useState(false);
 
   // Filtering
   let filtered = [...professionals];
@@ -222,7 +224,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
 
   const handleExport = () => {
     try {
-      exportProfessionals(filtered);
+      exportProfessionalsExcel(filtered);
       addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'export', module: 'Profissionais', description: `${filtered.length} profissionais exportados`, status: 'success' });
       toastSuccess('Exportado com sucesso');
     } catch { toastError('Erro ao exportar'); }
@@ -342,75 +344,129 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
   // ── LIST VIEW ─────────────────────────────────────────────────────────────
   const renderList = () => (
     <div className="space-y-6">
+
+      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestão de Profissionais</h2>
-          <p className="text-sm text-gray-600 mt-1">Cadastro, performance e certificação digital dos profissionais da clínica</p>
+          <h2 className="text-gray-900 mb-2">Gestão de Profissionais</h2>
+          <p className="text-gray-600">Cadastro, performance e certificação digital dos profissionais da clínica</p>
         </div>
         <div className="flex items-center gap-3">
-          {canExport && (
-            <button onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-sm rounded-lg transition-colors">
-              <Download className="w-4 h-4" /> Exportar
+          <div className="relative bg-white border border-gray-200 flex items-stretch w-max">
+            <div className="relative flex items-center w-72 px-2 border-r border-gray-200">
+              <Search className="absolute left-4 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Buscar profissional..."
+                className="w-full pl-7 pr-3 bg-gray-50 border-0 text-sm focus:outline-none focus:ring-0 focus:bg-white transition-all"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2.5 border-r border-gray-200 text-sm transition-colors ${showFilters ? 'bg-pink-50' : 'bg-gray-50 hover:bg-gray-100'}`}
+            >
+              <Filter className="w-4 h-4 text-gray-600" />
+              <span className="text-gray-700">Filtros</span>
             </button>
-          )}
+            {canExport && (
+              <button
+                onClick={handleExport}
+                title="Exportar Excel"
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-sm transition-colors"
+              >
+                <Download className="w-4 h-4 text-gray-600" />
+              </button>
+            )}
+          </div>
           {canCreate && (
-            <button onClick={handleAdd}
-              className="flex items-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 text-sm rounded-lg transition-colors">
+            <button
+              onClick={handleAdd}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors whitespace-nowrap"
+            >
               <Plus className="w-4 h-4" /> Novo Profissional
             </button>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {[
-          { label: 'Ativos', value: activeProfessionals, icon: User, color: 'blue' },
-          { label: 'Com Certificado', value: withCertificate, icon: Shield, color: 'green' },
-          { label: 'Cert. Vencendo', value: certExpiringCount, icon: AlertCircle, color: 'orange' },
-          { label: 'Consultas/Mês', value: totalConsultationsMonth, icon: TrendingUp, color: 'indigo' },
-          { label: 'Receita/Mês', value: `R$ ${(totalRevenueMonth / 1000).toFixed(0)}k`, icon: DollarSign, color: 'emerald' },
-        ].map(s => {
-          const Icon = s.icon;
-          return (
-            <div key={s.label} className="bg-white border border-gray-200 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <Icon className={`w-5 h-5 text-${s.color}-600`} />
-                <span className={`text-xl font-bold text-${s.color}-700`}>{s.value}</span>
+      {/* Stats */}
+      <div>
+        <button
+          onClick={() => setStatsExpanded(v => !v)}
+          className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsExpanded ? '' : '-rotate-90'}`} />
+          <span>
+            Resumo — Ativos: <span className="text-blue-600 font-semibold">{activeProfessionals}</span>
+            {' · '}Com Certificado: <span className="text-green-600 font-semibold">{withCertificate}</span>
+            {' · '}Cert. Vencendo: <span className="text-orange-600 font-semibold">{certExpiringCount}</span>
+            {' · '}Consultas/Mês: <span className="text-indigo-600 font-semibold">{totalConsultationsMonth}</span>
+            {' · '}Receita/Mês: <span className="text-emerald-600 font-semibold">R$ {(totalRevenueMonth / 1000).toFixed(0)}k</span>
+          </span>
+        </button>
+        {statsExpanded && (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-3">
+            {[
+              { label: 'Ativos', value: activeProfessionals, color: 'text-blue-600' },
+              { label: 'Com Certificado', value: withCertificate, color: 'text-green-600' },
+              { label: 'Cert. Vencendo', value: certExpiringCount, color: 'text-orange-600' },
+              { label: 'Consultas/Mês', value: totalConsultationsMonth, color: 'text-indigo-600' },
+              { label: 'Receita/Mês', value: `R$ ${(totalRevenueMonth / 1000).toFixed(0)}k`, color: 'text-emerald-600' },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white border border-gray-200 p-3 text-center">
+                <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
               </div>
-              <p className="text-xs text-gray-500">{s.label}</p>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Buscar profissional..."
-            className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm" />
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="bg-white border border-gray-200 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Tipo</label>
+              <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500">
+                <option value="">Todos</option>
+                {ROLES_PROF.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Especialidade</label>
+              <select value={filterSpecialty} onChange={e => setFilterSpecialty(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500">
+                <option value="">Todas</option>
+                {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Status</label>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500">
+                <option value="all">Todos</option>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-3">
+            <button
+              onClick={() => { setFilterRole(''); setFilterSpecialty(''); setFilterStatus('all'); }}
+              className="text-xs text-pink-600 hover:underline"
+            >
+              Limpar filtros
+            </button>
+          </div>
         </div>
-        <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
-          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
-          <option value="">Todos os tipos</option>
-          {ROLES_PROF.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-        </select>
-        <select value={filterSpecialty} onChange={e => setFilterSpecialty(e.target.value)}
-          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
-          <option value="">Todas as especialidades</option>
-          {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
-          className="px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm">
-          <option value="all">Todos os status</option>
-          <option value="active">Ativos</option>
-          <option value="inactive">Inativos</option>
-        </select>
-      </div>
+      )}
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-gray-200 rounded-lg">
+        <div className="text-center py-16 bg-white border border-gray-200">
           <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-600 font-medium">Nenhum profissional encontrado</p>
           <p className="text-sm text-gray-400 mt-1">
@@ -620,41 +676,6 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                 placeholder="(00) 00000-0000" />
             </div>
 
-            {(view === 'add' || view === 'edit') && (
-                <div className="md:col-span-2">
-                    {view === 'edit' && systemUsers.some(u => u.email === form.email && form.email) ? (
-                        <div className="flex items-center gap-2 text-sm text-green-700">
-                            <CheckCircle size={16} />
-                            <span>Profissional já possui acesso ao sistema</span>
-                        </div>
-                    ) : (
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" checked={isCreatingUser} onChange={() => setIsCreatingUser(!isCreatingUser)} className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500" />
-                            <span className="text-sm font-medium text-gray-700">{view === 'add' ? 'Criar acesso de usuário' : 'Atribuir acesso de usuário'}</span>
-                        </label>
-                    )}
-                </div>
-            )}
-            
-            {(isCreatingUser || view === 'edit') && (
-                <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{isCreatingUser || (view==='edit' && form.email) ? 'E-mail de Acesso *' : 'E-mail de Contato'}</label>
-                    <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                        className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
-                        placeholder="profissional@clinica.com" />
-                    {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
-                </div>
-            )}
-
-            {isCreatingUser && (
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Senha de Acesso *</label>
-                <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                  className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
-                  placeholder="Mínimo 6 caracteres" />
-                {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
-              </div>
-            )}
           </div>
 
           <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3 pt-2">Dados Profissionais</h3>
@@ -770,6 +791,47 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" placeholder="0" min={0} />
             </div>
           </div>
+
+          {(view === 'add' || view === 'edit') && (
+            <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3 pt-2">Acesso ao Sistema</h3>
+          )}
+          {(view === 'add' || view === 'edit') && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                {view === 'edit' && systemUsers.some(u => u.email === form.email && form.email) ? (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle size={16} />
+                    <span>Profissional já possui acesso ao sistema</span>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={isCreatingUser} onChange={() => setIsCreatingUser(!isCreatingUser)} className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500" />
+                    <span className="text-sm font-medium text-gray-700">{view === 'add' ? 'Criar acesso de usuário' : 'Atribuir acesso de usuário'}</span>
+                  </label>
+                )}
+              </div>
+
+              {(isCreatingUser || view === 'edit') && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{isCreatingUser || (view === 'edit' && form.email) ? 'E-mail de Acesso *' : 'E-mail de Contato'}</label>
+                  <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                    className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.email ? 'border-red-400' : 'border-gray-200'}`}
+                    placeholder="profissional@clinica.com" />
+                  {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
+                </div>
+              )}
+
+              {isCreatingUser && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Senha de Acesso *</label>
+                  <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                    className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 ${errors.password ? 'border-red-400' : 'border-gray-200'}`}
+                    placeholder="Mínimo 6 caracteres" />
+                  {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-end gap-3">

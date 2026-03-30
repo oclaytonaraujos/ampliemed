@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Search, Plus, Upload, Download, CheckCircle, Clock, AlertCircle, Filter, X, Eye, Trash2, Paperclip } from 'lucide-react';
+import { FileText, Search, Plus, Upload, Download, CheckCircle, Clock, AlertCircle, Filter, X, Eye, Trash2, Paperclip, ChevronDown } from 'lucide-react';
 import { useLocation } from 'react-router';
 import type { UserRole } from '../App';
 import type { Exam } from './AppContext';
@@ -17,6 +17,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
   const { exams, setExams, patients, professionals, addNotification, addAuditEntry, currentUser, addFileAttachment, deleteFileAttachment, getAttachmentsByEntity } = useApp();
   const { canCreate, canUpdate, canDelete, canExport } = usePermission('exams');
   const [searchTerm, setSearchTerm] = useState('');
+  const [statsExpanded, setStatsExpanded] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('todos');
   const [showFilters, setShowFilters] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -195,19 +196,29 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Total', value: stats.total, color: 'bg-pink-600' },
-          { label: 'Concluídos', value: stats.concluido, color: 'bg-green-600' },
-          { label: 'Em Andamento', value: stats.em_andamento, color: 'bg-yellow-500' },
-          { label: 'Atrasados', value: stats.atrasado, color: 'bg-red-600' },
-        ].map(s => (
-          <div key={s.label} className="bg-white border border-gray-200 p-4">
-            <div className={`w-2 h-8 ${s.color} mb-3`} />
-            <p className="text-2xl font-semibold text-gray-900">{s.value}</p>
-            <p className="text-sm text-gray-600">{s.label}</p>
+      <div>
+        <button
+          onClick={() => setStatsExpanded(v => !v)}
+          className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsExpanded ? '' : '-rotate-90'}`} />
+          <span>Resumo — Total: <span className="text-pink-600 font-semibold">{stats.total}</span> · Concluídos: <span className="text-green-600 font-semibold">{stats.concluido}</span> · Em Andamento: <span className="text-yellow-500 font-semibold">{stats.em_andamento}</span> · Atrasados: <span className="text-red-600 font-semibold">{stats.atrasado}</span></span>
+        </button>
+        {statsExpanded && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+            {[
+              { label: 'Total', value: stats.total, color: 'text-pink-600' },
+              { label: 'Concluídos', value: stats.concluido, color: 'text-green-600' },
+              { label: 'Em Andamento', value: stats.em_andamento, color: 'text-yellow-500' },
+              { label: 'Atrasados', value: stats.atrasado, color: 'text-red-600' },
+            ].map(s => (
+              <div key={s.label} className="bg-white border border-gray-200 p-3 text-center">
+                <p className={`text-2xl font-semibold ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       {/* Table */}

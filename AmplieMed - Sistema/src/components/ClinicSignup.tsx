@@ -345,69 +345,8 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {currentStep === 'credentials' && (
         <div className="space-y-4">
-          {/* Credentials Section */}
-          <div className="space-y-3.5">
-            <div>
-              <label className="block text-xs font-medium mb-1.5 text-gray-900 font-semibold">
-                Sua Senha de Acesso
-              </label>
-              <p className="text-xs text-gray-600 mb-3">
-                Esta será a senha do administrador da clínica para acessar o sistema.
-              </p>
-
-              <div>
-                <label className="text-xs text-gray-700 mb-1.5 block">Senha <span className="text-red-400">*</span></label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    className={`${INPUT_CLASS} pr-10`}
-                    placeholder="••••••••"
-                    disabled={loading}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <p className="text-[11px] text-gray-400 mt-1">
-                  Mínimo 8 caracteres com maiúsculas, minúsculas e números
-                </p>
-              </div>
-
-              <div className="mt-3">
-                <label className="text-xs text-gray-700 mb-1.5 block">Confirmar Senha <span className="text-red-400">*</span></label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={adminConfirmPassword}
-                    onChange={(e) => setAdminConfirmPassword(e.target.value)}
-                    className={`${INPUT_CLASS} pr-10`}
-                    placeholder="••••••••"
-                    disabled={loading}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Address Section */}
-          <div className="pt-4 border-t border-gray-200 space-y-3.5">
+          <div className="space-y-3.5">
             <div>
               <label className="block text-xs font-medium mb-1.5 text-gray-900 font-semibold flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5" />
@@ -517,6 +456,67 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
                   disabled={loading}
                   maxLength={9}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Credentials Section */}
+          <div className="pt-4 border-t border-gray-200 space-y-3.5">
+            <div>
+              <label className="block text-xs font-medium mb-1.5 text-gray-900 font-semibold">
+                Sua Senha de Acesso
+              </label>
+              <p className="text-xs text-gray-600 mb-3">
+                Esta será a senha do administrador da clínica para acessar o sistema.
+              </p>
+
+              <div>
+                <label className="text-xs text-gray-700 mb-1.5 block">Senha <span className="text-red-400">*</span></label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className={`${INPUT_CLASS} pr-10`}
+                    placeholder="••••••••"
+                    disabled={loading}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Mínimo 8 caracteres com maiúsculas, minúsculas e números
+                </p>
+              </div>
+
+              <div className="mt-3">
+                <label className="text-xs text-gray-700 mb-1.5 block">Confirmar Senha <span className="text-red-400">*</span></label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={adminConfirmPassword}
+                    onChange={(e) => setAdminConfirmPassword(e.target.value)}
+                    className={`${INPUT_CLASS} pr-10`}
+                    placeholder="••••••••"
+                    disabled={loading}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -509,6 +509,7 @@ export function queueEntryToRow(q: any, ownerId: string): Record<string, any> {
     email: q.email || null,
     insurance: q.insurance || null,
     allergies: q.allergies || null,
+    appointment_id: q.appointmentId || null,
   };
 }
 
@@ -532,6 +533,7 @@ export function queueEntryFromRow(row: any): any {
     email: row.email || undefined,
     insurance: row.insurance || undefined,
     allergies: row.allergies || undefined,
+    appointmentId: row.appointment_id || undefined,
   };
 }
 

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, ArrowLeft, User, Mail, Phone } from 'lucide-react';
 import logoAmplieMed from '../assets/775bd1b6594b305b8d42a07d24da813913fe5060.png';
-import { toastInfo } from '../utils/toastService';
 import { ClinicSignup } from './ClinicSignup';
 import type { ClinicSignupResult } from '../types';
+import { getSupabase } from '../utils/supabaseClient';
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
@@ -41,6 +41,11 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
 
+  // Forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+
   // Shared state
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -50,6 +55,31 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
     setMode(newMode);
     setError('');
     setSuccess('');
+    setShowForgotPassword(false);
+    setForgotSent(false);
+    setForgotEmail('');
+  };
+
+  // ── Forgot password handler ─────────────────────────────────────────────
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.includes('@')) {
+      setError('Digite um e-mail válido');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const { error: resetError } = await getSupabase().auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}`,
+      });
+      if (resetError) throw resetError;
+      setForgotSent(true);
+    } catch (err: any) {
+      setError(err?.message || 'Erro ao enviar e-mail. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ── Login handler ───────────────────────────────────────────────────────
@@ -154,7 +184,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
           {/* ══════════════════════════════════════════════════════════════ */}
           {/* LOGIN FORM                                                    */}
           {/* ══════════════════════════════════════════════════════════════ */}
-          {mode === 'login' && (
+          {mode === 'login' && !showForgotPassword && (
             <>
               <div className="text-center mb-6">
                 <h1 className="text-lg font-semibold text-gray-900">Bem-vindo de volta</h1>
@@ -215,7 +245,7 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
                   <button
                     type="button"
                     className="text-xs text-pink-500 hover:text-pink-600 transition-colors"
-                    onClick={() => toastInfo('Recuperação de senha: entre em contato com o administrador do sistema')}
+                    onClick={() => { setShowForgotPassword(true); setError(''); }}
                   >
                     Esqueceu a senha?
                   </button>
@@ -239,14 +269,97 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
 
               {/* Switch to signup */}
               <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
+                <p className="text-center text-sm text-gray-500">
+                  Não tem conta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => switchMode('clinic-signup')}
+                    className="text-pink-600 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer"
+                  >
+                    Registre-se
+                  </button>
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════ */}
+          {/* FORGOT PASSWORD                                               */}
+          {/* ══════════════════════════════════════════════════════════════ */}
+          {mode === 'login' && showForgotPassword && (
+            <>
+              <div className="mb-5">
                 <button
                   type="button"
-                  onClick={() => switchMode('clinic-signup')}
-                  className="w-full text-center text-sm font-medium px-4 py-2 rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors"
+                  onClick={() => { setShowForgotPassword(false); setForgotSent(false); setError(''); }}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  Registre-se
+                  <ArrowLeft className="w-3.5 h-3.5" /> Voltar para o login
                 </button>
               </div>
+
+              <div className="text-center mb-6">
+                <h1 className="text-lg font-semibold text-gray-900">Recuperar senha</h1>
+                <p className="text-[13px] text-gray-400 mt-0.5">Enviaremos um link para o seu e-mail</p>
+              </div>
+
+              {error && (
+                <div className="mb-4 p-2.5 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                  <p className="text-xs text-red-600">{error}</p>
+                </div>
+              )}
+
+              {forgotSent ? (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <CheckCircle2 className="w-10 h-10 text-pink-500" />
+                  <p className="text-sm text-gray-700 text-center">
+                    E-mail enviado! Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setShowForgotPassword(false); setForgotSent(false); setForgotEmail(''); }}
+                    className="mt-2 text-xs text-pink-500 hover:text-pink-600 transition-colors"
+                  >
+                    Voltar para o login
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div>
+                    <label htmlFor="forgot-email" className="block text-xs font-medium mb-1.5 text-[#101828]">
+                      E-mail
+                    </label>
+                    <input
+                      id="forgot-email"
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className={INPUT_CLASS}
+                      placeholder="seu@email.com"
+                      disabled={loading}
+                      autoComplete="email"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading || !forgotEmail}
+                    className="w-full bg-pink-600 text-white text-sm font-medium py-2.5 rounded-xl hover:bg-pink-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4" />
+                        Enviar link de recuperação
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
             </>
           )}
 

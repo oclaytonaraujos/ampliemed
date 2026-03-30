@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { X, Users, Clock, Calendar, Plus, Trash2, Settings, MessageSquare, Send } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Users, Clock, Calendar, Plus, Trash2, Settings, MessageSquare, Send, Loader2, Trash } from 'lucide-react';
 import { useApp } from './AppContext';
+import { getSupabase } from '../utils/supabaseClient';
 
 interface WaitingListModalProps {
   isOpen: boolean;
@@ -8,12 +9,21 @@ interface WaitingListModalProps {
 }
 
 export function WaitingListModal({ isOpen, onClose }: WaitingListModalProps) {
-  const { appointments, patients } = useApp();
-  
-  // Filtrar agendamentos na lista de espera (status especial ou pacientes sem data confirmada)
-  const waitingList = appointments.filter(apt => 
-    apt.status === 'pendente' && !apt.confirmed
-  );
+  const { appointments, setAppointments, patients } = useApp();
+
+  const waitingList = appointments.filter(apt => apt.status === 'pendente');
+
+  const handleConfirm = (id: string) => {
+    setAppointments(prev =>
+      prev.map(apt => apt.id === id ? { ...apt, status: 'confirmado' } : apt)
+    );
+  };
+
+  const handleRemove = (id: string) => {
+    setAppointments(prev =>
+      prev.map(apt => apt.id === id ? { ...apt, status: 'cancelado' } : apt)
+    );
+  };
 
   if (!isOpen) return null;
 
@@ -49,39 +59,34 @@ export function WaitingListModal({ isOpen, onClose }: WaitingListModalProps) {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                            {apt.patientName.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                            {apt.patientName.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900">{apt.patientName}</p>
-                            <p className="text-xs text-gray-500">{patient?.phone || 'Sem telefone'}</p>
+                            <p className="text-xs text-gray-500">{patient?.phone || apt.patientPhone || 'Sem telefone'}</p>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 text-xs text-gray-600 ml-13">
+                        <div className="grid grid-cols-2 gap-3 text-xs text-gray-600 mt-2 ml-13">
+                          <div><span className="font-medium">Especialidade:</span> {apt.specialty || '—'}</div>
+                          <div><span className="font-medium">Médico:</span> {apt.doctorName || '—'}</div>
                           <div>
-                            <span className="font-medium">Especialidade:</span> {apt.specialty}
-                          </div>
-                          <div>
-                            <span className="font-medium">Médico:</span> {apt.doctorName}
-                          </div>
-                          <div>
-                            <span className="font-medium">Data solicitada:</span>{' '}
+                            <span className="font-medium">Data:</span>{' '}
                             {new Date(apt.date).toLocaleDateString('pt-BR')}
                           </div>
-                          <div>
-                            <span className="font-medium">Horário preferido:</span> {apt.time}
-                          </div>
+                          <div><span className="font-medium">Horário:</span> {apt.time}</div>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 ml-4">
                         <button
+                          onClick={() => handleConfirm(apt.id)}
                           className="px-3 py-1 bg-pink-600 text-white text-xs hover:bg-pink-700 transition-colors"
-                          title="Confirmar agendamento"
                         >
                           Confirmar
                         </button>
                         <button
-                          className="p-1 hover:bg-red-50 text-red-600 transition-colors"
-                          title="Remover da lista"
+                          onClick={() => handleRemove(apt.id)}
+                          className="p-1 hover:bg-red-50 text-red-500 transition-colors"
+                          title="Cancelar agendamento"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -335,34 +340,122 @@ interface MessagesModalProps {
 }
 
 export function MessagesModal({ isOpen, onClose }: MessagesModalProps) {
-  const { currentUser } = useApp();
+  const { currentUser, selectedClinicId } = useApp();
   const [newMessage, setNewMessage] = useState('');
-  const [messages] = useState([
-    {
-      id: '1',
-      author: 'Dr. João Silva',
-      message: 'Favor confirmar o agendamento do paciente Pedro Santos para amanhã às 14h.',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: '2',
-      author: 'Recepção',
-      message: 'Lembrando que a sala 3 estará em manutenção na próxima segunda-feira.',
-      timestamp: new Date(Date.now() - 7200000).toISOString(),
-    },
-  ]);
+  const [messages, setMessages] = useState<{
+    id: string;
+    author_name: string;
+    author_role: string;
+    author_id: string;
+    message: string;
+    created_at: string;
+  }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Get current auth user id
+  useEffect(() => {
+    getSupabase().auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
+  }, []);
+
+  // Load messages + subscribe to realtime when modal opens
+  useEffect(() => {
+    if (!isOpen || !selectedClinicId) return;
+
+    setLoading(true);
+    const supabase = getSupabase();
+
+    supabase
+      .from('team_messages')
+      .select('id, author_name, author_role, author_id, message, created_at')
+      .eq('clinic_id', selectedClinicId)
+      .order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (!error && data) setMessages(data);
+        setLoading(false);
+      });
+
+    const channel = supabase
+      .channel(`team_messages:${selectedClinicId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'team_messages',
+          filter: `clinic_id=eq.${selectedClinicId}`,
+        },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as any]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'team_messages',
+          filter: `clinic_id=eq.${selectedClinicId}`,
+        },
+        (payload) => {
+          setMessages((prev) => prev.filter((m) => m.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isOpen, selectedClinicId]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   if (!isOpen) return null;
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    // Aqui você adicionaria a lógica para salvar a mensagem
+  const handleSendMessage = async () => {
+    const text = newMessage.trim();
+    if (!text || !selectedClinicId || !currentUserId) return;
+
+    setSending(true);
     setNewMessage('');
+
+    const { error } = await getSupabase().from('team_messages').insert({
+      clinic_id: selectedClinicId,
+      author_id: currentUserId,
+      author_name: currentUser?.name || 'Usuário',
+      author_role: currentUser?.role || 'user',
+      message: text,
+    });
+
+    if (error) {
+      setNewMessage(text); // restore on error
+      console.error('[TeamMessages] Erro ao enviar:', error.message);
+    }
+    setSending(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await getSupabase().from('team_messages').delete().eq('id', id);
+  };
+
+  const timeAgo = (iso: string) => {
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 60) return 'agora mesmo';
+    if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`;
+    return `há ${Math.floor(diff / 86400)}d`;
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white w-full max-w-2xl mx-4 shadow-lg max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white w-full max-w-2xl mx-4 shadow-lg flex flex-col h-[520px]" onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <MessageSquare className="w-5 h-5 text-pink-600" />
@@ -374,29 +467,41 @@ export function MessagesModal({ isOpen, onClose }: MessagesModalProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {messages.length === 0 ? (
+          {loading ? (
+            <div className="py-12 flex justify-center">
+              <Loader2 className="w-6 h-6 text-pink-400 animate-spin" />
+            </div>
+          ) : messages.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
               <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p>Nenhum recado ainda</p>
             </div>
           ) : (
-            messages.map((msg) => (
-              <div key={msg.id} className="border border-gray-200 p-4 bg-gray-50">
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-900">{msg.author}</span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(msg.timestamp).toLocaleString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
+            messages.map((msg) => {
+              const isOwn = msg.author_id === currentUserId;
+              return (
+                <div key={msg.id} className="group border border-gray-200 p-4 bg-gray-50 relative">
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-900">{msg.author_name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">{timeAgo(msg.created_at)}</span>
+                      {isOwn && (
+                        <button
+                          onClick={() => handleDelete(msg.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
+                          title="Excluir recado"
+                        >
+                          <Trash className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700">{msg.message}</p>
                 </div>
-                <p className="text-sm text-gray-700">{msg.message}</p>
-              </div>
-            ))
+              );
+            })
           )}
+          <div ref={bottomRef} />
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0">
@@ -405,15 +510,17 @@ export function MessagesModal({ isOpen, onClose }: MessagesModalProps) {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
               placeholder="Digite seu recado..."
               className="flex-1 px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              disabled={sending}
             />
             <button
               onClick={handleSendMessage}
-              className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors flex items-center gap-2"
+              disabled={sending || !newMessage.trim()}
+              className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-4 h-4" />
+              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               Enviar
             </button>
           </div>

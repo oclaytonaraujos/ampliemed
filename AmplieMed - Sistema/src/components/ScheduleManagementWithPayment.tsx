@@ -3,7 +3,7 @@ import {
   Calendar, ChevronLeft, ChevronRight, Clock, User, Search, Plus, Video, MapPin, 
   Phone, Filter, Download, X, Check, Ban, Edit, Send, MessageSquare, FileText, 
   AlertCircle, Stethoscope, Building, DollarSign, CreditCard, Receipt, Bell,
-  History, Printer, Mail, Copy, FileCheck, UserCog, Folder, RefreshCw, Banknote, RotateCcw
+  History, Printer, Mail, Copy, FileCheck, UserCog, Folder, RefreshCw, Banknote, RotateCcw, ChevronDown
 } from 'lucide-react';
 import { useLocation } from 'react-router';
 import type { UserRole } from '../App';
@@ -37,11 +37,12 @@ interface FilterOptions {
 export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWithPaymentProps) {
   const {
     appointments, setAppointments, addNotification, patients,
-    queueEntries, setQueueEntries,
+    setQueueEntries,
     professionals, insurances,
     addAuditEntry, currentUser,
     financialPayments, setFinancialPayments,
     selectedClinicId, addCommunicationMessage,
+    clinicSettings,
   } = useApp();
 
   const sendStatusWhatsApp = (phone: string | undefined, patientName: string, text: string) => {
@@ -79,6 +80,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
   const [showPatientsWaitingModal, setShowPatientsWaitingModal] = useState(false);
   const [showScaleConfigModal, setShowScaleConfigModal] = useState(false);
   const [showMessagesModal, setShowMessagesModal] = useState(false);
+  const [statsExpanded, setStatsExpanded] = useState(false);
   
   const [filters, setFilters] = useState<FilterOptions>({
     doctor: '',
@@ -117,6 +119,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
     insuranceName: '',
     paymentMethod: 'pix' as 'pix' | 'credito' | 'debito' | 'dinheiro' | 'convenio',
     installments: 1,
+    telemedLink: '',
   });
 
   // Form state para registro de pagamento
@@ -126,11 +129,11 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
     paidAmount: 0,
   });
 
-  const timeSlots = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30', '18:00'
-  ];
+  const timeSlots = Array.from({ length: 48 }, (_, i) => {
+    const h = Math.floor(i / 2).toString().padStart(2, '0');
+    const m = i % 2 === 0 ? '00' : '30';
+    return `${h}:${m}`;
+  });
 
   // Dynamic lists from context — empty when no data (never fall back to hardcoded mocks)
   const doctorOptions = professionals.map(p => p.name);
@@ -184,20 +187,37 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
   // Ref for the day-view scroll container
   const dayScrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll time column to the current time slot when day view is active
+  // Each 30-min slot is 30px tall; 8 hours = 16 slots = 480px visible at once
+  const SLOT_HEIGHT = 30;
+  const DAY_VIEW_HEIGHT = 8 * 2 * SLOT_HEIGHT; // 480px — exactly 8 hours
+
+  // On mount / view change: anchor current hour at the top; resize to show exactly 8 h.
+  // Uses DOM measurement instead of arithmetic because slots with appointments are
+  // taller than SLOT_HEIGHT (min-h-[30px] grows with content).
   useEffect(() => {
-    if (viewMode !== 'day' || !dayScrollRef.current) return;
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMin = now.getMinutes();
-    const idx = timeSlots.findIndex(slot => {
-      const [h, m] = slot.split(':').map(Number);
-      return h > currentHour || (h === currentHour && m >= currentMin);
-    });
-    // Show one slot before current time; default to start if before business hours
-    const slotIndex = idx > 0 ? idx - 1 : 0;
-    const SLOT_HEIGHT = 60; // matches min-h-[60px]
-    dayScrollRef.current.scrollTo({ top: slotIndex * SLOT_HEIGHT, behavior: 'smooth' });
+    if (viewMode !== 'day') return;
+    const timer = setTimeout(() => {
+      const container = dayScrollRef.current;
+      if (!container) return;
+
+      const currentHour = new Date().getHours(); // e.g. 14 for any time 14:00–14:59
+      const pad = (n: number) => String(n).padStart(2, '0');
+
+      // Find the slot elements by their data-time attribute (actual DOM positions)
+      const startEl = container.querySelector<HTMLElement>(`[data-time="${pad(currentHour)}:00"]`);
+      const endEl   = container.querySelector<HTMLElement>(`[data-time="${pad(Math.min(currentHour + 8, 23))}:00"]`);
+
+      if (startEl) {
+        // Anchor the current-hour block exactly at the top of the visible area
+        container.scrollTop = startEl.offsetTop;
+
+        // Resize viewport so exactly 8 hours are visible without scrolling
+        if (endEl) {
+          container.style.height = `${endEl.offsetTop - startEl.offsetTop}px`;
+        }
+      }
+    }, 50);
+    return () => clearTimeout(timer);
   }, [viewMode, selectedDate]);
 
   // Sync confirmed today's appointments to waiting queue on load
@@ -213,21 +233,19 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       let hasChanges = false;
       
       confirmedTodayApts.forEach(apt => {
-        const alreadyInQueue = prevQueue.some(q =>
-          (q.cpf && apt.patientCPF && q.cpf.replace(/\D/g, '') === apt.patientCPF.replace(/\D/g, '')) ||
-          q.name.toLowerCase() === apt.patientName.toLowerCase()
-        );
-        
+        const alreadyInQueue = prevQueue.some(q => q.appointmentId === apt.id);
+
         if (!alreadyInQueue) {
-          // Calculate next ticket number from highest existing ticket
           const maxTicket = newEntries.reduce((max, q) => {
             const n = parseInt(q.ticketNumber, 10);
             return isNaN(n) ? max : Math.max(max, n);
           }, 0);
           const ticketNum = String(maxTicket + 1).padStart(3, '0');
-          
+
           const newEntry = {
             id: crypto.randomUUID(),
+            appointmentId: apt.id,
+            appointmentTime: apt.time,
             ticketNumber: ticketNum,
             name: apt.patientName,
             status: 'waiting' as const,
@@ -435,24 +453,22 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       if (apt.date === todayStr) {
         // Use callback form to access current queueEntries and avoid race conditions
         setQueueEntries(prevQueue => {
-          const alreadyInQueue = prevQueue.some(q =>
-            (q.cpf && apt.patientCPF && q.cpf.replace(/\D/g, '') === apt.patientCPF.replace(/\D/g, '')) ||
-            q.name.toLowerCase() === apt.patientName.toLowerCase()
-          );
-          
+          const alreadyInQueue = prevQueue.some(q => q.appointmentId === apt.id);
+
           if (alreadyInQueue) {
-            return prevQueue; // No changes needed
+            return prevQueue;
           }
-          
-          // Calculate next ticket number from highest existing ticket
+
           const maxTicket = prevQueue.reduce((max, q) => {
             const n = parseInt(q.ticketNumber, 10);
             return isNaN(n) ? max : Math.max(max, n);
           }, 0);
           const ticketNum = String(maxTicket + 1).padStart(3, '0');
-          
+
           const newEntry = {
             id: crypto.randomUUID(),
+            appointmentId: apt.id,
+            appointmentTime: apt.time,
             ticketNumber: ticketNum,
             name: apt.patientName,
             status: 'waiting' as const,
@@ -695,12 +711,52 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
   };
 
   const handleSendReminder = (appointment: Appointment) => {
+    const phone = appointment.patientPhone;
+    if (!phone) {
+      showNotificationMessage(`Paciente ${appointment.patientName} não tem telefone cadastrado.`, 'error');
+      return;
+    }
+    if (!selectedClinicId) {
+      showNotificationMessage('Clínica não configurada para envio de mensagens.', 'error');
+      return;
+    }
+    const text = `Olá ${appointment.patientName}! Lembramos sua consulta com ${appointment.doctorName} em ${appointment.date} às ${appointment.time}. Responda SIM para confirmar ou NÃO para cancelar.`;
+    sendStatusWhatsApp(phone, appointment.patientName, text);
     showNotificationMessage(`Lembrete enviado para ${appointment.patientName} via WhatsApp`);
   };
 
   const handleSendPaymentReminder = (appointment: Appointment) => {
     showNotificationMessage(`Lembrete de pagamento enviado para ${appointment.patientName}`);
   };
+
+  // ── Conflict detection ───────────────────────────────────────────────────
+  const timeToMinutes = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + (m || 0);
+  };
+
+  const detectConflict = (
+    doctor: string, date: string, time: string, duration: number, excludeId?: string
+  ): Appointment | null => {
+    if (!doctor || !date || !time) return null;
+    const start = timeToMinutes(time);
+    const end = start + duration;
+    return appointments.find(a => {
+      if (excludeId && a.id === excludeId) return false;
+      if (a.status === 'cancelado') return false;
+      if (a.doctorName !== doctor || a.date !== date) return false;
+      const aStart = timeToMinutes(a.time);
+      const aEnd = aStart + (a.duration || 30);
+      return start < aEnd && end > aStart;
+    }) || null;
+  };
+
+  const newApptConflict = detectConflict(
+    newAppointmentForm.doctorName,
+    newAppointmentForm.date,
+    newAppointmentForm.time,
+    newAppointmentForm.duration,
+  );
 
   const handleCreateAppointment = () => {
     const newAppointment: Appointment = {
@@ -726,6 +782,9 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       paymentMethod: newAppointmentForm.paymentType === 'convenio' ? 'convenio' : newAppointmentForm.paymentMethod,
       installments: newAppointmentForm.installments,
       tussCode: newAppointmentForm.tussCode || undefined,
+      telemedLink: newAppointmentForm.type === 'telemedicina'
+        ? (newAppointmentForm.telemedLink || `https://meet.jit.si/ampliemed-${Math.random().toString(36).slice(2, 10)}`)
+        : newAppointmentForm.telemedLink || undefined,
     };
 
     setAppointments([...appointments, newAppointment]);
@@ -738,7 +797,27 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
     sendStatusWhatsApp(
       newAppointment.patientPhone,
       newAppointment.patientName,
-      `Olá ${newAppointment.patientName}! Sua consulta foi agendada para o dia ${newAppointment.date} às ${newAppointment.time} com ${newAppointment.doctorName}. Aguardamos você!`,
+      (() => {
+        const d = new Date(newAppointment.date + 'T12:00:00');
+        const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+        const weekdayCap = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+        const dateFmt = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const portalUrl = clinicSettings.patientPortalUrl || 'https://ampliemed.com/paciente';
+        const instagram = clinicSettings.instagram || '';
+        return (
+          `Olá! Tudo bem? 😊\n\n` +
+          `Estamos passando para confirmar seu atendimento ${newAppointment.specialty || 'médico'}:\n\n` +
+          `📅 Data: ${weekdayCap}, ${dateFmt}\n` +
+          `⏰ Horário: ${newAppointment.time}\n\n` +
+          (newAppointment.type === 'telemedicina' && newAppointment.telemedLink
+            ? `🎥 Esta é uma consulta por videochamada. Acesse pelo link abaixo no horário da consulta:\n🔗 ${newAppointment.telemedLink}\n\n`
+            : '') +
+          `Por favor, confirme ou solicite o reagendamento pelo link abaixo:\n` +
+          `👉 ${portalUrl}\n\n` +
+          `⚠️ Importante: Cancelamentos devem ser realizados até hoje às 18h. Após esse horário, a sessão será considerada como realizada.\n\n` +
+          (instagram ? `Acompanhe nossas novidades no Instagram:\n📲 ${instagram}` : '')
+        ).trimEnd();
+      })(),
     );
     showNotificationMessage('Consulta agendada com sucesso!');
     setShowNewAppointmentModal(false);
@@ -764,6 +843,7 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       paymentMethod: 'pix',
       installments: 1,
       tussCode: '',
+      telemedLink: '',
     });
     addAuditEntry({
       user: currentUser?.name || 'Sistema',
@@ -789,11 +869,6 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
   };
 
   const stats = getStatsForDate();
-
-  // Calcular contadores para o sidebar
-  const todayAppointmentsFiltered = validOnly 
-    ? appointments.filter(apt => apt.date === selectedDate.toISOString().split('T')[0] && apt.status !== 'cancelado')
-    : appointments.filter(apt => apt.date === selectedDate.toISOString().split('T')[0]);
 
   // Função para obter cores do card baseado no status
   const getCardColorByStatus = (status: string) => {
@@ -847,6 +922,26 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
             <p className="text-gray-600">Gestão de consultas com registro de pagamento integrado</p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Search & Filters */}
+            <div className="relative bg-white border border-gray-200 flex items-stretch">
+              <div className="relative flex items-center w-72 px-2 border-r border-gray-200">
+                <Search className="absolute left-4 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar paciente, médico, especialidade..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-7 pr-3 py-2.5 bg-gray-50 border-0 text-sm focus:outline-none focus:bg-white transition-all"
+                />
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center px-4 py-2.5 text-sm transition-colors ${showFilters ? 'bg-pink-50' : 'bg-gray-50 hover:bg-gray-100'}`}
+              >
+                <Filter className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+
             {/* View Mode Toggle */}
             <div className="flex border border-gray-200 bg-white">
               {(['day', 'week', 'month'] as const).map((mode) => (
@@ -886,52 +981,31 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
-          {[
-            { label: 'Total', value: stats.total, color: 'text-pink-600' },
-            { label: 'Confirmadas', value: stats.confirmed, color: 'text-green-600' },
-            { label: 'Pendentes', value: stats.pending, color: 'text-orange-600' },
-            { label: 'Telemedicina', value: stats.telemedicine, color: 'text-purple-600' },
-            { label: 'Pag. Pendente', value: stats.paymentPending, color: 'text-red-600' },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white border border-gray-200 p-3 text-center">
-              <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
+        <div className="mt-4">
+          <button
+            onClick={() => setStatsExpanded(v => !v)}
+            className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsExpanded ? '' : '-rotate-90'}`} />
+            <span>Resumo do dia — Total: <span className="text-pink-600 font-semibold">{stats.total}</span> · Confirmadas: <span className="text-green-600 font-semibold">{stats.confirmed}</span> · Pendentes: <span className="text-orange-600 font-semibold">{stats.pending}</span> · Telemedicina: <span className="text-purple-600 font-semibold">{stats.telemedicine}</span> · Pag. Pendente: <span className="text-red-600 font-semibold">{stats.paymentPending}</span></span>
+          </button>
+          {statsExpanded && (
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-3">
+              {[
+                { label: 'Total', value: stats.total, color: 'text-pink-600' },
+                { label: 'Confirmadas', value: stats.confirmed, color: 'text-green-600' },
+                { label: 'Pendentes', value: stats.pending, color: 'text-orange-600' },
+                { label: 'Telemedicina', value: stats.telemedicine, color: 'text-purple-600' },
+                { label: 'Pag. Pendente', value: stats.paymentPending, color: 'text-red-600' },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-white border border-gray-200 p-3 text-center">
+                  <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
+                  <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      </div>
-
-      {/* Search & Filters */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar paciente, médico, especialidade..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-          />
-        </div>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2.5 border text-sm transition-colors ${
-            showFilters ? 'bg-pink-50 border-pink-200 text-pink-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          <Filter className="w-4 h-4" />
-          Filtros
-        </button>
-        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={validOnly}
-            onChange={(e) => setValidOnly(e.target.checked)}
-            className="w-4 h-4"
-          />
-          Apenas válidas
-        </label>
       </div>
 
       {/* Filters Panel */}
@@ -987,30 +1061,34 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               </select>
             </div>
           </div>
-          <button
-            onClick={() => setFilters({ doctor: '', specialty: '', status: '', type: '' })}
-            className="mt-3 text-xs text-pink-600 hover:underline"
-          >
-            Limpar filtros
-          </button>
+          <div className="mt-3 flex items-center justify-between">
+            <button
+              onClick={() => setFilters({ doctor: '', specialty: '', status: '', type: '' })}
+              className="text-xs text-pink-600 hover:underline"
+            >
+              Limpar filtros
+            </button>
+            <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer select-none">
+              <button
+                onClick={() => setValidOnly(!validOnly)}
+                className={`relative inline-flex h-5 w-9 items-center transition-colors ${validOnly ? 'bg-pink-600' : 'bg-gray-200'}`}
+              >
+                <span className={`inline-block h-3 w-3 transform bg-white transition-transform ${validOnly ? 'translate-x-5' : 'translate-x-1'}`} />
+              </button>
+              Somente válidos
+            </label>
+          </div>
         </div>
       )}
 
       {/* Main Layout: Agenda + Sidebar */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 items-start">
         {/* Left: AgendaSidebar */}
         <AgendaSidebar
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
-          appointmentCount={todayAppointmentsFiltered.length}
-          waitingListCount={queueEntries.filter(q => q.status === 'waiting').length}
-          patientsWaitingCount={queueEntries.filter(q => q.status === 'waiting').length}
           onSearchAppointment={(term) => setSearchTerm(term)}
-          onToggleValidOnly={(val) => setValidOnly(val)}
-          validOnly={validOnly}
           className="h-full"
-          onOpenWaitingList={() => setShowWaitingListModal(true)}
-          onOpenPatientsWaiting={() => setShowPatientsWaitingModal(true)}
           onOpenScaleConfig={() => setShowScaleConfigModal(true)}
           onOpenMessages={() => setShowMessagesModal(true)}
           appointments={appointments}
@@ -1019,13 +1097,15 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
         {/* Center: Time slots */}
         <div className="flex-1 bg-white border border-gray-200 overflow-hidden">
           {viewMode === 'day' && (
-            <div ref={dayScrollRef} className="overflow-y-auto h-full">
+            <div ref={dayScrollRef} className="overflow-y-auto" style={{ height: `${DAY_VIEW_HEIGHT}px` }}>
               {timeSlots.map((time) => {
                 const apt = getAppointmentAtTime(time);
                 return (
                   <div
                     key={time}
-                    className={`flex border-b border-gray-100 min-h-[60px] ${
+                    data-slot
+                    data-time={time}
+                    className={`flex border-b border-gray-100 min-h-[30px] ${
                       apt ? '' : 'hover:bg-gray-50'
                     }`}
                     onDragOver={handleDragOver}
@@ -1516,6 +1596,18 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     </select>
                   </div>
                 </div>
+                {newAppointmentForm.type === 'telemedicina' && (
+                  <div className="mt-3">
+                    <label className="block text-xs text-gray-600 mb-1">Link da videoconferência</label>
+                    <input
+                      type="url"
+                      placeholder="https://meet.google.com/..."
+                      value={newAppointmentForm.telemedLink}
+                      onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, telemedLink: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Payment data */}
@@ -1588,6 +1680,14 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               </div>
             </div>
 
+            {newApptConflict && (
+              <div className="mx-6 mb-0 mt-0 px-4 py-3 bg-orange-50 border border-orange-300 flex items-start gap-2 text-sm text-orange-800">
+                <span className="font-bold flex-shrink-0">⚠</span>
+                <span>
+                  <strong>Conflito de horário:</strong> {newApptConflict.patientName} já está agendado para {newApptConflict.time} com {newApptConflict.doctorName}. Você ainda pode salvar, mas verifique a disponibilidade.
+                </span>
+              </div>
+            )}
             <div className="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button
                 onClick={() => setShowNewAppointmentModal(false)}
@@ -1598,9 +1698,9 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
               <button
                 onClick={handleCreateAppointment}
                 disabled={!newAppointmentForm.patientName || !newAppointmentForm.doctorName || !newAppointmentForm.date || !newAppointmentForm.time}
-                className="px-5 py-2.5 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-5 py-2.5 text-white text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${newApptConflict ? 'bg-orange-500 hover:bg-orange-600' : 'bg-pink-600 hover:bg-pink-700'}`}
               >
-                Agendar Consulta
+                {newApptConflict ? 'Agendar Mesmo Assim' : 'Agendar Consulta'}
               </button>
             </div>
           </div>

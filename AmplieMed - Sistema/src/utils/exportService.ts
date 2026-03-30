@@ -1,8 +1,28 @@
 /**
  * AmplieMed — Export Service
- * Funções para exportar dados em CSV, JSON e PDF.
- * PDF gerado via HTML + window.print() — sem dependência de biblioteca externa.
+ * Funções para exportar dados em CSV, JSON, PDF e Excel.
  */
+
+import * as XLSX from 'xlsx';
+
+// ─── Excel Export ─────────────────────────────────────────────────────────────
+
+export function exportToExcel(
+  data: Record<string, unknown>[],
+  filename: string,
+  columns: { key: string; label: string }[]
+): void {
+  if (!data.length) return;
+
+  const rows = data.map(row =>
+    Object.fromEntries(columns.map(c => [c.label, row[c.key] ?? '']))
+  );
+
+  const ws = XLSX.utils.json_to_sheet(rows, { header: columns.map(c => c.label) });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+  XLSX.writeFile(wb, `${filename}.xlsx`);
+}
 
 // ─── CSV Export ───────────────────────────────────────────────────────────────
 
@@ -142,6 +162,20 @@ ${summaryHtml}
 }
 
 // ─── Pacientes CSV ────────────────────────────────────────────────────────────
+
+export function exportPatientsExcel(patients: unknown[]): void {
+  exportToExcel(patients as Record<string, unknown>[], `pacientes_${today()}`, [
+    { key: 'name', label: 'Nome' },
+    { key: 'cpf', label: 'CPF' },
+    { key: 'birthDate', label: 'Data de Nascimento' },
+    { key: 'gender', label: 'Sexo' },
+    { key: 'phone', label: 'Telefone' },
+    { key: 'email', label: 'E-mail' },
+    { key: 'insurance', label: 'Convênio' },
+    { key: 'status', label: 'Status' },
+    { key: 'createdAt', label: 'Cadastrado em' },
+  ]);
+}
 
 export function exportPatients(patients: unknown[]): void {
   exportToCSV(patients as Record<string, unknown>[], `pacientes_${today()}`, [
@@ -329,6 +363,17 @@ export function exportAuditLogPDF(entries: unknown[]): void {
 }
 
 // ─── Profissionais CSV ────────────────────────────────────────────────────────
+
+export function exportProfessionalsExcel(professionals: unknown[]): void {
+  exportToExcel(professionals as Record<string, unknown>[], `profissionais_${today()}`, [
+    { key: 'name', label: 'Nome' },
+    { key: 'crm', label: 'CRM' },
+    { key: 'specialty', label: 'Especialidade' },
+    { key: 'email', label: 'E-mail' },
+    { key: 'phone', label: 'Telefone' },
+    { key: 'status', label: 'Status' },
+  ]);
+}
 
 export function exportProfessionals(professionals: unknown[]): void {
   exportToCSV(professionals as Record<string, unknown>[], `profissionais_${today()}`, [

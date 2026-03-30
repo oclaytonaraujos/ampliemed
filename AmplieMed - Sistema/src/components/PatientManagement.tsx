@@ -12,7 +12,7 @@ import type { Patient } from './AppContext';
 import { useApp } from './AppContext';
 import { PatientDetailView } from './PatientDetailView';
 import { medicalToast, toastError, toastWarning, toastSuccess } from '../utils/toastService';
-import { exportPatients, exportPatientsPDF, importFromCSV } from '../utils/exportService';
+import { exportPatientsExcel, exportPatientsPDF, importFromCSV } from '../utils/exportService';
 import { usePermission } from './PermissionGuard';
 import { estados } from '../utils/brasilLocations';
 
@@ -20,7 +20,14 @@ interface PatientManagementProps {
   userRole: UserRole;
 }
 
-type FilterType = 'all' | 'active' | 'inactive' | 'lgpd-pending' | 'insurance';
+interface PatientFilters {
+  status: '' | 'active' | 'inactive';
+  gender: '' | 'M' | 'F' | 'Outro';
+  insurance: string;
+  lgpd: '' | 'pending' | 'confirmed';
+}
+
+const DEFAULT_FILTERS: PatientFilters = { status: '', gender: '', insurance: '', lgpd: '' };
 
 export function PatientManagement({ userRole }: PatientManagementProps) {
   const { patients, addPatient, updatePatient, deletePatient, addNotification, addAuditEntry, currentUser } = useApp();
@@ -33,8 +40,9 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewingPatient, setViewingPatient] = useState<Patient | null>(null);
-  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [filters, setFilters] = useState<PatientFilters>(DEFAULT_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
+  const [statsExpanded, setStatsExpanded] = useState(false);
   const [showCpf, setShowCpf] = useState(false);
   const [formData, setFormData] = useState<Partial<Patient>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -222,21 +230,11 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
       );
     }
 
-    // Filtros por tipo
-    switch (filterType) {
-      case 'active':
-        filtered = filtered.filter((p) => p.status === 'active');
-        break;
-      case 'inactive':
-        filtered = filtered.filter((p) => p.status === 'inactive');
-        break;
-      case 'lgpd-pending':
-        filtered = filtered.filter((p) => !p.lgpdConsent);
-        break;
-      case 'insurance':
-        filtered = filtered.filter((p) => p.insurance !== 'Particular');
-        break;
-    }
+    if (filters.status) filtered = filtered.filter((p) => p.status === filters.status);
+    if (filters.gender) filtered = filtered.filter((p) => p.gender === filters.gender);
+    if (filters.insurance) filtered = filtered.filter((p) => p.insurance === filters.insurance);
+    if (filters.lgpd === 'pending') filtered = filtered.filter((p) => !p.lgpdConsent);
+    if (filters.lgpd === 'confirmed') filtered = filtered.filter((p) => p.lgpdConsent);
 
     // Ordenação
     filtered.sort((a, b) => {
@@ -253,6 +251,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
 
   const filteredPatients = getFilteredPatients();
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+  const insuranceOptions = Array.from(new Set(patients.map((p) => p.insurance).filter(Boolean))).sort();
   const paginatedPatients = filteredPatients.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -262,7 +261,9 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
   const stats = {
     total: patients.length,
     active: patients.filter((p) => p.status === 'active').length,
+    inactive: patients.filter((p) => p.status === 'inactive').length,
     lgpdPending: patients.filter((p) => !p.lgpdConsent).length,
+    withInsurance: patients.filter((p) => p.insurance && p.insurance !== 'Particular').length,
     newThisMonth: patients.filter((p) => {
       if (!p.createdAt) return false;
       const created = new Date(p.createdAt.split('/').reverse().join('-'));
@@ -453,7 +454,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div className="w-1/2">
+        <div>
           <h2 className="text-gray-900 mb-2">Gestão de Pacientes</h2>
           <p className="text-gray-600">Cadastro completo com validação de CPF e conformidade LGPD</p>
         </div>
@@ -482,60 +483,12 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
               <span className="text-gray-700">Filtros</span>
             </button>
             <button
-              onClick={() => { exportPatients(filteredPatients); medicalToast.exportSuccess(`pacientes_${new Date().toISOString().split('T')[0]}.csv`); }}
-              title="Exportar CSV"
+              onClick={() => { exportPatientsExcel(filteredPatients); medicalToast.exportSuccess(`pacientes_${new Date().toISOString().split('T')[0]}.xlsx`); }}
+              title="Exportar Excel"
               className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-sm transition-colors"
             >
               <Download className="w-4 h-4 text-gray-600" />
             </button>
-
-            {/* Filtros avançados */}
-            {showFilters && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 p-3 shadow-lg z-10">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                  <button
-                    onClick={() => setFilterType('all')}
-                    className={`px-3 py-2 border text-sm transition-colors ${
-                      filterType === 'all'
-                        ? 'bg-pink-600 text-white border-pink-600'
-                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    Todos
-                  </button>
-                  <button
-                    onClick={() => setFilterType('active')}
-                    className={`px-3 py-2 border text-sm transition-colors ${
-                      filterType === 'active'
-                        ? 'bg-pink-600 text-white border-pink-600'
-                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    Ativos
-                  </button>
-                  <button
-                    onClick={() => setFilterType('inactive')}
-                    className={`px-3 py-2 border text-sm transition-colors ${
-                      filterType === 'inactive'
-                        ? 'bg-pink-600 text-white border-pink-600'
-                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    Inativos
-                  </button>
-                  <button
-                    onClick={() => setFilterType('lgpd-pending')}
-                    className={`px-3 py-2 border text-sm transition-colors ${
-                      filterType === 'lgpd-pending'
-                        ? 'bg-pink-600 text-white border-pink-600'
-                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    LGPD Pendente
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
           
           <button
@@ -547,23 +500,107 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
           </button>
 
           {/* Hidden CSV import input */}
-          <input
-            ref={importInputRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={handleImportCSV}
-          />
-          <button
-            onClick={() => importInputRef.current?.click()}
-            title="Importar pacientes via CSV"
-            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
-          >
-            <Upload className="w-4 h-4" />
-            Importar CSV
-          </button>
         </div>
       </div>
+
+      {/* Stats */}
+      <div>
+        <button
+          onClick={() => setStatsExpanded(v => !v)}
+          className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsExpanded ? '' : '-rotate-90'}`} />
+          <span>
+            Resumo — Total: <span className="text-pink-600 font-semibold">{stats.total}</span>
+            {' · '}Ativos: <span className="text-green-600 font-semibold">{stats.active}</span>
+            {' · '}Inativos: <span className="text-orange-600 font-semibold">{stats.inactive}</span>
+            {' · '}LGPD Pendente: <span className="text-red-600 font-semibold">{stats.lgpdPending}</span>
+            {' · '}Novos este mês: <span className="text-purple-600 font-semibold">{stats.newThisMonth}</span>
+          </span>
+        </button>
+        {statsExpanded && (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-3">
+            {[
+              { label: 'Total', value: stats.total, color: 'text-pink-600' },
+              { label: 'Ativos', value: stats.active, color: 'text-green-600' },
+              { label: 'Inativos', value: stats.inactive, color: 'text-orange-600' },
+              { label: 'LGPD Pendente', value: stats.lgpdPending, color: 'text-red-600' },
+              { label: 'Novos este mês', value: stats.newThisMonth, color: 'text-purple-600' },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white border border-gray-200 p-3 text-center">
+                <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Filters Panel */}
+      {showFilters && (
+        <div className="bg-white border border-gray-200 p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Status</label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value as PatientFilters['status'] })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
+              >
+                <option value="">Todos</option>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Sexo</label>
+              <select
+                value={filters.gender}
+                onChange={(e) => setFilters({ ...filters, gender: e.target.value as PatientFilters['gender'] })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
+              >
+                <option value="">Todos</option>
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Convênio</label>
+              <select
+                value={filters.insurance}
+                onChange={(e) => setFilters({ ...filters, insurance: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
+              >
+                <option value="">Todos</option>
+                {insuranceOptions.map((ins) => (
+                  <option key={ins} value={ins}>{ins}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">LGPD</label>
+              <select
+                value={filters.lgpd}
+                onChange={(e) => setFilters({ ...filters, lgpd: e.target.value as PatientFilters['lgpd'] })}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500"
+              >
+                <option value="">Todos</option>
+                <option value="confirmed">Consentimento confirmado</option>
+                <option value="pending">Consentimento pendente</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-3">
+            <button
+              onClick={() => setFilters(DEFAULT_FILTERS)}
+              className="text-xs text-pink-600 hover:underline"
+            >
+              Limpar filtros
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Patients Table */}
       <div className="bg-white border border-gray-200">

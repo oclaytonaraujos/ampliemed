@@ -23,6 +23,7 @@ import { QueueManagement } from './components/QueueManagement';
 import { ReportsModule } from './components/ReportsModule';
 import { TemplatesModule } from './components/TemplatesModule';
 import { MedicalCalculators } from './components/MedicalCalculators';
+import { DoctorWorkspace } from './components/DoctorWorkspace';
 import { useApp } from './components/AppContext';
 import type { UserRole } from './App';
 
@@ -50,6 +51,7 @@ export const MODULE_PATHS: Record<string, string> = {
   reports:            '/relatorios',
   templates:          '/templates',
   calculators:        '/calculadoras',
+  consultorio:        '/consultorio',
   audit:              '/controle-acesso',
 };
 
@@ -80,6 +82,7 @@ export const PATH_NAMES: Record<string, string> = {
   '/relatorios':                    'Relatórios',
   '/templates':                     'Templates',
   '/calculadoras':                  'Calculadoras Médicas',
+  '/consultorio':                   'Meu Consultório',
   '/auditoria':                     'Auditoria',
 };
 
@@ -231,6 +234,11 @@ function CalculatorsPage() {
   return <MedicalCalculators userRole={role} />;
 }
 
+function DoctorWorkspacePage() {
+  const role = useUserRole();
+  return <DoctorWorkspace userRole={role} />;
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 
 export const router = createBrowserRouter([
@@ -285,6 +293,9 @@ export const router = createBrowserRouter([
       // Ferramentas
       { path: 'templates',    Component: TemplatesPage },
       { path: 'calculadoras', Component: CalculatorsPage },
+
+      // Consultório médico
+      { path: 'consultorio',  Component: DoctorWorkspacePage },
 
       // Comunicação
       { path: 'comunicacao',     Component: CommunicationPage },

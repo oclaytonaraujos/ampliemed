@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { UserRole } from '../App';
 import { useApp } from './AppContext';
-import { CheckCircle, User, Lock, Bell, Palette, Settings, Shield, Mail, Phone, Globe, Database, Trash2, AlertTriangle, Download, Upload, X, MessageSquare, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { CheckCircle, User, Lock, Bell, Palette, Settings, Shield, Mail, Phone, Globe, Database, Trash2, AlertTriangle, Download, Upload, X } from 'lucide-react';
 import { medicalToast } from '../utils/toastService';
 import { BackupRestore } from './BackupRestore';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -16,7 +16,7 @@ interface SettingsModuleProps {
 
 export function SettingsModule({ userRole }: SettingsModuleProps) {
   const [searchParams] = useSearchParams();
-  const validTabs = ['profile', 'security', 'notifications', 'appearance', 'system', 'whatsapp', 'privacy'];
+  const validTabs = ['profile', 'security', 'notifications', 'appearance', 'system', 'privacy'];
   const initialTab = validTabs.includes(searchParams.get('tab') ?? '') ? searchParams.get('tab')! : 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
 
@@ -26,7 +26,6 @@ export function SettingsModule({ userRole }: SettingsModuleProps) {
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'appearance', label: 'Aparência', icon: Palette },
     { id: 'system', label: 'Sistema', icon: Settings },
-    { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
     { id: 'privacy', label: 'Privacidade', icon: Shield },
   ];
 
@@ -77,8 +76,7 @@ export function SettingsModule({ userRole }: SettingsModuleProps) {
             {activeTab === 'notifications' && <NotificationSettings />}
             {activeTab === 'appearance' && <AppearanceSettings />}
             {activeTab === 'system' && <SystemSettings />}
-            {activeTab === 'whatsapp' && <WhatsAppSettings />}
-            {activeTab === 'privacy' && <PrivacySettings />}
+{activeTab === 'privacy' && <PrivacySettings />}
           </div>
         </div>
       </div>
@@ -98,6 +96,8 @@ function ProfileSettings() {
     clinicCNPJ: clinicSettings.cnpj || '',
     clinicPhone: clinicSettings.phone || '',
     clinicAddress: clinicSettings.address || '',
+    clinicInstagram: clinicSettings.instagram || '',
+    clinicPortalUrl: clinicSettings.patientPortalUrl || '',
   });
   const [userId, setUserId] = useState<string>('default');
 
@@ -113,7 +113,7 @@ function ProfileSettings() {
 
   const handleSave = () => {
     updateCurrentUser({ name: form.name, crm: form.crm, email: form.email, phone: form.phone, specialty: form.specialty });
-    updateClinicSettings({ clinicName: form.clinicName, cnpj: form.clinicCNPJ, phone: form.clinicPhone, address: form.clinicAddress });
+    updateClinicSettings({ clinicName: form.clinicName, cnpj: form.clinicCNPJ, phone: form.clinicPhone, address: form.clinicAddress, instagram: form.clinicInstagram, patientPortalUrl: form.clinicPortalUrl });
     medicalToast.settingsSaved();
   };
 
@@ -168,6 +168,8 @@ function ProfileSettings() {
               { label: 'CNPJ', key: 'clinicCNPJ', type: 'text' },
               { label: 'Telefone da Clínica', key: 'clinicPhone', type: 'tel' },
               { label: 'Endereço', key: 'clinicAddress', type: 'text' },
+              { label: 'Instagram (ex: @suaclinica)', key: 'clinicInstagram', type: 'text' },
+              { label: 'Link do Portal do Paciente', key: 'clinicPortalUrl', type: 'url' },
             ].map(f => (
               <div key={f.key}>
                 <label className="block text-sm text-gray-700 mb-2">{f.label}</label>
@@ -235,10 +237,36 @@ function ProfileSettings() {
 }
 
 function SecuritySettings() {
+  const { clinicSettings, updateClinicSettings } = useApp();
+  const orgao = clinicSettings.orgaoAutenticador;
+  const [showForm, setShowForm] = useState(false);
+  const [nome, setNome] = useState('');
+  const [tipo, setTipo] = useState<'ICP-Brasil' | 'outro'>('ICP-Brasil');
+  const [identificacao, setIdentificacao] = useState('');
+
+  function handleSaveOrgao() {
+    if (!nome.trim()) return;
+    updateClinicSettings({ orgaoAutenticador: { nome: nome.trim(), tipo, identificacao: identificacao.trim() || undefined } });
+    setShowForm(false);
+    medicalToast.settingsSaved();
+  }
+
+  function handleRemoveOrgao() {
+    updateClinicSettings({ orgaoAutenticador: undefined });
+    setShowForm(false);
+  }
+
+  function handleOpenEdit() {
+    setNome(orgao?.nome ?? '');
+    setTipo(orgao?.tipo ?? 'ICP-Brasil');
+    setIdentificacao(orgao?.identificacao ?? '');
+    setShowForm(true);
+  }
+
   return (
     <div className="p-6">
       <h3 className="text-gray-900 mb-6">Segurança e Acesso</h3>
-      
+
       <div className="space-y-6">
         {/* Password Change */}
         <div className="pb-6 border-b border-gray-200">
@@ -284,21 +312,97 @@ function SecuritySettings() {
           </div>
         </div>
 
-        {/* Digital Certificate */}
+        {/* Órgão Autenticador de Documentos — opcional */}
         <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-4">Certificado Digital ICP-Brasil</h4>
-          <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-gray-400" />
+          <div className="flex items-center justify-between mb-1">
+            <h4 className="text-sm font-medium text-gray-900">Órgão Autenticador de Documentos</h4>
+            <span className="text-xs text-gray-400">Opcional</span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Se cadastrado, os documentos médicos serão autenticados por este órgão. Caso contrário, a autenticação é a assinatura do médico.
+          </p>
+
+          {!showForm && (
+            orgao ? (
+              <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium text-green-900">{orgao.nome}</p>
+                    <p className="text-xs text-green-700">
+                      Tipo: {orgao.tipo === 'ICP-Brasil' ? 'ICP-Brasil' : 'Outro'}
+                      {orgao.identificacao ? ` · ID: ${orgao.identificacao}` : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={handleOpenEdit} className="px-3 py-1.5 border border-gray-200 text-sm text-gray-700 hover:bg-white transition-colors">
+                    Editar
+                  </button>
+                  <button onClick={handleRemoveOrgao} className="px-3 py-1.5 border border-red-200 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    Remover
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-900">Nenhum órgão autenticador cadastrado</p>
+                    <p className="text-xs text-gray-500">Documentos serão autenticados pela assinatura do médico</p>
+                  </div>
+                </div>
+                <button onClick={handleOpenEdit} className="px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-white transition-colors">
+                  Cadastrar
+                </button>
+              </div>
+            )
+          )}
+
+          {showForm && (
+            <div className="p-4 border border-gray-200 space-y-4">
               <div>
-                <p className="text-sm text-gray-900">Nenhum certificado configurado</p>
-                <p className="text-xs text-gray-500">Configure um certificado digital para assinaturas</p>
+                <label className="block text-sm text-gray-700 mb-1">Nome do Órgão</label>
+                <input
+                  type="text"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  placeholder="Ex: ICP-Brasil, Cartório 1º Ofício..."
+                  className="w-full px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-pink-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Tipo</label>
+                <select
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value as 'ICP-Brasil' | 'outro')}
+                  className="w-full px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-pink-600 bg-white"
+                >
+                  <option value="ICP-Brasil">ICP-Brasil</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Identificação / Número do Certificado (opcional)</label>
+                <input
+                  type="text"
+                  value={identificacao}
+                  onChange={(e) => setIdentificacao(e.target.value)}
+                  placeholder="Ex: A1-12345..."
+                  className="w-full px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-pink-600"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={handleSaveOrgao} disabled={!nome.trim()} className="px-4 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors disabled:opacity-50">
+                  Salvar
+                </button>
+                <button onClick={() => setShowForm(false)} className="px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  Cancelar
+                </button>
               </div>
             </div>
-            <button className="px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-white transition-colors">
-              Configurar
-            </button>
-          </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
@@ -508,146 +612,6 @@ function SystemSettings() {
   );
 }
 
-function WhatsAppSettings() {
-  const { selectedClinicId } = useApp();
-  const [instanceId, setInstanceId] = useState('');
-  const [savedInstanceId, setSavedInstanceId] = useState<string | null>(null);
-  const [instanceStatus, setInstanceStatus] = useState<string>('disconnected');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!selectedClinicId) {
-      setLoading(false);
-      return;
-    }
-    getSupabase()
-      .from('clinics')
-      .select('evolution_instance_id, evolution_instance_status')
-      .eq('id', selectedClinicId)
-      .single()
-      .then(({ data, error: err }) => {
-        if (err) {
-          setError('Não foi possível carregar a configuração WhatsApp.');
-        } else {
-          setSavedInstanceId(data?.evolution_instance_id ?? null);
-          setInstanceId(data?.evolution_instance_id ?? '');
-          setInstanceStatus(data?.evolution_instance_status ?? 'disconnected');
-        }
-        setLoading(false);
-      });
-  }, [selectedClinicId]);
-
-  const handleSave = async () => {
-    if (!selectedClinicId) return;
-    setError('');
-    setSaving(true);
-    const { error: updateErr } = await getSupabase()
-      .from('clinics')
-      .update({ evolution_instance_id: instanceId.trim() || null })
-      .eq('id', selectedClinicId);
-    setSaving(false);
-    if (updateErr) {
-      setError('Erro ao salvar: ' + updateErr.message);
-    } else {
-      setSavedInstanceId(instanceId.trim() || null);
-      medicalToast.settingsSaved();
-    }
-  };
-
-  const isConnected = instanceStatus === 'connected';
-  const isConfigured = !!savedInstanceId;
-
-  return (
-    <div className="p-6">
-      <h3 className="text-gray-900 mb-1">Integração WhatsApp</h3>
-      <p className="text-sm text-gray-500 mb-6">Configure a instância Evolution API para envio de mensagens aos pacientes</p>
-
-      {loading ? (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Carregando configuração...
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Status banner */}
-          <div className={`flex items-center gap-3 p-4 border ${isConnected ? 'bg-green-50 border-green-200' : isConfigured ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}`}>
-            {isConnected
-              ? <Wifi className="w-5 h-5 text-green-600 flex-shrink-0" />
-              : <WifiOff className="w-5 h-5 text-gray-400 flex-shrink-0" />
-            }
-            <div>
-              <p className={`text-sm font-medium ${isConnected ? 'text-green-800' : 'text-gray-700'}`}>
-                {isConnected ? 'Instância conectada' : isConfigured ? 'Instância configurada — aguardando conexão' : 'WhatsApp não configurado'}
-              </p>
-              {savedInstanceId && (
-                <p className="text-xs text-gray-500 mt-0.5 font-mono">{savedInstanceId}</p>
-              )}
-            </div>
-            {isConfigured && (
-              <span className={`ml-auto text-xs px-2 py-1 font-medium ${isConnected ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                {isConnected ? 'CONECTADO' : instanceStatus.toUpperCase()}
-              </span>
-            )}
-          </div>
-
-          {/* Instance name field */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Configuração da Instância</h4>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-700 mb-2">
-                  Nome da Instância Evolution API
-                </label>
-                <input
-                  type="text"
-                  value={instanceId}
-                  onChange={(e) => setInstanceId(e.target.value)}
-                  placeholder="ex: ampliemed"
-                  className="w-full md:w-96 px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600 font-mono text-sm"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Nome exato da instância criada no painel Evolution API. Deixe em branco para desativar o WhatsApp nesta clínica.
-                </p>
-              </div>
-
-              {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-sm text-red-700">
-                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                  {error}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Deploy instructions */}
-          <div className="bg-pink-50 border border-pink-200 p-4">
-            <p className="text-xs font-medium text-pink-900 mb-2">Pré-requisitos para funcionamento</p>
-            <ol className="text-xs text-pink-800 space-y-1 list-decimal list-inside">
-              <li>Preencher <span className="font-mono">EVOLUTION_API_URL</span>, <span className="font-mono">EVOLUTION_API_KEY</span>, <span className="font-mono">EVOLUTION_INSTANCE_NAME</span> e <span className="font-mono">EVOLUTION_WEBHOOK_SECRET</span> no <span className="font-mono">.env</span></li>
-              <li>Executar <span className="font-mono">supabase secrets set --env-file .env</span></li>
-              <li>Executar <span className="font-mono">supabase functions deploy evolution_send_message</span> e <span className="font-mono">evolution_webhook</span></li>
-              <li>Aplicar a migration <span className="font-mono">20260327_evolution_api.sql</span> no banco de dados</li>
-              <li>Definir o nome da instância acima e salvar</li>
-            </ol>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button
-              onClick={handleSave}
-              disabled={saving || instanceId === (savedInstanceId ?? '')}
-              className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {saving ? 'Salvando...' : 'Salvar Configuração'}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function PrivacySettings() {
   const { currentUser, logout } = useApp();

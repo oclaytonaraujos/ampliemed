@@ -79,7 +79,8 @@ interface Procedure {
 type Step = 'anamnesis' | 'physical' | 'diagnosis' | 'prescription' | 'exams' | 'documents' | 'procedures' | 'finish';
 
 export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFinish }: MedicalConsultationWorkspaceProps) {
-  const { addMedicalRecord, setExams, currentUser, addAuditEntry, addNotification, addFileAttachment, deleteFileAttachment, getAttachmentsByEntity } = useApp();
+  const { addMedicalRecord, setExams, currentUser, addAuditEntry, addNotification, addFileAttachment, deleteFileAttachment, getAttachmentsByEntity, clinicSettings } = useApp();
+  const orgaoAutenticador = clinicSettings.orgaoAutenticador;
   const [currentStep, setCurrentStep] = useState<Step>('anamnesis');
   const [saving, setSaving] = useState(false);
   const [showDraftConfirm, setShowDraftConfirm] = useState(false);
@@ -763,7 +764,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
             <Signature className="w-4 h-4" />
-            Assinar com ICP-Brasil
+            {orgaoAutenticador ? `Assinar via ${orgaoAutenticador.nome}` : 'Assinar'}
           </button>
         </div>
       )}
@@ -866,7 +867,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
             <Signature className="w-4 h-4" />
-            Assinar com ICP-Brasil
+            {orgaoAutenticador ? `Assinar via ${orgaoAutenticador.nome}` : 'Assinar'}
           </button>
         </div>
       )}
@@ -922,7 +923,7 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
                 </button>
                 <button className="flex items-center gap-2 px-3 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm">
                   <Signature className="w-4 h-4" />
-                  Assinar e Gerar
+                  {orgaoAutenticador ? `Assinar via ${orgaoAutenticador.nome} e Gerar` : 'Assinar e Gerar'}
                 </button>
               </div>
             </div>
@@ -1227,9 +1228,13 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
         <div className="flex items-start gap-3">
           <Shield className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-pink-900 mb-1">Assinatura Digital ICP-Brasil</p>
+            <p className="text-sm font-medium text-pink-900 mb-1">
+              {orgaoAutenticador ? `Assinatura via ${orgaoAutenticador.nome}` : 'Assinatura do Médico'}
+            </p>
             <p className="text-xs text-pink-700 mb-3">
-              Ao finalizar, o prontuário será assinado digitalmente garantindo autenticidade e validade jurídica
+              {orgaoAutenticador
+                ? 'Ao finalizar, o prontuário será autenticado digitalmente garantindo autenticidade e validade jurídica'
+                : 'Ao finalizar, o prontuário será assinado pelo médico responsável'}
             </p>
             <button className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm">
               <Signature className="w-4 h-4" />

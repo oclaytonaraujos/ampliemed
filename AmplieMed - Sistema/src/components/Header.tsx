@@ -124,7 +124,8 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
   ];
 
   const singleMenuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'doctor', 'receptionist', 'financial'] as UserRole[] },
+    { id: 'dashboard',  label: 'Dashboard',       icon: LayoutDashboard, roles: ['admin', 'doctor', 'receptionist', 'financial'] as UserRole[] },
+    { id: 'consultorio', label: 'Meu Consultório', icon: Stethoscope,     roles: ['doctor'] as UserRole[] },
   ];
 
   const hasAccess = (roles: UserRole[]) => roles.includes(userRole);

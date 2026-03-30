@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Clock, CheckCircle, AlertCircle, Play, Pause, Monitor, Phone, MessageSquare, Plus, X, Bell, Download } from 'lucide-react';
+import { Users, Clock, CheckCircle, AlertCircle, Play, Pause, Monitor, Phone, MessageSquare, Plus, X, Bell, Download, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { UserRole } from '../App';
 import type { QueueEntry } from './AppContext';
@@ -14,10 +14,11 @@ interface QueueManagementProps { userRole: UserRole; }
 type QueuePatient = QueueEntry;
 
 export function QueueManagement({ userRole }: QueueManagementProps) {
-  const { queueEntries: queuePatients, setQueueEntries: setQueuePatients, patients, addNotification, addAuditEntry, currentUser, selectedClinicId, addCommunicationMessage } = useApp();
+  const { queueEntries: queuePatients, setQueueEntries: setQueuePatients, patients, appointments, addNotification, addAuditEntry, currentUser, selectedClinicId, addCommunicationMessage } = useApp();
   const { canCreate, canExport } = usePermission('queue');
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<'queue' | 'tv-panel'>('queue');
+  const [statsExpanded, setStatsExpanded] = useState(false);
   const [currentTicket, setCurrentTicket] = useState('');
   const [patientInConsultation, setPatientInConsultation] = useState<QueuePatient | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -45,13 +46,14 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
   const handleCallPatient = (patient: QueuePatient) => {
     setCurrentTicket(patient.ticketNumber);
     setQueuePatients(prev => prev.map(p => p.id === patient.id ? { ...p, status: 'called' as const } : p));
-    addNotification({ type: 'appointment', title: 'Paciente chamado', message: `Paciente ${patient.name} — Senha ${patient.ticketNumber} — chamado para ${patient.doctor || 'consultório'}`, urgent: false });
+    const roomInfo = patient.room ? ` — Sala ${patient.room}` : '';
+    addNotification({ type: 'appointment', title: 'Paciente chamado', message: `Paciente ${patient.name} — Senha ${patient.ticketNumber}${roomInfo} — chamado para ${patient.doctor || 'consultório'}`, urgent: false });
     if (patient.phone && selectedClinicId) {
-      const text = `Olá ${patient.name}! Sua senha ${patient.ticketNumber} foi chamada. Por favor, dirija-se ao consultório${patient.doctor ? ` de ${patient.doctor}` : ''}.`;
+      const text = `Olá ${patient.name}! Sua senha ${patient.ticketNumber} foi chamada. Por favor, dirija-se${patient.room ? ` à Sala ${patient.room}` : ` ao consultório${patient.doctor ? ` de ${patient.doctor}` : ''}`}.`;
       const msg = addCommunicationMessage({ type: 'reminder', patientName: patient.name, channel: 'whatsapp', subject: 'Chamada de senha', body: text, status: 'pending' });
       sendEvolutionMessage({ clinicId: selectedClinicId, messageId: msg.id, phone: patient.phone, text }).catch(() => {});
     }
-    toastSuccess(`Paciente ${patient.name} chamado!`, { description: `Senha ${patient.ticketNumber}` });
+    toastSuccess(`Paciente ${patient.name} chamado!`, { description: `Senha ${patient.ticketNumber}${roomInfo}` });
   };
 
   const handleStartConsultation = (patient: QueuePatient) => {
@@ -199,19 +201,29 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Aguardando', value: stats.waiting, color: 'bg-yellow-600', icon: Clock },
-          { label: 'Em Atendimento', value: stats.inProgress, color: 'bg-green-600', icon: Play },
-          { label: 'Concluídos', value: stats.completed, color: 'bg-pink-600', icon: CheckCircle },
-          { label: 'Espera Média (min)', value: stats.averageWait, color: 'bg-gray-600', icon: Clock },
-        ].map(s => { const Icon = s.icon; return (
-          <div key={s.label} className="bg-white border border-gray-200 p-4">
-            <div className={`w-9 h-9 ${s.color} flex items-center justify-center mb-3`}><Icon className="w-5 h-5 text-white" /></div>
-            <p className="text-2xl font-semibold text-gray-900">{s.value}</p>
-            <p className="text-sm text-gray-600">{s.label}</p>
+      <div>
+        <button
+          onClick={() => setStatsExpanded(v => !v)}
+          className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsExpanded ? '' : '-rotate-90'}`} />
+          <span>Resumo — Aguardando: <span className="text-yellow-600 font-semibold">{stats.waiting}</span> · Em Atendimento: <span className="text-green-600 font-semibold">{stats.inProgress}</span> · Concluídos: <span className="text-pink-600 font-semibold">{stats.completed}</span> · Espera Média: <span className="text-gray-600 font-semibold">{stats.averageWait} min</span></span>
+        </button>
+        {statsExpanded && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+            {[
+              { label: 'Aguardando', value: stats.waiting, color: 'text-yellow-600' },
+              { label: 'Em Atendimento', value: stats.inProgress, color: 'text-green-600' },
+              { label: 'Concluídos', value: stats.completed, color: 'text-pink-600' },
+              { label: 'Espera Média (min)', value: stats.averageWait, color: 'text-gray-600' },
+            ].map(s => (
+              <div key={s.label} className="bg-white border border-gray-200 p-3 text-center">
+                <p className={`text-2xl font-semibold ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+              </div>
+            ))}
           </div>
-        ); })}
+        )}
       </div>
 
       {activeView === 'tv-panel' ? (
@@ -241,7 +253,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
                   <th className="px-4 py-3 text-left text-xs text-gray-600 uppercase">Médico</th>
                   <th className="px-4 py-3 text-left text-xs text-gray-600 uppercase">Sala</th>
                   <th className="px-4 py-3 text-left text-xs text-gray-600 uppercase">Chegada</th>
-                  <th className="px-4 py-3 text-left text-xs text-gray-600 uppercase">Espera</th>
+                  <th className="px-4 py-3 text-left text-xs text-gray-600 uppercase">Agendado</th>
                   <th className="px-4 py-3 text-left text-xs text-gray-600 uppercase">Status</th>
                   <th className="px-4 py-3 text-right text-xs text-gray-600 uppercase">Ações</th>
                 </tr>
@@ -254,7 +266,7 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
                     <p className="text-sm text-gray-400 mt-1">Adicione pacientes à fila para começar.</p>
                   </td></tr>
                 ) : queuePatients.map(patient => (
-                  <tr key={patient.id} className={`hover:bg-gray-50 ${patient.priority ? 'bg-red-50' : ''}`}>
+                  <tr key={patient.id} className={`group hover:bg-gray-50 ${patient.priority ? 'bg-red-50' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-gray-900">{patient.ticketNumber}</span>
@@ -265,26 +277,44 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
                     <td className="px-4 py-3 text-sm text-gray-600">{patient.specialty || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{patient.doctor || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{patient.room || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{patient.arrivalTime}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{patient.waitingTime} min</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {patient.arrivalTime
+                        ? patient.arrivalTime.includes('T')
+                          ? new Date(patient.arrivalTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                          : patient.arrivalTime
+                        : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {(() => {
+                        const time = patient.appointmentId
+                          ? appointments.find(a => a.id === patient.appointmentId)?.time
+                          : patient.appointmentTime;
+                        return time ? time.substring(0, 5) : '-';
+                      })()}
+                    </td>
                     <td className="px-4 py-3"><span className={`text-xs px-2 py-1 ${statusColor(patient.status)}`}>{statusLabel(patient.status)}</span></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => handleRemoveFromQueue(patient.id, patient.name)}
+                          className="p-1.5 text-gray-300 hover:bg-red-50 hover:text-red-600 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Remover da fila"><X className="w-4 h-4" /></button>
                         {patient.status === 'waiting' && (
                           <>
-                            <button onClick={() => handleCallPatient(patient)} className="p-1.5 text-pink-600 hover:bg-pink-50 rounded" title="Chamar"><Bell className="w-4 h-4" /></button>
                             <button onClick={() => handleNotifyPatient(patient, 'whatsapp')} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="WhatsApp"><MessageSquare className="w-4 h-4" /></button>
-                            <button onClick={() => handleNotifyPatient(patient, 'sms')} className="p-1.5 text-gray-600 hover:bg-gray-50 rounded" title="SMS"><Phone className="w-4 h-4" /></button>
+                            <button onClick={() => handleCallPatient(patient)}
+                              className="px-3 py-1.5 bg-pink-600 text-white text-xs hover:bg-pink-700 transition-colors flex items-center gap-1">
+                              <Bell className="w-3 h-3" /> Chamar
+                            </button>
                           </>
                         )}
-                        {(patient.status === 'waiting' || patient.status === 'called') && (
-                          <button onClick={() => handleStartConsultation(patient)}
-                            className="px-3 py-1.5 bg-green-600 text-white text-xs hover:bg-green-700 transition-colors flex items-center gap-1">
-                            <Play className="w-3 h-3" /> Iniciar
-                          </button>
-                        )}
-                        {patient.status === 'completed' && (
-                          <button onClick={() => handleRemoveFromQueue(patient.id, patient.name)} className="p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded"><X className="w-4 h-4" /></button>
+                        {patient.status === 'called' && (
+                          <>
+                            <button onClick={() => handleCallPatient(patient)} className="p-1.5 text-pink-600 hover:bg-pink-50 rounded" title="Chamar novamente"><Bell className="w-4 h-4" /></button>
+                            <button onClick={() => handleStartConsultation(patient)}
+                              className="px-3 py-1.5 bg-green-600 text-white text-xs hover:bg-green-700 transition-colors flex items-center gap-1">
+                              <Play className="w-3 h-3" /> Iniciar
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>

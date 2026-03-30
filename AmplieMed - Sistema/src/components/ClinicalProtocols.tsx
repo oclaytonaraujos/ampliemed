@@ -13,6 +13,7 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
   const { protocols, addProtocol, updateProtocol, deleteProtocol, addNotification, addAuditEntry, currentUser } = useApp();
   const { canCreate, canUpdate, canDelete, canExport } = usePermission('protocols');
   const [searchTerm, setSearchTerm] = useState('');
+  const [statsExpanded, setStatsExpanded] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterSpecialty, setFilterSpecialty] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -151,18 +152,29 @@ export function ClinicalProtocols({ userRole }: ClinicalProtocolsProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: 'Total', value: protocols.length, color: 'text-pink-600' },
-          { label: 'Ativos', value: protocols.filter(p => p.active).length, color: 'text-green-600' },
-          { label: 'Emergências', value: protocols.filter(p => p.category === 'emergência').length, color: 'text-red-600' },
-          { label: 'Usos totais', value: protocols.reduce((s, p) => s + p.usage, 0), color: 'text-gray-600' },
-        ].map(s => (
-          <div key={s.label} className="bg-white border border-gray-200 p-4">
-            <p className={`text-2xl font-semibold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+      <div>
+        <button
+          onClick={() => setStatsExpanded(v => !v)}
+          className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsExpanded ? '' : '-rotate-90'}`} />
+          <span>Resumo — Total: <span className="text-pink-600 font-semibold">{protocols.length}</span> · Ativos: <span className="text-green-600 font-semibold">{protocols.filter(p => p.active).length}</span> · Emergências: <span className="text-red-600 font-semibold">{protocols.filter(p => p.category === 'emergência').length}</span> · Usos totais: <span className="text-gray-600 font-semibold">{protocols.reduce((s, p) => s + p.usage, 0)}</span></span>
+        </button>
+        {statsExpanded && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+            {[
+              { label: 'Total', value: protocols.length, color: 'text-pink-600' },
+              { label: 'Ativos', value: protocols.filter(p => p.active).length, color: 'text-green-600' },
+              { label: 'Emergências', value: protocols.filter(p => p.category === 'emergência').length, color: 'text-red-600' },
+              { label: 'Usos totais', value: protocols.reduce((s, p) => s + p.usage, 0), color: 'text-gray-600' },
+            ].map(s => (
+              <div key={s.label} className="bg-white border border-gray-200 p-3 text-center">
+                <p className={`text-2xl font-semibold ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       {filtered.length === 0 ? (

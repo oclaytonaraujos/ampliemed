@@ -147,6 +147,8 @@ export interface StockItem {
 // ── Queue ─────────────────────────────────────────────────────────────────────
 export interface QueueEntry {
   id: string;
+  appointmentId?: string;
+  appointmentTime?: string;
   ticketNumber: string;
   name: string;
   status: 'waiting' | 'called' | 'in-progress' | 'completed';
@@ -395,6 +397,13 @@ export interface StoredFileAttachment {
 export type FileAttachment = StoredFileAttachment;
 
 // ── ClinicSettings ────────────────────────────────────────────────────────────
+export interface OrgaoAutenticador {
+  nome: string;
+  tipo: 'ICP-Brasil' | 'outro';
+  /** Número/identificação do certificado ou credencial */
+  identificacao?: string;
+}
+
 export interface ClinicSettings {
   clinicName: string;
   cnpj: string;
@@ -413,10 +422,15 @@ export interface ClinicSettings {
   language: 'pt-BR';
   autoBackup: boolean;
   backupInterval: number;
+  instagram?: string;
+  patientPortalUrl?: string;
+  /** Órgão autenticador de documentos médicos — opcional.
+   *  Se não configurado, a autenticação é a assinatura manual do médico. */
+  orgaoAutenticador?: OrgaoAutenticador;
 }
 
 const DEFAULT_SETTINGS: ClinicSettings = {
-  clinicName: '', cnpj: '', address: '', phone: '', email: '',
+  clinicName: '', cnpj: '', address: '', phone: '', email: '', instagram: '', patientPortalUrl: '',
   workingHours: { start: '08:00', end: '18:00' }, appointmentInterval: 30,
   timezone: 'America/Sao_Paulo', notificationsEmail: true, notificationsSMS: false,
   notificationsWhatsApp: false, theme: 'light', language: 'pt-BR',
@@ -853,6 +867,90 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!dataLoadedRef.current) return;
     scheduleSync('queue', api.syncQueueEntries, () => queueEntriesRef.current);
   }, [queueEntries, scheduleSync]);
+
+  // ── Realtime: appointments + queue_entries ────────────────────────────────
+  useEffect(() => {
+    if (!selectedClinicId) return;
+
+    const supabase = getSupabase();
+
+    const channel = supabase
+      .channel(`realtime:clinic:${selectedClinicId}`)
+      // Appointments UPDATE → sincroniza status em todos os dispositivos
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'appointments',
+        filter: `clinic_id=eq.${selectedClinicId}`,
+      }, (payload) => {
+        const row = payload.new as any;
+        setAppointments(prev => prev.map(a =>
+          a.id === row.id
+            ? {
+                ...a,
+                status: row.status,
+                room: row.room ?? a.room,
+                doctorName: row.doctor_name ?? a.doctorName,
+                specialty: row.specialty ?? a.specialty,
+                time: row.appointment_time ?? a.time,
+                date: row.appointment_date ?? a.date,
+              }
+            : a
+        ));
+      })
+      // queue_entries INSERT → novo paciente na fila (confirmado em outro dispositivo)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'queue_entries',
+        filter: `clinic_id=eq.${selectedClinicId}`,
+      }, (payload) => {
+        const row = payload.new as any;
+        const entry = {
+          id: row.id,
+          ticketNumber: row.ticket_number || '',
+          name: row.name || '',
+          status: row.status || 'waiting',
+          arrivalTime: row.arrival_time || '',
+          waitingTime: row.waiting_time ?? 0,
+          doctor: row.doctor || '',
+          specialty: row.specialty || '',
+          priority: row.priority || false,
+          room: row.room || '',
+          cpf: row.cpf || '',
+          phone: row.phone || '',
+        };
+        setQueueEntries(prev =>
+          prev.some(q => q.id === entry.id) ? prev : [...prev, entry]
+        );
+      })
+      // queue_entries UPDATE → paciente chamado, iniciou consulta, etc.
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'queue_entries',
+        filter: `clinic_id=eq.${selectedClinicId}`,
+      }, (payload) => {
+        const row = payload.new as any;
+        setQueueEntries(prev => prev.map(q =>
+          q.id === row.id ? { ...q, status: row.status, waitingTime: row.waiting_time ?? q.waitingTime } : q
+        ));
+      })
+      // queue_entries DELETE → entrada removida da fila
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'queue_entries',
+        filter: `clinic_id=eq.${selectedClinicId}`,
+      }, (payload) => {
+        setQueueEntries(prev => prev.filter(q => q.id !== (payload.old as any).id));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedClinicId]);
 
   useEffect(() => {
     if (!dataLoadedRef.current) return;
