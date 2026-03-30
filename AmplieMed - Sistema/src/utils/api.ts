@@ -249,10 +249,25 @@ export async function getProfile() {
 }
 
 export async function updateProfile(data: Record<string, any>) {
-  return edgeFetch('/auth/profile', {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+  const supabase = getSupabase();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) throw new Error('Não autenticado');
+
+  const row: Record<string, any> = {};
+  if (data.name !== undefined) row.name = data.name;
+  if (data.email !== undefined) row.email = data.email;
+  if (data.phone !== undefined) row.phone = data.phone;
+  if (data.specialty !== undefined) row.specialty = data.specialty;
+  if (data.crm !== undefined) row.crm = data.crm;
+  if (data.crm_uf !== undefined) row.crm_uf = data.crm_uf;
+  if (data.avatar_path !== undefined) row.avatar_path = data.avatar_path;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update(row)
+    .eq('id', session.user.id);
+
+  if (error) throw new Error(error.message);
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -290,57 +305,21 @@ export async function uploadFile(
   folder: string,
   bucketType: BucketType = 'documents',
 ): Promise<{ path: string; bucketType: BucketType; url: string | null }> {
-  const form = new FormData();
-  // Append the file binary directly — NO base64, NO readAsDataURL
-  form.append('file', file, fileName);
-  form.append('folder', folder);
-  form.append('bucketType', bucketType);
+  const supabase = getSupabase();
+  const bucketName = BUCKET_NAMES[bucketType];
+  const storagePath = folder ? `${folder}/${fileName}` : fileName;
 
-  // Always get a fresh token from the Supabase session to avoid expired JWT issues
-  let token = getAccessToken();
-  if (!token) {
-    try {
-      const supabase = getSupabase();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        token = session.access_token;
-        setAccessToken(token);
-      }
-    } catch (e) {
-      console.warn('[API] Could not refresh session token for upload:', e);
-    }
-  }
+  const { error } = await supabase.storage
+    .from(bucketName)
+    .upload(storagePath, file, { upsert: true, contentType: file.type });
 
-  if (!token) {
-    console.error('[API] No access token available for upload. User may not be authenticated.');
-    throw new Error('Usuário não autenticado. Faça login novamente para enviar arquivos.');
-  }
+  if (error) throw new Error(error.message);
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-    // NOTE: do NOT set Content-Type — browser sets it automatically with the multipart boundary
-  };
+  const url = PUBLIC_BUCKETS.includes(bucketType)
+    ? getPublicFileUrl(storagePath, bucketType)
+    : null;
 
-  try {
-    const url = `${EDGE_BASE}/storage/upload`;
-    console.log(`[API] POST ${url} (FormData, bucketType=${bucketType})`);
-
-    const res = await fetch(url, { method: 'POST', headers, body: form });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: res.statusText }));
-      const msg = body?.error || `HTTP ${res.status}`;
-      console.error(`[API] POST /storage/upload failed:`, msg);
-      throw new Error(msg);
-    }
-
-    return res.json();
-  } catch (err: any) {
-    if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-      throw new Error('Não foi possível conectar ao servidor durante o upload.');
-    }
-    throw err;
-  }
+  return { path: storagePath, bucketType, url };
 }
 
 /**
@@ -367,10 +346,13 @@ export async function getSignedFileUrl(
   bucketType: BucketType = 'documents',
   expiresIn: number = 3600,
 ): Promise<string> {
-  const res = await edgeFetch<{ signedUrl: string }>(
-    `/storage/signed-url/${bucketType}/${storagePath}?expires=${expiresIn}`,
-  );
-  return res.signedUrl;
+  const supabase = getSupabase();
+  const bucketName = BUCKET_NAMES[bucketType];
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .createSignedUrl(storagePath, expiresIn);
+  if (error) throw new Error(error.message);
+  return data.signedUrl;
 }
 
 /**
@@ -382,7 +364,10 @@ export async function deleteFile(
   storagePath: string,
   bucketType: BucketType = 'documents',
 ): Promise<void> {
-  await edgeFetch(`/storage/file/${bucketType}/${storagePath}`, { method: 'DELETE' });
+  const supabase = getSupabase();
+  const bucketName = BUCKET_NAMES[bucketType];
+  const { error } = await supabase.storage.from(bucketName).remove([storagePath]);
+  if (error) throw new Error(error.message);
 }
 
 /**
@@ -397,12 +382,12 @@ export async function deleteFileAttachmentRecord(
   storagePath?: string,
   bucketType?: BucketType,
 ): Promise<void> {
-  await edgeFetch(`/file-attachments/${id}`, {
-    method: 'DELETE',
-    body: storagePath && bucketType
-      ? JSON.stringify({ storagePath, bucketType })
-      : '{}',
-  });
+  const supabase = getSupabase();
+  if (storagePath && bucketType) {
+    await deleteFile(storagePath, bucketType);
+  }
+  const { error } = await supabase.from('file_attachments').delete().eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 /**

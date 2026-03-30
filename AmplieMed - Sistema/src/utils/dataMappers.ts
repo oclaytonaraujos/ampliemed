@@ -16,6 +16,7 @@ import type {
   Address,
   ResponsiblePerson,
 } from '../types';
+import { calculateAge } from './validators';
 
 // ─── Generic utilities ───────────────────────────────────────────────────────
 
@@ -234,8 +235,8 @@ export function patientFromRow(row: PatientRow): PatientInput {
     name: row.name || '',
     cpf: row.cpf || '',
     rg: row.rg || '',
-    birthDate: row.birth_date || '',
-    age: row.age ?? 0,
+    birthDate: row.birth_date ? isoToBrDate(row.birth_date) : '',
+    age: row.birth_date ? calculateAge(isoToBrDate(row.birth_date)) : (row.age ?? 0),
     gender: row.gender || 'M',
     phone: row.phone || '',
     phone2: row.phone2 || undefined,
@@ -1056,6 +1057,8 @@ export function clinicSettingsToRow(s: any, ownerId: string): Record<string, any
     email: s.email || '',
     // logo_path stores only the PATH in the avatars bucket — never a full URL
     logo_path: s.logoPath || null,
+    instagram: s.instagram || null,
+    patient_portal_url: s.patientPortalUrl || null,
     working_hours_start: s.workingHours?.start || '08:00',
     working_hours_end: s.workingHours?.end || '18:00',
     appointment_interval: s.appointmentInterval ?? 30,
@@ -1080,6 +1083,8 @@ export function clinicSettingsFromRow(row: any): any {
     // logoPath = PATH relativo no bucket 'avatars' — gerado dinamicamente na exibição
     // logo_url foi removido do schema (migration v2)
     logoPath: row.logo_path || undefined,
+    instagram: row.instagram || '',
+    patientPortalUrl: row.patient_portal_url || '',
     workingHours: {
       start: row.working_hours_start || '08:00',
       end: row.working_hours_end || '18:00',

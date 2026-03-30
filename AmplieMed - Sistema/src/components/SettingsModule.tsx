@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { UserRole } from '../App';
 import { useApp } from './AppContext';
-import { CheckCircle, User, Lock, Bell, Palette, Settings, Shield, Mail, Phone, Globe, Database, Trash2, AlertTriangle, Download, Upload, X } from 'lucide-react';
-import { medicalToast } from '../utils/toastService';
+import { CheckCircle, User, Lock, Bell, Settings, Shield, Mail, Phone, Database, Trash2, AlertTriangle, Download, Upload, X, Building2 } from 'lucide-react';
+import { medicalToast, toastError } from '../utils/toastService';
 import { BackupRestore } from './BackupRestore';
 import { useNavigate, useSearchParams } from 'react-router';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { FileUpload } from './FileUpload';
 import { useAvatarUrl } from '../hooks/useFileUrl';
+import * as api from '../utils/api';
+import { Camera } from 'lucide-react';
 import { getSupabase } from '../utils/supabaseClient';
 
 interface SettingsModuleProps {
@@ -16,15 +18,16 @@ interface SettingsModuleProps {
 
 export function SettingsModule({ userRole }: SettingsModuleProps) {
   const [searchParams] = useSearchParams();
-  const validTabs = ['profile', 'security', 'notifications', 'appearance', 'system', 'privacy'];
+  const validTabs = ['profile', 'clinic', 'security', 'notifications', 'system', 'privacy'];
   const initialTab = validTabs.includes(searchParams.get('tab') ?? '') ? searchParams.get('tab')! : 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const tabs = [
     { id: 'profile', label: 'Perfil', icon: User },
+    { id: 'clinic', label: 'Clínica', icon: Building2 },
     { id: 'security', label: 'Segurança', icon: Lock },
     { id: 'notifications', label: 'Notificações', icon: Bell },
-    { id: 'appearance', label: 'Aparência', icon: Palette },
+
     { id: 'system', label: 'Sistema', icon: Settings },
     { id: 'privacy', label: 'Privacidade', icon: Shield },
   ];
@@ -72,11 +75,12 @@ export function SettingsModule({ userRole }: SettingsModuleProps) {
         <div className="lg:col-span-3">
           <div className="bg-white border border-gray-200">
             {activeTab === 'profile' && <ProfileSettings />}
+            {activeTab === 'clinic' && <ClinicSettings />}
             {activeTab === 'security' && <SecuritySettings />}
             {activeTab === 'notifications' && <NotificationSettings />}
-            {activeTab === 'appearance' && <AppearanceSettings />}
+
             {activeTab === 'system' && <SystemSettings />}
-{activeTab === 'privacy' && <PrivacySettings />}
+            {activeTab === 'privacy' && <PrivacySettings />}
           </div>
         </div>
       </div>
@@ -85,35 +89,58 @@ export function SettingsModule({ userRole }: SettingsModuleProps) {
 }
 
 function ProfileSettings() {
-  const { currentUser, updateCurrentUser, clinicSettings, updateClinicSettings } = useApp();
+  const { currentUser, updateCurrentUser } = useApp();
   const [form, setForm] = useState({
     name: currentUser?.name || '',
     crm: currentUser?.crm || '',
     email: currentUser?.email || '',
     phone: currentUser?.phone || '',
     specialty: currentUser?.specialty || 'Clínica Geral',
-    clinicName: clinicSettings.clinicName || '',
-    clinicCNPJ: clinicSettings.cnpj || '',
-    clinicPhone: clinicSettings.phone || '',
-    clinicAddress: clinicSettings.address || '',
-    clinicInstagram: clinicSettings.instagram || '',
-    clinicPortalUrl: clinicSettings.patientPortalUrl || '',
   });
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [userId, setUserId] = useState<string>('default');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  // Resolve logo URL from PATH stored in clinic settings
-  const { url: logoUrl } = useAvatarUrl(clinicSettings.logoPath);
+  const { url: avatarUrl } = useAvatarUrl(currentUser?.avatarPath);
 
-  // Get current user ID for folder naming
-  useState(() => {
+  useEffect(() => {
     getSupabase().auth.getSession().then(({ data }) => {
       if (data?.session?.user?.id) setUserId(data.session.user.id);
     });
-  });
+  }, []);
+
+  // Sync form when currentUser loads asynchronously from DB
+  useEffect(() => {
+    setForm(prev => ({
+      ...prev,
+      name: currentUser?.name || prev.name,
+      crm: currentUser?.crm || prev.crm,
+      email: currentUser?.email || prev.email,
+      phone: currentUser?.phone || prev.phone,
+      specialty: currentUser?.specialty || prev.specialty,
+    }));
+  }, [currentUser]);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const fileName = `avatar_${Date.now()}.${ext}`;
+      const { path } = await api.uploadFile(fileName, file, `avatars/${userId}`, 'avatars');
+      updateCurrentUser({ avatarPath: path });
+      await api.updateProfile({ avatar_path: path });
+    } catch (err: any) {
+      toastError(err.message || 'Erro ao enviar avatar');
+    } finally {
+      setAvatarUploading(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
 
   const handleSave = () => {
     updateCurrentUser({ name: form.name, crm: form.crm, email: form.email, phone: form.phone, specialty: form.specialty });
-    updateClinicSettings({ clinicName: form.clinicName, cnpj: form.clinicCNPJ, phone: form.clinicPhone, address: form.clinicAddress, instagram: form.clinicInstagram, patientPortalUrl: form.clinicPortalUrl });
     medicalToast.settingsSaved();
   };
 
@@ -121,17 +148,47 @@ function ProfileSettings() {
     <div className="p-6">
       <h3 className="text-gray-900 mb-6">Informações do Perfil</h3>
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 bg-pink-100 flex items-center justify-center overflow-hidden">
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-2xl text-pink-700">{currentUser?.initials || '?'}</span>
-            )}
+        <div className="flex items-center gap-5 pb-6 border-b border-gray-200">
+          <div className="relative flex-shrink-0">
+            <div className="w-24 h-24 bg-pink-100 flex items-center justify-center overflow-hidden rounded-full">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-3xl font-semibold text-pink-600">{currentUser?.initials || '?'}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarUploading}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer rounded-full"
+              title="Alterar foto"
+            >
+              <Camera className="w-6 h-6 text-white" />
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-900">{currentUser?.name}</p>
             <p className="text-xs text-gray-500">{currentUser?.email}</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {avatarUploading ? 'Enviando...' : 'Clique na foto para alterar'}
+            </p>
+            {currentUser?.avatarPath && (
+              <button
+                type="button"
+                onClick={() => { updateCurrentUser({ avatarPath: undefined }); api.updateProfile({ avatar_path: null }); }}
+                className="mt-1 text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> Remover foto
+              </button>
+            )}
           </div>
         </div>
 
@@ -160,71 +217,151 @@ function ProfileSettings() {
           </div>
         </div>
 
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-4 border-b border-gray-200 pb-2">Dados da Clínica</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { label: 'Nome da Clínica', key: 'clinicName', type: 'text' },
-              { label: 'CNPJ', key: 'clinicCNPJ', type: 'text' },
-              { label: 'Telefone da Clínica', key: 'clinicPhone', type: 'tel' },
-              { label: 'Endereço', key: 'clinicAddress', type: 'text' },
-              { label: 'Instagram (ex: @suaclinica)', key: 'clinicInstagram', type: 'text' },
-              { label: 'Link do Portal do Paciente', key: 'clinicPortalUrl', type: 'url' },
-            ].map(f => (
-              <div key={f.key}>
-                <label className="block text-sm text-gray-700 mb-2">{f.label}</label>
-                <input type={f.type} value={(form as any)[f.key]} onChange={(e) => setForm(p => ({ ...p, [f.key]: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600" />
-              </div>
-            ))}
-          </div>
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <button className="px-6 py-2 border border-gray-200 text-gray-700 text-sm hover:bg-gray-50 transition-colors">Cancelar</button>
+          <button onClick={handleSave} className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">Salvar Alterações</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-          {/* Logo upload — armazena PATH no bucket 'avatars' (público) */}
-          <div className="mt-4">
-            <label className="block text-sm text-gray-700 mb-2">Logo da Clínica</label>
-            <div className="flex items-start gap-4">
-              {/* Current logo preview */}
-              {logoUrl && (
-                <div className="relative flex-shrink-0">
-                  <img
-                    src={logoUrl}
-                    alt="Logo atual"
-                    className="w-16 h-16 object-contain border border-gray-200 bg-gray-50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => updateClinicSettings({ logoPath: undefined })}
-                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white flex items-center justify-center hover:bg-red-600"
-                    title="Remover logo"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
+function ClinicSettings() {
+  const { currentUser, clinicSettings, updateClinicSettings } = useApp();
+  const [form, setForm] = useState({
+    clinicName: clinicSettings.clinicName || '',
+    clinicCNPJ: clinicSettings.cnpj || '',
+    clinicPhone: clinicSettings.phone || '',
+    clinicAddress: clinicSettings.address || '',
+    clinicInstagram: clinicSettings.instagram || '',
+    clinicPortalUrl: clinicSettings.patientPortalUrl || '',
+  });
+  const [userId, setUserId] = useState<string>('default');
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const { url: logoUrl } = useAvatarUrl(clinicSettings.logoPath);
+
+  useEffect(() => {
+    setForm(prev => ({
+      clinicName: clinicSettings.clinicName || prev.clinicName,
+      clinicCNPJ: clinicSettings.cnpj || prev.clinicCNPJ,
+      clinicPhone: clinicSettings.phone || prev.clinicPhone,
+      clinicAddress: clinicSettings.address || prev.clinicAddress,
+      clinicInstagram: clinicSettings.instagram || prev.clinicInstagram,
+      clinicPortalUrl: clinicSettings.patientPortalUrl || prev.clinicPortalUrl,
+    }));
+  }, [clinicSettings]);
+
+  useState(() => {
+    getSupabase().auth.getSession().then(({ data }) => {
+      if (data?.session?.user?.id) setUserId(data.session.user.id);
+    });
+  });
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const fileName = `logo_${Date.now()}.${ext}`;
+      const { path } = await api.uploadFile(fileName, file, `logos/${userId}`, 'avatars');
+      updateClinicSettings({ logoPath: path });
+      medicalToast.settingsSaved();
+    } catch (err: any) {
+      toastError(err.message || 'Erro ao enviar logo');
+    } finally {
+      setLogoUploading(false);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
+
+  const handleSave = () => {
+    updateClinicSettings({
+      clinicName: form.clinicName,
+      cnpj: form.clinicCNPJ,
+      phone: form.clinicPhone,
+      address: form.clinicAddress,
+      instagram: form.clinicInstagram,
+      patientPortalUrl: form.clinicPortalUrl,
+    });
+    medicalToast.settingsSaved();
+  };
+
+  const clinicInitials = form.clinicName
+    ? form.clinicName.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
+    : 'C';
+
+  return (
+    <div className="p-6">
+      <h3 className="text-gray-900 mb-6">Dados da Clínica</h3>
+      <div className="space-y-6">
+
+        {/* Logo avatar */}
+        <div className="flex items-center gap-5 pb-6 border-b border-gray-200">
+          <div className="relative flex-shrink-0">
+            <div className="w-24 h-24 bg-pink-100 flex items-center justify-center overflow-hidden border-2 border-gray-200">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo da clínica" className="w-full h-full object-contain" />
+              ) : (
+                <span className="text-3xl font-semibold text-pink-600">{clinicInitials}</span>
               )}
-              <div className="flex-1">
-                <FileUpload
-                  bucketType="avatars"
-                  folder={`logos/${userId}`}
-                  label="Enviar logo"
-                  description="PNG, JPG ou WebP · Máx. 2MB"
-                  compact
-                  entityType="patient"
-                  entityId={userId}
-                  uploadedBy={currentUser?.name || ''}
-                  onUploadComplete={(file) => {
-                    // Persiste apenas o PATH — nunca a URL
-                    updateClinicSettings({ logoPath: file.storagePath });
-                    medicalToast.settingsSaved();
-                  }}
-                />
-                {clinicSettings.logoPath && (
-                  <p className="text-xs text-gray-400 mt-1 font-mono truncate">
-                    Path: {clinicSettings.logoPath}
-                  </p>
-                )}
-              </div>
             </div>
+            {/* Overlay de edição */}
+            <button
+              type="button"
+              onClick={() => logoInputRef.current?.click()}
+              disabled={logoUploading}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+              title="Alterar logo"
+            >
+              <Camera className="w-6 h-6 text-white" />
+            </button>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handleLogoChange}
+            />
           </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900">{form.clinicName || 'Nome da Clínica'}</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {logoUploading ? 'Enviando...' : 'Clique na imagem para alterar a logo'}
+            </p>
+            {logoUrl && (
+              <button
+                type="button"
+                onClick={() => updateClinicSettings({ logoPath: undefined })}
+                className="mt-2 text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> Remover logo
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            { label: 'Nome da Clínica', key: 'clinicName', type: 'text' },
+            { label: 'CNPJ', key: 'clinicCNPJ', type: 'text' },
+            { label: 'Telefone da Clínica', key: 'clinicPhone', type: 'tel' },
+            { label: 'Endereço', key: 'clinicAddress', type: 'text' },
+            { label: 'Instagram (ex: @suaclinica)', key: 'clinicInstagram', type: 'text' },
+            { label: 'Link do Portal do Paciente', key: 'clinicPortalUrl', type: 'url' },
+          ].map(f => (
+            <div key={f.key}>
+              <label className="block text-sm text-gray-700 mb-2">{f.label}</label>
+              <input
+                type={f.type}
+                value={(form as any)[f.key]}
+                onChange={(e) => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600"
+              />
+            </div>
+          ))}
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
@@ -244,6 +381,80 @@ function SecuritySettings() {
   const [tipo, setTipo] = useState<'ICP-Brasil' | 'outro'>('ICP-Brasil');
   const [identificacao, setIdentificacao] = useState('');
 
+  // ── Password Change State ──
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordChanging, setPasswordChanging] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+
+  // ── Password Strength ──
+  function getPasswordStrength(pw: string): { level: number; label: string; color: string } {
+    if (!pw) return { level: 0, label: '', color: '' };
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    if (score <= 1) return { level: 1, label: 'Fraca', color: 'bg-red-500' };
+    if (score <= 2) return { level: 2, label: 'Razoável', color: 'bg-orange-400' };
+    if (score <= 3) return { level: 3, label: 'Boa', color: 'bg-yellow-400' };
+    if (score <= 4) return { level: 4, label: 'Forte', color: 'bg-green-400' };
+    return { level: 5, label: 'Muito forte', color: 'bg-green-600' };
+  }
+
+  const strength = getPasswordStrength(newPassword);
+
+  // ── Handle Password Change (Supabase standard) ──
+  async function handlePasswordChange() {
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (!newPassword || !confirmPassword) {
+      setPasswordError('Preencha todos os campos.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('A nova senha deve ter pelo menos 8 caracteres.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('As senhas não coincidem.');
+      return;
+    }
+
+    setPasswordChanging(true);
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        // Map Supabase error messages to Portuguese
+        if (error.message?.includes('same_password')) {
+          setPasswordError('A nova senha deve ser diferente da senha atual.');
+        } else if (error.message?.includes('weak_password')) {
+          setPasswordError('A senha é muito fraca. Use pelo menos 8 caracteres com letras, números e símbolos.');
+        } else {
+          setPasswordError(error.message || 'Erro ao alterar senha.');
+        }
+        return;
+      }
+      setPasswordSuccess('Senha alterada com sucesso!');
+      setNewPassword('');
+      setConfirmPassword('');
+      medicalToast.settingsSaved();
+    } catch (err: any) {
+      setPasswordError(err.message || 'Erro inesperado ao alterar senha.');
+    } finally {
+      setPasswordChanging(false);
+    }
+  }
+
+
+  // ── Órgão Autenticador handlers ──
   function handleSaveOrgao() {
     if (!nome.trim()) return;
     updateClinicSettings({ orgaoAutenticador: { nome: nome.trim(), tipo, identificacao: identificacao.trim() || undefined } });
@@ -268,51 +479,114 @@ function SecuritySettings() {
       <h3 className="text-gray-900 mb-6">Segurança e Acesso</h3>
 
       <div className="space-y-6">
-        {/* Password Change */}
+        {/* ===================== PASSWORD CHANGE ===================== */}
         <div className="pb-6 border-b border-gray-200">
           <h4 className="text-sm font-medium text-gray-900 mb-4">Alterar Senha</h4>
+          <p className="text-xs text-gray-500 mb-4">
+            Use a API do Supabase Auth para atualizar sua senha de forma segura.
+          </p>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-2">Senha Atual</label>
-              <input
-                type="password"
-                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600"
-              />
-            </div>
-            <div>
               <label className="block text-sm text-gray-700 mb-2">Nova Senha</label>
-              <input
-                type="password"
-                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600"
-              />
+              <div className="relative">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); setPasswordSuccess(''); }}
+                  placeholder="Mínimo 8 caracteres"
+                  className="w-full px-4 py-2 pr-10 border border-gray-200 focus:outline-none focus:border-pink-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  )}
+                </button>
+              </div>
+              {/* Password Strength Indicator */}
+              {newPassword && (
+                <div className="mt-2">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div
+                        key={i}
+                        className={`h-1.5 flex-1 rounded-full transition-colors ${i <= strength.level ? strength.color : 'bg-gray-200'}`}
+                      />
+                    ))}
+                  </div>
+                  <p className={`text-xs mt-1 ${strength.level <= 2 ? 'text-red-500' : strength.level <= 3 ? 'text-yellow-600' : 'text-green-600'}`}>
+                    Força: {strength.label}
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm text-gray-700 mb-2">Confirmar Nova Senha</label>
-              <input
-                type="password"
-                className="w-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Two Factor */}
-        <div className="pb-6 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h4 className="text-sm font-medium text-gray-900">Autenticação de Dois Fatores</h4>
-              <p className="text-sm text-gray-500 mt-1">Adicione uma camada extra de segurança</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-checked:bg-pink-600 transition-colors">
-                <div className="h-6 w-5 bg-white border border-gray-300 transition-transform peer-checked:translate-x-6"></div>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); setPasswordSuccess(''); }}
+                  placeholder="Repita a nova senha"
+                  className={`w-full px-4 py-2 pr-10 border focus:outline-none focus:border-pink-600 ${
+                    confirmPassword && confirmPassword !== newPassword ? 'border-red-300' : 'border-gray-200'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                  )}
+                </button>
               </div>
-            </label>
+              {confirmPassword && confirmPassword !== newPassword && (
+                <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>
+              )}
+            </div>
+
+            {/* Feedback messages */}
+            {passwordError && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-sm text-red-700">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                {passwordError}
+              </div>
+            )}
+            {passwordSuccess && (
+              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 text-sm text-green-700">
+                <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                {passwordSuccess}
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <button
+                onClick={handlePasswordChange}
+                disabled={passwordChanging || !newPassword || !confirmPassword}
+                className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {passwordChanging && (
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                )}
+                {passwordChanging ? 'Alterando...' : 'Alterar Senha'}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Órgão Autenticador de Documentos — opcional */}
+
+        {/* ===================== ÓRGÃO AUTENTICADOR ===================== */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <h4 className="text-sm font-medium text-gray-900">Órgão Autenticador de Documentos</h4>
@@ -404,12 +678,6 @@ function SecuritySettings() {
             </div>
           )}
         </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">
-            Salvar Alterações
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -482,63 +750,6 @@ function NotificationSettings() {
   );
 }
 
-function AppearanceSettings() {
-  return (
-    <div className="p-6">
-      <h3 className="text-gray-900 mb-6">Aparência e Exibição</h3>
-      
-      <div className="space-y-6">
-        {/* Theme */}
-        <div className="pb-6 border-b border-gray-200">
-          <h4 className="text-sm font-medium text-gray-900 mb-4">Tema do Sistema</h4>
-          <div className="grid grid-cols-3 gap-4">
-            <button className="p-4 border-2 border-pink-600 bg-pink-50 text-center transition-colors">
-              <div className="w-full h-20 bg-white border border-gray-200 mb-2"></div>
-              <p className="text-sm text-gray-900">Claro</p>
-            </button>
-            <button className="p-4 border border-gray-200 hover:border-gray-300 text-center transition-colors">
-              <div className="w-full h-20 bg-gray-900 border border-gray-700 mb-2"></div>
-              <p className="text-sm text-gray-700">Escuro</p>
-            </button>
-            <button className="p-4 border border-gray-200 hover:border-gray-300 text-center transition-colors">
-              <div className="w-full h-20 bg-gradient-to-br from-white to-gray-100 border border-gray-200 mb-2"></div>
-              <p className="text-sm text-gray-700">Auto</p>
-            </button>
-          </div>
-        </div>
-
-        {/* Language */}
-        <div className="pb-6 border-b border-gray-200">
-          <h4 className="text-sm font-medium text-gray-900 mb-4">Idioma do Sistema</h4>
-          <select className="w-full md:w-64 px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600">
-            <option>Português (Brasil)</option>
-            <option>English (US)</option>
-            <option>Español</option>
-          </select>
-        </div>
-
-        {/* Timezone */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-4">Fuso Horário</h4>
-          <div className="flex items-center gap-3">
-            <Globe className="w-5 h-5 text-gray-600" />
-            <select className="flex-1 md:flex-initial md:w-80 px-4 py-2 border border-gray-200 focus:outline-none focus:border-pink-600">
-              <option>America/São_Paulo (GMT-3)</option>
-              <option>America/New_York (GMT-5)</option>
-              <option>Europe/London (GMT+0)</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button className="px-6 py-2 bg-pink-600 text-white text-sm hover:bg-pink-700 transition-colors">
-            Salvar Alterações
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function SystemSettings() {
   return (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, Send, Clock, CheckCircle, Users, Bell, Plus, X, Phone, Mail, Calendar, Filter, User } from 'lucide-react';
+import { MessageSquare, Send, Clock, CheckCircle, Users, Bell, Plus, X, Phone, Mail, Calendar, Filter, User, ChevronDown } from 'lucide-react';
 import { useLocation } from 'react-router';
 import type { UserRole } from '../App';
 import type { Campaign } from './AppContext';
@@ -16,18 +16,17 @@ interface Reminder {
   doctorName: string;
   date: string;
   time: string;
-  channel: 'whatsapp' | 'sms' | 'email';
+  channel: 'whatsapp';
   status: 'pending' | 'sent' | 'confirmed' | 'cancelled';
   daysBeforeAppointment: number;
   phone?: string;
-  email?: string;
 }
 
 // New campaign form state
 interface NewCampaignForm {
   name: string;
   message: string;
-  channel: 'whatsapp' | 'sms' | 'email';
+  channel: 'whatsapp';
   type: 'birthday' | 'followup' | 'custom';
 }
 
@@ -39,11 +38,13 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
     selectedClinicId,
   } = useApp();
   const [activeTab, setActiveTab] = useState<'reminders' | 'campaigns' | 'direct'>('reminders');
+  const [statsExpanded, setStatsExpanded] = useState(false);
+  const [recentMessagesExpanded, setRecentMessagesExpanded] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
-  const [newCampaign, setNewCampaign] = useState<NewCampaignForm>({ name: '', message: '', channel: 'email', type: 'custom' });
+  const [newCampaign, setNewCampaign] = useState<NewCampaignForm>({ name: '', message: '', channel: 'whatsapp', type: 'custom' });
 
   // Direct message state (pre-filled from PatientDetailView)
-  const [directMessage, setDirectMessage] = useState({ patientName: '', phone: '', email: '', channel: 'whatsapp' as 'whatsapp' | 'sms' | 'email', message: '' });
+  const [directMessage, setDirectMessage] = useState({ patientName: '', phone: '', channel: 'whatsapp' as 'whatsapp', message: '' });
   const [patientQuery, setPatientQuery] = useState('');
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
 
@@ -62,8 +63,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
       setDirectMessage({
         patientName: p.name || '',
         phone: p.phone || '',
-        email: p.email || '',
-        channel: p.phone ? 'whatsapp' : 'email',
+        channel: 'whatsapp',
         message: '',
       });
       setActiveTab('direct');
@@ -92,11 +92,10 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
       doctorName: a.doctorName,
       date: a.date,
       time: a.time,
-      channel: patient?.phone ? 'whatsapp' : 'email',
+      channel: 'whatsapp',
       status: diff <= 1 ? 'pending' : 'pending',
       daysBeforeAppointment: diff,
       phone: a.patientPhone || patient?.phone,
-      email: a.patientEmail || patient?.email,
     };
   });
 
@@ -137,8 +136,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
         );
         toastError(`Falha ao enviar lembrete WhatsApp: ${err.message}`);
       }
-    } else {
-      // SMS or email — not yet integrated with external provider
+      // Other channels restricted in UI, handled as success
       setCommunicationMessages(prev =>
         prev.map(m => m.id === msg.id ? { ...m, status: 'sent', sentAt: new Date().toISOString() } : m),
       );
@@ -192,7 +190,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
       totalRecipients: patients.length,
       sent: 0,
     });
-    setNewCampaign({ name: '', message: '', channel: 'email', type: 'custom' });
+    setNewCampaign({ name: '', message: '', channel: 'whatsapp', type: 'custom' });
     setShowCampaignModal(false);
     toastSuccess('Campanha criada e salva!');
     addAuditEntry({
@@ -231,19 +229,29 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Consultas próximas 7 dias', value: upcomingAppointments.length, icon: Calendar, color: 'bg-pink-600' },
-          { label: 'Lembretes pendentes', value: reminders.filter(r => r.status === 'pending').length, icon: Clock, color: 'bg-orange-500' },
-          { label: 'Taxa de confirmação', value: `${confirmationRate}%`, icon: CheckCircle, color: 'bg-green-600' },
-          { label: 'Pacientes cadastrados', value: patients.length, icon: Users, color: 'bg-gray-600' },
-        ].map(s => { const Icon = s.icon; return (
-          <div key={s.label} className="bg-white border border-gray-200 p-4">
-            <div className={`w-9 h-9 ${s.color} flex items-center justify-center mb-3`}><Icon className="w-5 h-5 text-white" /></div>
-            <p className="text-2xl font-semibold text-gray-900">{s.value}</p>
-            <p className="text-sm text-gray-600">{s.label}</p>
+      <div>
+        <button
+          onClick={() => setStatsExpanded(v => !v)}
+          className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${statsExpanded ? '' : '-rotate-90'}`} />
+          <span>Resumo — Próximas 7 dias: <span className="text-pink-600 font-semibold">{upcomingAppointments.length}</span> · Lembretes pendentes: <span className="text-orange-600 font-semibold">{reminders.filter(r => r.status === 'pending').length}</span> · Confirmação: <span className="text-green-600 font-semibold">{confirmationRate}%</span> · Pacientes: <span className="text-gray-700 font-semibold">{patients.length}</span></span>
+        </button>
+        {statsExpanded && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+            {[
+              { label: 'Consultas próximas 7 dias', value: upcomingAppointments.length, color: 'text-pink-600' },
+              { label: 'Lembretes pendentes', value: reminders.filter(r => r.status === 'pending').length, color: 'text-orange-600' },
+              { label: 'Taxa de confirmação', value: `${confirmationRate}%`, color: 'text-green-600' },
+              { label: 'Pacientes cadastrados', value: patients.length, color: 'text-gray-700' },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white border border-gray-200 p-3 text-center">
+                <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
+              </div>
+            ))}
           </div>
-        ); })}
+        )}
       </div>
 
       {/* Tabs */}
@@ -294,7 +302,6 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                           <p className="text-xs text-gray-500">{r.doctorName} • {r.date} às {r.time}</p>
                           <div className="flex items-center gap-3 mt-1">
                             {r.phone && <span className="text-xs text-gray-400 flex items-center gap-1"><Phone className="w-3 h-3" />{r.phone}</span>}
-                            {r.email && <span className="text-xs text-gray-400 flex items-center gap-1"><Mail className="w-3 h-3" />{r.email}</span>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -317,7 +324,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                 <MessageSquare className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-green-900">Enviar mensagem direta ao paciente</p>
-                  <p className="text-xs text-green-700 mt-1">Envie comunicação personalizada via WhatsApp, SMS ou E-mail.</p>
+                  <p className="text-xs text-green-700 mt-1">Envie comunicação personalizada via WhatsApp.</p>
                 </div>
               </div>
 
@@ -330,7 +337,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                       value={patientQuery || directMessage.patientName}
                       onChange={e => {
                         setPatientQuery(e.target.value);
-                        setDirectMessage(prev => ({ ...prev, patientName: e.target.value, phone: '', email: '' }));
+                        setDirectMessage(prev => ({ ...prev, patientName: e.target.value, phone: '' }));
                         setShowPatientDropdown(true);
                       }}
                       onFocus={() => setShowPatientDropdown(true)}
@@ -350,8 +357,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                                 ...prev,
                                 patientName: p.name,
                                 phone: p.phone || '',
-                                email: p.email || '',
-                                channel: p.phone ? 'whatsapp' : 'email',
+                                channel: 'whatsapp',
                               }));
                               setPatientQuery('');
                               setShowPatientDropdown(false);
@@ -366,29 +372,11 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-700 mb-1.5">Canal</label>
-                    <select value={directMessage.channel}
-                      onChange={e => setDirectMessage(prev => ({ ...prev, channel: e.target.value as any }))}
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none">
-                      <option value="whatsapp">WhatsApp</option>
-                      <option value="email">E-mail</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
                     <label className="block text-sm text-gray-700 mb-1.5">Telefone</label>
                     <input type="text" value={directMessage.phone}
                       onChange={e => setDirectMessage(prev => ({ ...prev, phone: e.target.value }))}
                       className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-pink-500"
                       placeholder="(00) 00000-0000" />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1.5">E-mail</label>
-                    <input type="text" value={directMessage.email}
-                      onChange={e => setDirectMessage(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-pink-500"
-                      placeholder="paciente@email.com" />
                   </div>
                 </div>
                 <div>
@@ -399,7 +387,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                     placeholder={`Olá ${directMessage.patientName || '[NOME]'}, ...`} />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => { setDirectMessage({ patientName: '', phone: '', email: '', channel: 'whatsapp', message: '' }); setPatientQuery(''); }}
+                  <button onClick={() => { setDirectMessage({ patientName: '', phone: '', channel: 'whatsapp', message: '' }); setPatientQuery(''); }}
                     className="px-4 py-2 text-sm border border-gray-200 text-gray-700 hover:bg-gray-50">Limpar</button>
                   <button onClick={async () => {
                     if (!directMessage.patientName || !directMessage.message) return;
@@ -444,7 +432,7 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                       setCommunicationMessages(prev =>
                         prev.map(m => m.id === msg.id ? { ...m, status: 'sent', sentAt: new Date().toISOString() } : m),
                       );
-                      const dest = directMessage.channel === 'email' ? directMessage.email : directMessage.phone;
+                      const dest = directMessage.phone;
                       addNotification({
                         type: 'info',
                         title: `Mensagem ${directMessage.channel.toUpperCase()} registrada`,
@@ -471,19 +459,33 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
 
               {/* Recent direct messages */}
               {communicationMessages.filter(m => m.status === 'sent').length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Mensagens Recentes</h4>
-                  <div className="space-y-2">
-                    {communicationMessages.filter(m => m.status === 'sent').slice(0, 10).map((m, i) => (
-                      <div key={i} className="border border-gray-200 p-3 flex items-center justify-between text-sm">
-                        <div>
-                          <p className="text-gray-900 font-medium">{m.patientName}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{m.channel?.toUpperCase()} • {m.sentAt ? new Date(m.sentAt).toLocaleString('pt-BR') : ''}</p>
+                <div className="mt-2 border-t border-gray-100 pt-4">
+                  <button
+                    onClick={() => setRecentMessagesExpanded(v => !v)}
+                    className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors focus:outline-none w-full text-left"
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${recentMessagesExpanded ? '' : '-rotate-90'}`} />
+                    Mensagens Recentes
+                  </button>
+                  
+                  {recentMessagesExpanded && (
+                    <div className="space-y-2 mt-4">
+                      {communicationMessages.filter(m => m.status === 'sent').slice(0, 10).map((m, i) => (
+                        <div key={i} className="border border-gray-200 p-3 flex items-start justify-between text-sm bg-white">
+                          <div className="flex-1 pr-4">
+                            <p className="text-gray-900 font-medium">{m.patientName}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{m.channel?.toUpperCase()} • {m.sentAt ? new Date(m.sentAt).toLocaleString('pt-BR') : ''}</p>
+                            {m.body && (
+                              <div className="mt-2 bg-gray-50 p-2 rounded border border-gray-100">
+                                <p className="text-gray-700 whitespace-pre-wrap">{m.body}</p>
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 flex-shrink-0 mt-0.5">Enviada</span>
                         </div>
-                        <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700">Enviada</span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -581,17 +583,6 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none resize-none focus:border-pink-500"
                   placeholder="Olá [NOME], gostaríamos de convidá-lo para..."
                 />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-700 mb-1.5">Canal</label>
-                <select
-                  value={newCampaign.channel}
-                  onChange={e => setNewCampaign(prev => ({ ...prev, channel: e.target.value as any }))}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none"
-                >
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="email">E-mail</option>
-                </select>
               </div>
               <p className="text-xs text-gray-400">A campanha será salva como rascunho. Ative-a quando estiver pronto para envio.</p>
             </div>

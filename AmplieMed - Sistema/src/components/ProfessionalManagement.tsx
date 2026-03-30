@@ -230,114 +230,91 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     } catch { toastError('Erro ao exportar'); }
   };
 
-  // ── CARD ──────────────────────────────────────────────────────────────────
+  // ── TABLE ROW ──────────────────────────────────────────────────────────────
   const renderCard = (prof: Professional) => {
-    const consultations = getMonthlyConsultations(prof.name);
-    const revenue = getMonthlyRevenue(prof.name);
-    const goalC = prof.goalMonthlyConsultations || 0;
-    const goalR = prof.goalMonthlyRevenue || 0;
-    const pctC = goalC > 0 ? Math.min(Math.round((consultations / goalC) * 100), 100) : 0;
-    const pctR = goalR > 0 ? Math.min(Math.round((revenue / goalR) * 100), 100) : 0;
     const isDoctor = prof.role === 'doctor' || (!prof.role && prof.crm);
-    const hasUserAccess = prof.email && professionals.some(p => p.id === prof.id && p.email); // Heuristic
+    const hasUserAccess = prof.email && professionals.some(p => p.id === prof.id && p.email);
 
     return (
-      <div key={prof.id} className="border border-gray-200 bg-white p-5 hover:border-pink-400 transition-colors rounded-lg">
-        <div className="flex items-start gap-4">
-          <div className={`w-12 h-12 ${isDoctor ? 'bg-pink-50 border-pink-200' : 'bg-purple-50 border-purple-200'} border flex items-center justify-center flex-shrink-0 rounded-lg`}>
-            {isDoctor ? <Stethoscope className="w-6 h-6 text-pink-600" /> : <User className="w-6 h-6 text-purple-600" />}
+      <tr key={prof.id} className="hover:bg-gray-50 transition-colors group">
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-full ${isDoctor ? 'bg-pink-100 border-pink-200' : 'bg-purple-100 border-purple-200'} border flex items-center justify-center flex-shrink-0`}>
+              {isDoctor ? <Stethoscope className="w-5 h-5 text-pink-600" /> : <User className="w-5 h-5 text-purple-600" />}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
+                {prof.name} {hasUserAccess && <KeyRound className="w-3 h-3 text-gray-400" title="Possui acesso ao sistema"/>}
+              </p>
+              <p className="text-xs text-gray-500">
+                {prof.crm ? `CRM ${prof.crm}/${prof.crmUf} • ` : ''}{prof.specialty}
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">{prof.name} {hasUserAccess && <KeyRound className="w-3 h-3 text-gray-400" title="Possui acesso ao sistema"/>}</h3>
-                <p className="text-sm text-gray-600">
-                  {prof.crm ? `CRM ${prof.crm}/${prof.crmUf} • ` : ''}{prof.specialty}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span className={`px-2 py-0.5 text-xs rounded ${isDoctor ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700'}`}>
-                  {getRoleLabel(prof.role)}
-                </span>
-                <span className={`px-2 py-0.5 text-xs rounded border ${
-                  prof.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'
-                }`}>
-                  {prof.status === 'active' ? 'Ativo' : 'Inativo'}
-                </span>
-              </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <Phone className="w-3 h-3" />
+              {prof.phone || '—'}
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <Phone className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{prof.phone || '—'}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <Mail className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{prof.email || '—'}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <Shield className="w-3 h-3 flex-shrink-0" />
-                <span className={certColor(prof.digitalCertificate) + ' px-1 rounded'}>
-                  {prof.digitalCertificate === 'none' ? 'Sem cert.' : `Cert. ${prof.digitalCertificate}`}
-                </span>
-              </div>
-              {isCertExpiring(prof.certificateExpiry) && (
-                <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded flex items-center gap-1 w-fit">
-                  <AlertCircle className="w-3 h-3" /> Vencendo
-                </span>
-              )}
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <Mail className="w-3 h-3" />
+              {prof.email || '—'}
             </div>
-
-            {(consultations > 0 || revenue > 0) && (
-              <div className="bg-gray-50 border border-gray-100 p-3 rounded mb-3">
-                <p className="text-xs font-medium text-gray-600 mb-2">Desempenho — {now.toLocaleDateString('pt-BR', { month: 'long' })}</p>
-                <div className="grid grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <p className="text-gray-400">Consultas</p>
-                    <p className="font-bold text-gray-900">{consultations}{goalC > 0 ? `/${goalC}` : ''}</p>
-                    {goalC > 0 && <div className="w-full bg-gray-200 h-1 mt-1 rounded"><div className="bg-pink-600 h-1 rounded" style={{ width: `${pctC}%` }} /></div>}
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Receita</p>
-                    <p className="font-bold text-gray-900">R$ {(revenue / 1000).toFixed(1)}k</p>
-                    {goalR > 0 && <div className="w-full bg-gray-200 h-1 mt-1 rounded"><div className="bg-green-600 h-1 rounded" style={{ width: `${pctR}%` }} /></div>}
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Satisfação</p>
-                    <p className={`font-bold ${prof.avgSatisfaction ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {prof.avgSatisfaction ? `${prof.avgSatisfaction.toFixed(1)}⭐` : 'N/D'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <button onClick={() => handleViewDetails(prof)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-pink-600 text-white hover:bg-pink-700 rounded transition-colors">
-                <Eye className="w-3 h-3" /> Detalhes
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <Shield className="w-3 h-3" />
+              <span className={certColor(prof.digitalCertificate) + ' px-1 rounded text-xs'}>
+                {prof.digitalCertificate === 'none' ? 'Sem cert.' : `Cert. ${prof.digitalCertificate}`}
+              </span>
+            </div>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-2 justify-end">
+            <span className={`px-2 py-0.5 text-xs ${isDoctor ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700'}`}>
+              {getRoleLabel(prof.role)}
+            </span>
+            <span className={`px-2 py-0.5 text-xs border ${
+              prof.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'
+            }`}>
+              {prof.status === 'active' ? 'Ativo' : 'Inativo'}
+            </span>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-2">
+            <button onClick={() => handleViewDetails(prof)}
+              className="flex items-center gap-1 px-3 py-1 text-xs bg-pink-600 text-white hover:bg-pink-700 transition-colors">
+              <Eye className="w-3 h-3" /> Detalhes
+            </button>
+            {canUpdate && (
+              <button onClick={() => handleEdit(prof)}
+                className="flex items-center gap-1 px-3 py-1 text-xs border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                <Edit className="w-3 h-3" /> Editar
               </button>
-              {canUpdate && (
-                <button onClick={() => handleEdit(prof)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 text-gray-700 hover:bg-gray-50 rounded transition-colors">
-                  <Edit className="w-3 h-3" /> Editar
-                </button>
-              )}
-              {canDelete && (
-                <button onClick={() => handleToggleStatus(prof)}
-                  className={`flex items-center gap-1 px-3 py-1.5 text-xs border rounded transition-colors ${
-                    prof.status === 'active'
-                      ? 'border-orange-200 text-orange-600 hover:bg-orange-50'
-                      : 'border-green-200 text-green-600 hover:bg-green-50'
-                  }`}>
-                  {prof.status === 'active' ? 'Desativar' : <><CheckCircle className="w-3 h-3" /> Reativar</>}
-                </button>
-              )}
-            </div>
+            )}
+            {canDelete && (
+              <button onClick={() => handleToggleStatus(prof)}
+                className={`flex items-center gap-1 px-3 py-1 text-xs border transition-colors ${
+                  prof.status === 'active'
+                    ? 'border-orange-200 text-orange-600 hover:bg-orange-50'
+                    : 'border-green-200 text-green-600 hover:bg-green-50'
+                }`}>
+                {prof.status === 'active' ? 'Desativar' : <><CheckCircle className="w-3 h-3" /> Reativar</>}
+              </button>
+            )}
           </div>
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   };
 
@@ -465,21 +442,44 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
         </div>
       )}
 
-      {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-gray-200">
-          <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium">Nenhum profissional encontrado</p>
-          <p className="text-sm text-gray-400 mt-1">
-            {professionals.length === 0
-              ? 'Cadastre profissionais clicando em "Novo Profissional"'
-              : 'Ajuste os filtros para ver mais resultados'}
-          </p>
+      {/* Professionals Table */}
+      <div className="bg-white border border-gray-200">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  Profissional
+                </th>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  Telefone
+                </th>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  E-mail
+                </th>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  Certificado
+                </th>
+                <th className="px-6 py-4 text-right text-xs text-gray-600 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filtered.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-12 text-center"><div className="flex flex-col items-center"><User className="w-12 h-12 text-gray-300 mb-3" /><p className="text-gray-500 mb-1">Nenhum profissional encontrado</p><p className="text-sm text-gray-400">{professionals.length === 0
+                    ? 'Cadastre profissionais clicando em "Novo Profissional"'
+                    : 'Ajuste os filtros para ver mais resultados'}</p></div></td></tr>
+              ) : (
+                filtered.map(renderCard)
+              )}
+            </tbody>
+          </table>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(renderCard)}
-        </div>
-      )}
+      </div>
     </div>
   );
 

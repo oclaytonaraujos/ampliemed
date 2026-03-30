@@ -24,6 +24,8 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [tussSearch, setTussSearch] = useState('');
   const [showTussDropdown, setShowTussDropdown] = useState(false);
+  const [patientSearch, setPatientSearch] = useState('');
+  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
   const [formData, setFormData] = useState<Partial<Exam>>({ status: 'solicitado', priority: 'normal' });
 
   const filteredExams = exams.filter(exam => {
@@ -39,6 +41,13 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
         t.description.toLowerCase().includes(tussSearch.toLowerCase()) ||
         t.code.includes(tussSearch) ||
         t.category.toLowerCase().includes(tussSearch.toLowerCase())
+      ).slice(0, 8)
+    : [];
+
+  const filteredPatients = patientSearch.length >= 2
+    ? patients.filter(p =>
+        p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
+        (p.cpf && p.cpf.includes(patientSearch))
       ).slice(0, 8)
     : [];
 
@@ -76,6 +85,7 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
         requestedBy: currentUser?.name || '',
       });
       setTussSearch('');
+      setPatientSearch(found?.name || p.name || '');
       setShowModal(true);
       setPreselectedPatientInfo({ id: p.id, name: p.name });
       toastSuccess(`Paciente pré-selecionado: ${p.name}`, { description: 'Selecione o exame desejado.' });
@@ -83,8 +93,8 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
     }
   }, [location.state, patients, currentUser]);
 
-  const openAdd = () => { setEditingExam(null); setFormData({ status: 'solicitado', priority: 'normal' }); setTussSearch(''); setShowModal(true); };
-  const openEdit = (e: Exam) => { setEditingExam(e); setFormData({ ...e }); setTussSearch(e.examType); setShowModal(true); };
+  const openAdd = () => { setEditingExam(null); setFormData({ status: 'solicitado', priority: 'normal' }); setTussSearch(''); setPatientSearch(''); setShowModal(true); };
+  const openEdit = (e: Exam) => { setEditingExam(e); setFormData({ ...e }); setTussSearch(e.examType); setPatientSearch(e.patientName); setShowModal(true); };
 
   const handleSave = () => {
     if (!formData.patientName || !formData.examType) return;
@@ -303,19 +313,37 @@ export function ExamsManagement({ userRole }: ExamsManagementProps) {
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 {/* Patient select */}
-                <div>
+                {/* Patient autocomplete */}
+                <div className="relative">
                   <label className="block text-sm text-gray-700 mb-1.5">Paciente *</label>
-                  <select value={formData.patientId || ''} onChange={(e) => {
-                    const p = patients.find(pt => pt.id === e.target.value);
-                    if (p) setFormData(prev => ({ ...prev, patientId: p.id, patientName: p.name }));
-                  }} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500">
-                    <option value="">Selecionar paciente...</option>
-                    {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                  {!formData.patientId && (
-                    <input type="text" placeholder="Ou digite o nome manualmente" value={formData.patientName || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, patientName: e.target.value }))}
-                      className="w-full mt-2 px-3 py-2 bg-gray-50 border border-gray-200 focus:outline-none text-sm" />
+                  <input type="text" placeholder="Buscar por nome ou CPF..." value={patientSearch}
+                    onChange={(e) => {
+                      setPatientSearch(e.target.value);
+                      setShowPatientDropdown(true);
+                      setFormData(prev => ({ ...prev, patientName: e.target.value, patientId: undefined }));
+                    }}
+                    onFocus={() => setShowPatientDropdown(true)}
+                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500" />
+                  
+                  {showPatientDropdown && filteredPatients.length > 0 && (
+                    <div className="absolute z-20 left-0 right-0 bg-white border border-gray-200 shadow-lg mt-1 max-h-48 overflow-y-auto">
+                      {filteredPatients.map(p => (
+                        <button key={p.id} onClick={() => { 
+                          setFormData(prev => ({ ...prev, patientName: p.name, patientId: p.id })); 
+                          setPatientSearch(p.name); 
+                          setShowPatientDropdown(false); 
+                        }}
+                          className="w-full text-left px-3 py-2.5 hover:bg-pink-50 border-b border-gray-100 last:border-0 flex flex-col">
+                          <span className="text-gray-800 text-sm">{p.name}</span>
+                          {p.cpf && <span className="text-gray-400 text-xs">CPF: {p.cpf}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {showPatientDropdown && patientSearch.length >= 2 && filteredPatients.length === 0 && (
+                     <div className="absolute z-20 left-0 right-0 bg-white border border-gray-200 shadow-lg mt-1 p-3 text-sm text-gray-500 text-center">
+                       Nenhum paciente encontrado. Pressione Enter ou clique fora para usar o nome digitado.
+                     </div>
                   )}
                 </div>
 

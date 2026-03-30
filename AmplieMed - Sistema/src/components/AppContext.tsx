@@ -16,6 +16,7 @@ export interface AuthUser {
   role: UserRole;
   specialty: string;
   phone: string;
+  avatarPath?: string;
 }
 
 // ── Patient (rich, canonical) ────────────────────────────────────────────────
@@ -822,6 +823,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setClinicSettings(data.clinicSettings || DEFAULT_SETTINGS);
         if (data.clinicId) setSelectedClinicId(data.clinicId);
 
+        // Load avatar_path from profiles table
+        try {
+          const supabase = getSupabase();
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('avatar_path')
+              .eq('id', session.user.id)
+              .single();
+            if (profile?.avatar_path) {
+              setCurrentUser(prev => prev ? { ...prev, avatarPath: profile.avatar_path } : prev);
+            }
+          }
+        } catch { /* non-critical */ }
+
         dataLoadedRef.current = true;
         console.log('[Data] All tables loaded successfully');
       } catch (err) {
@@ -1489,8 +1506,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fileAttachments.filter(f => f.entityType === entityType && f.entityId === entityId);
 
   // ── Clinic Settings helpers ────────────────────────────────────────────────
-  const updateClinicSettings = (data: Partial<ClinicSettings>) =>
-    setClinicSettings(prev => ({ ...prev, ...data }));
+  const updateClinicSettings = (data: Partial<ClinicSettings>) => {
+    setClinicSettings(prev => {
+      const updated = { ...prev, ...data };
+      api.syncClinicSettings(updated).catch(err => console.error('[Settings] Clinic settings save failed:', err));
+      return updated;
+    });
+  };
 
   // ── System User helpers ───────────────────────────────────────────────────
   const addSystemUser = (data: Omit<SystemUser, 'id' | 'createdAt'>): SystemUser => {

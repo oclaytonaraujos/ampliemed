@@ -1,11 +1,28 @@
 import { useState } from 'react';
 import {
   Calendar, FileText, Download, CreditCard, User, Clock, Video, Shield,
-  X, CheckCircle, Phone, Mail, AlertTriangle, Printer,
+  X, CheckCircle, Phone, Mail, AlertTriangle, Printer, Building2,
 } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 import { useApp } from './AppContext';
+import { useAvatarUrl } from '../hooks/useFileUrl';
 import { downloadPDF } from '../utils/documentGenerators';
 import type { MedicalRecord, ScheduleAppointment } from './AppContext';
+
+function formatPhone(phone: string | undefined): string {
+  if (!phone) return '';
+  const p = phone.replace(/\\D/g, '');
+  if (p.length === 11) return `(${p.slice(0, 2)}) ${p.slice(2, 7)}-${p.slice(7)}`;
+  if (p.length === 10) return `(${p.slice(0, 2)}) ${p.slice(2, 6)}-${p.slice(6)}`;
+  return phone;
+}
+
+function formatCNPJ(cnpj: string | undefined): string {
+  if (!cnpj) return '';
+  const c = cnpj.replace(/\\D/g, '');
+  if (c.length === 14) return `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}`;
+  return cnpj;
+}
 
 type FinancialPayment = ReturnType<typeof useApp>['financialPayments'][0];
 
@@ -14,6 +31,8 @@ export function PatientPortal() {
     currentUser, patients, appointments, setAppointments,
     medicalRecords, financialPayments, clinicSettings,
   } = useApp();
+
+  const { url: logoUrl } = useAvatarUrl(clinicSettings?.logoPath);
 
   const [activeTab, setActiveTab] = useState<'appointments' | 'records' | 'payments' | 'profile'>('appointments');
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
@@ -140,24 +159,53 @@ export function PatientPortal() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-pink-600 text-white p-8">
+      <div className="bg-pink-600 text-white px-8 pt-8 pb-12">
         <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-white mb-2">
-                Bem-vindo{patientData.name ? `, ${patientData.name.split(' ')[0]}` : ' ao Portal do Paciente'}
-              </h1>
-              <p className="text-pink-100">Acesse seu histórico médico, consultas e muito mais</p>
-            </div>
-            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
-              {patientData.name ? (
-                <span className="text-2xl font-bold text-white">
-                  {patientData.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
-                </span>
-              ) : (
-                <User className="w-10 h-10 text-white" />
-              )}
-            </div>
+          {/* Clinic Brand / Data */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 pb-6 border-b border-pink-500">
+             <div className="flex items-center gap-4">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo da Clínica" className="h-16 w-auto object-contain bg-white rounded-xl py-2 px-4 shadow-sm" />
+                ) : (
+                  <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center p-2 shadow-sm">
+                    <span className="text-pink-600 font-bold text-2xl">{clinicSettings.clinicName?.substring(0, 2).toUpperCase() || <Building2 className="w-8 h-8 text-pink-600" />}</span>
+                  </div>
+                )}
+                <div>
+                   <h2 className="text-white text-xl font-bold tracking-tight">{clinicSettings.clinicName || 'Minha Clínica'}</h2>
+                   <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-pink-100 text-sm mt-2">
+                     {clinicSettings.phone && (
+                       <div className="flex items-center gap-3 mr-2">
+                         <span className="flex items-center gap-1.5 font-medium">
+                           <Phone className="w-3.5 h-3.5" /> {formatPhone(clinicSettings.phone)}
+                         </span>
+                         <a href={`tel:${clinicSettings.phone.replace(/\\D/g, '')}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white text-xs font-medium" title="Ligar">
+                           <Phone className="w-3 h-3" />
+                           Ligar
+                         </a>
+                         <a href={`https://wa.me/55${clinicSettings.phone.replace(/\\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366]/20 hover:bg-[#25D366]/40 rounded-full transition-colors text-white text-xs font-medium" title="WhatsApp">
+                           <FaWhatsapp className="w-3.5 h-3.5 text-[#25D366]" />
+                           WhatsApp
+                         </a>
+                       </div>
+                     )}
+                     {clinicSettings.email && (
+                       <a href={`mailto:${clinicSettings.email}`} className="flex items-center gap-1.5 hover:text-white transition-colors hover:underline">
+                         <Mail className="w-3.5 h-3.5" /> {clinicSettings.email}
+                       </a>
+                     )}
+                     {clinicSettings.cnpj && <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> CNPJ: {formatCNPJ(clinicSettings.cnpj)}</span>}
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          {/* Patient Welcome */}
+          <div>
+            <h1 className="text-white text-3xl font-bold mb-2">
+              Bem-vindo{patientData.name ? `, ${patientData.name.split(' ')[0]}` : ' ao Portal do Paciente'}
+            </h1>
+            <p className="text-pink-50 text-base">Acesse seu histórico médico, consultas e muito mais</p>
           </div>
         </div>
       </div>

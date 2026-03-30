@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
-  Plus, Search, Edit, Trash2, UserPlus, Calendar, DollarSign,
-  TrendingUp, Award, CheckCircle, Stethoscope,
+  Plus, Search, Edit, Trash2, CheckCircle, Stethoscope,
   Phone, Mail, Shield, X, Download, Eye
 } from 'lucide-react';
 import type { UserRole } from '../App';
@@ -139,193 +138,172 @@ export function DoctorManagement({ userRole }: DoctorManagementProps) {
   }[model || ''] || 'Não configurado');
 
   const renderCard = (doctor: Professional) => {
-    const consultations = getMonthlyConsultations(doctor.name);
-    const revenue = getMonthlyRevenue(doctor.name);
-    const goalC = doctor.goalMonthlyConsultations || 0;
-    const goalR = doctor.goalMonthlyRevenue || 0;
-    const pctC = goalC > 0 ? Math.min(Math.round((consultations / goalC) * 100), 100) : 0;
-    const pctR = goalR > 0 ? Math.min(Math.round((revenue / goalR) * 100), 100) : 0;
-
     return (
-      <div key={doctor.id} className="border border-gray-300 bg-white p-4 hover:border-pink-600 transition-colors">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 bg-pink-100 border border-pink-200 flex items-center justify-center flex-shrink-0">
-            <Stethoscope className="w-7 h-7 text-pink-600" />
+      <tr key={doctor.id} className="hover:bg-gray-50 transition-colors group border-b border-gray-100">
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-pink-100 border border-pink-200 flex items-center justify-center text-pink-600 flex-shrink-0">
+              <Stethoscope className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">{doctor.name}</p>
+              <p className="text-xs text-gray-500">
+                CRM {doctor.crm}/{doctor.crmUf} • {doctor.specialty}
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="font-bold text-gray-900">{doctor.name}</h3>
-                <p className="text-sm text-gray-600">
-                  CRM {doctor.crm}/{doctor.crmUf} • {doctor.specialty}
-                </p>
-              </div>
-              <span className={`px-2 py-1 text-xs border flex-shrink-0 ${
-                doctor.status === 'active' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-100 text-gray-800 border-gray-300'
-              }`}>
-                {doctor.status === 'active' ? 'Ativo' : 'Inativo'}
-              </span>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <Phone className="w-3 h-3" />
+              {doctor.phone || '—'}
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-              <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                <Phone className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{doctor.phone || '—'}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                <Mail className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{doctor.email || '—'}</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                <Shield className="w-3 h-3 flex-shrink-0" />
-                <span>Cert. {doctor.digitalCertificate}</span>
-              </div>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <Mail className="w-3 h-3" />
+              {doctor.email || '—'}
             </div>
-
-            {/* Desempenho do mês */}
-            <div className="bg-gray-50 border border-gray-200 p-3 mb-3">
-              <p className="text-xs font-medium text-gray-700 mb-2">Desempenho — {now.toLocaleDateString('pt-BR', { month: 'long' })}</p>
-              <div className="grid grid-cols-3 gap-3 text-xs">
-                <div>
-                  <p className="text-gray-500">Consultas</p>
-                  <p className="font-bold text-gray-900">{consultations}{goalC > 0 ? `/${goalC}` : ''}</p>
-                  {goalC > 0 && (
-                    <div className="w-full bg-gray-200 h-1 mt-1">
-                      <div className="bg-pink-600 h-1" style={{ width: `${pctC}%` }} />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-gray-500">Receita</p>
-                  <p className="font-bold text-gray-900">R$ {(revenue / 1000).toFixed(1)}k</p>
-                  {goalR > 0 && (
-                    <div className="w-full bg-gray-200 h-1 mt-1">
-                      <div className="bg-green-600 h-1" style={{ width: `${pctR}%` }} />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-gray-500">Satisfação</p>
-                  <p className={`font-bold ${doctor.avgSatisfaction ? 'text-gray-900' : 'text-gray-400'}`}>
-                    {doctor.avgSatisfaction ? `${doctor.avgSatisfaction.toFixed(1)}⭐` : 'N/D'}
-                  </p>
-                </div>
-              </div>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <Shield className="w-3 h-3" />
+              Cert. {doctor.digitalCertificate}
             </div>
-
-            <div className="flex items-center gap-2">
-              <button onClick={() => handleViewDetails(doctor)}
-                className="flex items-center gap-1 px-3 py-1 text-xs bg-pink-600 text-white hover:bg-pink-700 transition-colors">
-                <Eye className="w-3 h-3" /> Detalhes
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-2 justify-end">
+            <span className="px-2 py-0.5 text-xs bg-pink-100 text-pink-700 border border-pink-200">
+              Médico(a)
+            </span>
+            <span className={`px-2 py-0.5 text-xs border ${doctor.status === 'active' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-100 text-gray-800 border-gray-300'}`}>
+              {doctor.status === 'active' ? 'Ativo' : 'Inativo'}
+            </span>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="flex items-center gap-2">
+            <button onClick={() => handleViewDetails(doctor)}
+              className="flex items-center gap-1 px-3 py-1 text-xs bg-pink-600 text-white hover:bg-pink-700 transition-colors">
+              <Eye className="w-3 h-3" /> Detalhes
+            </button>
+            {(userRole === 'admin' || canUpdate) && (
+              <button onClick={() => handleEdit(doctor)}
+                className="flex items-center gap-1 px-3 py-1 text-xs border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                <Edit className="w-3 h-3" /> Editar
               </button>
-              {(userRole === 'admin' || canUpdate) && (
-                <button onClick={() => handleEdit(doctor)}
-                  className="flex items-center gap-1 px-3 py-1 text-xs border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
-                  <Edit className="w-3 h-3" /> Editar
-                </button>
-              )}
-              {(userRole === 'admin' || canDelete) && (
-                <button onClick={() => handleDeactivate(doctor)}
-                  className={`flex items-center gap-1 px-3 py-1 text-xs border transition-colors ${
-                    doctor.status === 'active'
-                      ? 'border-orange-300 text-orange-600 hover:bg-orange-50'
-                      : 'border-green-300 text-green-600 hover:bg-green-50'
+            )}
+            {(userRole === 'admin' || canDelete) && (
+              <button onClick={() => handleDeactivate(doctor)}
+                className={`flex items-center gap-1 px-3 py-1 text-xs border transition-colors ${doctor.status === 'active'
+                    ? 'border-orange-300 text-orange-600 hover:bg-orange-50'
+                    : 'border-green-300 text-green-600 hover:bg-green-50'
                   }`}>
-                  {doctor.status === 'active' ? <><Trash2 className="w-3 h-3" /> Desativar</> : <><CheckCircle className="w-3 h-3" /> Reativar</>}
-                </button>
-              )}
-            </div>
+                {doctor.status === 'active' ? <><Trash2 className="w-3 h-3" /> Desativar</> : <><CheckCircle className="w-3 h-3" /> Reativar</>}
+              </button>
+            )}
           </div>
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   };
 
   const renderList = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestão de Médicos</h2>
-          <p className="text-sm text-gray-600 mt-1">{filteredDoctors.length} médico(s) encontrado(s)</p>
+          <h2 className="text-gray-900 mb-2">Gestão de Médicos</h2>
+          <p className="text-gray-600">{filteredDoctors.length} médico(s) encontrado(s)</p>
         </div>
         <div className="flex items-center gap-3">
-          {canExport && (
-            <button onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 text-sm transition-colors">
-              <Download className="w-4 h-4" /> Exportar
-            </button>
-          )}
+          <div className="relative bg-white border border-gray-200 flex items-stretch w-max">
+            <div className="relative flex items-center w-72 px-2 border-r border-gray-200">
+              <Search className="absolute left-4 w-4 h-4 text-gray-400" />
+              <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nome, CRM, e-mail..."
+                className="w-full pl-7 pr-3 bg-gray-50 border-0 text-sm focus:outline-none focus:ring-0 focus:bg-white transition-all" />
+            </div>
+            <select value={filterSpecialty} onChange={e => setFilterSpecialty(e.target.value)}
+              className="px-4 py-2.5 bg-gray-50 border-r border-gray-200 text-sm focus:outline-none hover:bg-gray-100 transition-colors">
+              <option value="">Todas especialidades</option>
+              {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
+              className="px-4 py-2.5 bg-gray-50 border-r border-gray-200 text-sm focus:outline-none hover:bg-gray-100 transition-colors">
+              <option value="all">Todos status</option>
+              <option value="active">Ativos</option>
+              <option value="inactive">Inativos</option>
+            </select>
+            {canExport && (
+              <button onClick={handleExportCSV}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-sm transition-colors">
+                <Download className="w-4 h-4 text-gray-600" />
+              </button>
+            )}
+          </div>
           {(userRole === 'admin' || canCreate) && (
             <button onClick={() => { setForm(EMPTY_FORM); setView('add'); }}
-              className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 transition-colors whitespace-nowrap">
               <Plus className="w-4 h-4" /> Novo Médico
             </button>
           )}
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Buscar médico..." className="w-full pl-10 pr-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600" />
-        </div>
-        <select value={filterSpecialty} onChange={e => setFilterSpecialty(e.target.value)}
-          className="px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
-          <option value="">Todas as especialidades</option>
-          {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as any)}
-          className="px-3 py-2 border border-gray-300 focus:outline-none focus:border-pink-600">
-          <option value="all">Todos os status</option>
-          <option value="active">Ativos</option>
-          <option value="inactive">Inativos</option>
-        </select>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-pink-50 border border-pink-200 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Stethoscope className="w-8 h-8 text-pink-600" />
-            <span className="text-2xl font-bold text-pink-900">{activeDoctors}</span>
-          </div>
-          <p className="text-sm text-pink-700 font-medium">Médicos Ativos</p>
-        </div>
-        <div className="bg-green-50 border border-green-200 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <TrendingUp className="w-8 h-8 text-green-600" />
-            <span className="text-2xl font-bold text-green-900">{totalConsultationsMonth}</span>
-          </div>
-          <p className="text-sm text-green-700 font-medium">Consultas Este Mês</p>
-        </div>
-        <div className="bg-yellow-50 border border-yellow-200 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <DollarSign className="w-8 h-8 text-yellow-600" />
-            <span className="text-2xl font-bold text-yellow-900">
-              R$ {(totalRevenueMonth / 1000).toFixed(0)}k
-            </span>
-          </div>
-          <p className="text-sm text-yellow-700 font-medium">Receita Total (Mês)</p>
+      {/* Summary Stats - Collapsible like patient page */}
+      <div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span>
+            Resumo — Ativos: <span className="text-pink-600 font-semibold">{activeDoctors}</span>
+            {' · '}Consultas/Mês: <span className="text-green-600 font-semibold">{totalConsultationsMonth}</span>
+            {' · '}Receita/Mês: <span className="text-yellow-600 font-semibold">R$ {(totalRevenueMonth / 1000).toFixed(0)}k</span>
+          </span>
         </div>
       </div>
 
-      {/* Doctors List */}
-      <div className="space-y-4">
-        {filteredDoctors.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 border border-gray-200">
-            <Stethoscope className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 font-medium">Nenhum médico encontrado</p>
-            <p className="text-sm text-gray-400 mt-1">
-              {doctors.length === 0
-                ? 'Cadastre médicos clicando em "Novo Médico"'
-                : 'Ajuste os filtros para ver mais resultados'}
-            </p>
-          </div>
-        ) : (
-          filteredDoctors.map(renderCard)
-        )}
+      {/* Doctors Table */}
+      <div className="bg-white border border-gray-200">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  Médico
+                </th>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  Telefone
+                </th>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  E-mail
+                </th>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  Certificado
+                </th>
+                <th className="px-6 py-4 text-right text-xs text-gray-600 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs text-gray-600 uppercase tracking-wider">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredDoctors.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-12 text-center"><div className="flex flex-col items-center"><Stethoscope className="w-12 h-12 text-gray-300 mb-3" /><p className="text-gray-500 mb-1">Nenhum médico encontrado</p><p className="text-sm text-gray-400">{doctors.length === 0
+                  ? 'Cadastre médicos clicando em "Novo Médico"'
+                  : 'Ajuste os filtros para ver mais resultados'}</p></div></td></tr>
+              ) : (
+                filteredDoctors.map(renderCard)
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

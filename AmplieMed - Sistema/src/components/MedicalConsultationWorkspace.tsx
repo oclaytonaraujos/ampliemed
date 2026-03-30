@@ -22,6 +22,7 @@ import {
 import { medicalToast, toastError } from '../utils/toastService';
 import { useApp } from './AppContext';
 import { FileUpload } from './FileUpload';
+import { TemplatePickerModal } from './TemplatesModule';
 
 interface MedicalConsultationWorkspaceProps {
   userRole: UserRole;
@@ -79,7 +80,7 @@ interface Procedure {
 type Step = 'anamnesis' | 'physical' | 'diagnosis' | 'prescription' | 'exams' | 'documents' | 'procedures' | 'finish';
 
 export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFinish }: MedicalConsultationWorkspaceProps) {
-  const { addMedicalRecord, setExams, currentUser, addAuditEntry, addNotification, addFileAttachment, deleteFileAttachment, getAttachmentsByEntity, clinicSettings } = useApp();
+  const { addMedicalRecord, setExams, currentUser, addAuditEntry, addNotification, addFileAttachment, deleteFileAttachment, getAttachmentsByEntity, clinicSettings, setAppTemplates } = useApp();
   const orgaoAutenticador = clinicSettings.orgaoAutenticador;
   const [currentStep, setCurrentStep] = useState<Step>('anamnesis');
   const [saving, setSaving] = useState(false);
@@ -158,6 +159,9 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
   const [paymentValue, setPaymentValue] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid'>('pending');
 
+  // Template picker
+  const [showTemplatePicker, setShowTemplatePicker] = useState<'prescription' | 'certificate' | 'report' | null>(null);
+
   // Rescheduling
   const [scheduleFollowUp, setScheduleFollowUp] = useState(false);
   const [followUpDate, setFollowUpDate] = useState('');
@@ -231,6 +235,20 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
   const handleFinishConsultation = async () => {
     setSaving(true);
     await new Promise(resolve => setTimeout(resolve, 1200));
+
+    let city = 'Cidade';
+    if (clinicSettings.address) {
+      const parts = clinicSettings.address.split('-');
+      if (parts.length > 1) {
+        city = parts[parts.length - 1].split('/')[0].trim();
+      }
+    }
+    const clinicData = {
+      name: clinicSettings.clinicName,
+      address: clinicSettings.address,
+      phone: clinicSettings.phone,
+      city
+    };
 
     // 1. Save medical record to context
     addMedicalRecord({
@@ -638,17 +656,44 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
     </div>
   );
 
+  const handleTemplateSelect = (content: string, template: any) => {
+    if (showTemplatePicker === 'prescription') {
+      // Parse template content into a prescription entry
+      setPrescriptions(prev => [
+        ...prev,
+        { id: crypto.randomUUID(), medication: template.name, dosage: '', frequency: '', duration: '', instructions: content }
+      ]);
+      // Increment template usage
+      setAppTemplates(prev => prev.map(t => t.id === template.id ? { ...t, usageCount: t.usageCount + 1 } : t));
+    } else if (showTemplatePicker === 'certificate') {
+      setGenerateCertificate(true);
+      setCertificateText(content);
+      setAppTemplates(prev => prev.map(t => t.id === template.id ? { ...t, usageCount: t.usageCount + 1 } : t));
+    }
+    setShowTemplatePicker(null);
+    medicalToast.recordSaved(`Template "${template.name}" aplicado`);
+  };
+
   const renderPrescription = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-900">Prescrição de Medicamentos</h3>
-        <button
-          onClick={handleAddPrescription}
-          className="flex items-center gap-2 px-3 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Adicionar Medicamento
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTemplatePicker('prescription')}
+            className="flex items-center gap-2 px-3 py-2 border border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors text-sm"
+          >
+            <FileText className="w-4 h-4" />
+            Usar Template
+          </button>
+          <button
+            onClick={handleAddPrescription}
+            className="flex items-center gap-2 px-3 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Adicionar Medicamento
+          </button>
+        </div>
       </div>
 
       {prescriptions.length === 0 ? (
@@ -877,7 +922,16 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
   const renderDocuments = () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-sm font-medium text-gray-900 mb-4">Documentos Médicos</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-gray-900">Documentos Médicos</h3>
+          <button
+            onClick={() => setShowTemplatePicker('certificate')}
+            className="flex items-center gap-2 px-3 py-2 border border-pink-200 text-pink-600 hover:bg-pink-50 transition-colors text-sm"
+          >
+            <FileText className="w-4 h-4" />
+            Usar Template
+          </button>
+        </div>
         
         {/* Certificate */}
         <div className="border border-gray-300 p-4 mb-4">
@@ -1423,6 +1477,18 @@ export function MedicalConsultationWorkspace({ userRole, patient, onClose, onFin
             </div>
           </div>
         </div>
+      )}
+
+      {/* Template Picker */}
+      {showTemplatePicker && (
+        <TemplatePickerModal
+          category={showTemplatePicker}
+          onSelect={handleTemplateSelect}
+          onClose={() => setShowTemplatePicker(null)}
+          patientName={patient.name}
+          doctorName={currentUser?.name}
+          crm={currentUser?.crm}
+        />
       )}
     </div>
   );

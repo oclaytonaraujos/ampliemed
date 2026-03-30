@@ -14,7 +14,7 @@ interface QueueManagementProps { userRole: UserRole; }
 type QueuePatient = QueueEntry;
 
 export function QueueManagement({ userRole }: QueueManagementProps) {
-  const { queueEntries: queuePatients, setQueueEntries: setQueuePatients, patients, appointments, addNotification, addAuditEntry, currentUser, selectedClinicId, addCommunicationMessage } = useApp();
+  const { queueEntries: queuePatients, setQueueEntries: setQueuePatients, patients, appointments, addNotification, addAuditEntry, currentUser, selectedClinicId, addCommunicationMessage, appTemplates } = useApp();
   const { canCreate, canExport } = usePermission('queue');
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<'queue' | 'tv-panel'>('queue');
@@ -62,6 +62,15 @@ export function QueueManagement({ userRole }: QueueManagementProps) {
     setPatientInConsultation(patient);
     addNotification({ type: 'appointment', title: 'Consulta iniciada', message: `Consulta de ${patient.name} iniciada com ${patient.doctor}`, urgent: false });
     addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Fila de Espera', description: `Consulta iniciada: ${patient.name}`, status: 'success' });
+    
+    // Sugestão de templates da especialidade
+    const targetSpecialty = currentUser?.specialty || patient.specialty;
+    if (targetSpecialty) {
+      const suggested = appTemplates.filter(t => t.specialty?.toLowerCase() === targetSpecialty.toLowerCase());
+      if (suggested.length > 0) {
+        toastInfo(`Dica: Você possui ${suggested.length} template(s) de ${targetSpecialty}. Utilize-os nas abas de Prescrição ou Documentos.`);
+      }
+    }
   };
 
   // Get current patient being called or in progress for TV panel

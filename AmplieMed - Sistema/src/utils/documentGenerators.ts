@@ -29,16 +29,24 @@ interface DoctorData {
   specialty: string;
 }
 
+export interface ClinicData {
+  name?: string;
+  address?: string;
+  phone?: string;
+  city?: string;
+}
+
 /**
  * Gera HTML para impressão de receita médica
  * Aceita tanto a assinatura clássica quanto uma simplificada para templates
  */
 export function generatePrescriptionHTML(
-  patientOrSimple: PatientData | { doctorName: string; crm: string; patientName: string; medications: any[] },
+  patientOrSimple: PatientData | { doctorName: string; crm: string; patientName: string; medications: any[], clinicData?: ClinicData },
   doctorOrUndef?: DoctorData,
   prescriptions?: PrescriptionData[],
   date?: string,
-  orgaoAutenticador?: OrgaoAutenticador
+  orgaoAutenticador?: OrgaoAutenticador,
+  clinicData?: ClinicData
 ): string {
   // Simplified call from TemplatesModule
   if ('doctorName' in patientOrSimple) {
@@ -48,10 +56,11 @@ export function generatePrescriptionHTML(
       { name: s.doctorName, crm: s.crm || '', specialty: '' },
       s.medications || [],
       new Date().toLocaleDateString('pt-BR'),
-      orgaoAutenticador
+      orgaoAutenticador,
+      s.clinicData || {}
     );
   }
-  return generatePrescriptionHTMLInternal(patientOrSimple as PatientData, doctorOrUndef!, prescriptions!, date!, orgaoAutenticador);
+  return generatePrescriptionHTMLInternal(patientOrSimple as PatientData, doctorOrUndef!, prescriptions!, date!, orgaoAutenticador, clinicData);
 }
 
 function generatePrescriptionHTMLInternal(
@@ -59,8 +68,12 @@ function generatePrescriptionHTMLInternal(
   doctor: DoctorData,
   prescriptions: PrescriptionData[],
   date: string,
-  orgaoAutenticador?: OrgaoAutenticador
+  orgaoAutenticador?: OrgaoAutenticador,
+  clinicData?: ClinicData
 ): string {
+  const clinicName = clinicData?.name || 'Clínica';
+  const clinicAddress = clinicData?.address || '';
+  const clinicPhone = clinicData?.phone || '';
   return `
 <!DOCTYPE html>
 <html>
@@ -85,11 +98,11 @@ function generatePrescriptionHTMLInternal(
 </head>
 <body>
   <div class="header">
-    <div class="logo">AmplieMed</div>
+    <div class="logo">${clinicName}</div>
     <div class="doctor-info">
       ${doctor.name} - CRM: ${doctor.crm}<br>
       ${doctor.specialty}<br>
-      Telefone: (11) 3456-7890 | Email: contato@ampliemed.com.br
+      ${clinicAddress}${clinicAddress && clinicPhone ? ' | ' : ''}${clinicPhone ? `Tel: ${clinicPhone}` : ''}
     </div>
   </div>
 
@@ -105,9 +118,9 @@ function generatePrescriptionHTMLInternal(
     <div class="prescription-item">
       <div class="medication-name">${index + 1}. ${rx.medication}</div>
       <div style="margin-top: 8px;">
-        <strong>Posologia:</strong> ${rx.dosage} - ${rx.frequency}<br>
-        <strong>Duração do tratamento:</strong> ${rx.duration}<br>
-        ${rx.instructions ? `<strong>Instruções:</strong> ${rx.instructions}` : ''}
+        ${rx.dosage || rx.frequency ? `<strong>Posologia:</strong> ${rx.dosage || ''} ${rx.frequency ? `- ${rx.frequency}` : ''}<br>` : ''}
+        ${rx.duration ? `<strong>Duração do tratamento:</strong> ${rx.duration}<br>` : ''}
+        ${rx.instructions ? `<strong>Instruções:</strong> <pre style="white-space: pre-wrap; font-family: inherit; margin: 0; display: inline;">${rx.instructions}</pre>` : ''}
       </div>
     </div>
   `).join('')}
@@ -141,18 +154,19 @@ function generatePrescriptionHTMLInternal(
  * Gera HTML para impressão de atestado médico
  */
 export function generateCertificateHTML(
-  patientOrSimple: PatientData | { doctorName: string; crm: string; patientName: string; content: string },
+  patientOrSimple: PatientData | { doctorName: string; crm: string; patientName: string; content: string, clinicData?: ClinicData },
   doctorOrUndef?: DoctorData,
   days?: number,
   reason?: string,
   date?: string,
-  orgaoAutenticador?: OrgaoAutenticador
+  orgaoAutenticador?: OrgaoAutenticador,
+  clinicData?: ClinicData
 ): string {
   if ('doctorName' in patientOrSimple) {
     const s = patientOrSimple as any;
-    return generateCertificateHTMLInternal({ name: s.patientName, cpf: '', birthDate: '', age: 0 }, { name: s.doctorName, crm: s.crm || '', specialty: '' }, 1, s.content || '', new Date().toLocaleDateString('pt-BR'), orgaoAutenticador);
+    return generateCertificateHTMLInternal({ name: s.patientName, cpf: '', birthDate: '', age: 0 }, { name: s.doctorName, crm: s.crm || '', specialty: '' }, 1, s.content || '', new Date().toLocaleDateString('pt-BR'), orgaoAutenticador, true, s.clinicData || {});
   }
-  return generateCertificateHTMLInternal(patientOrSimple as PatientData, doctorOrUndef!, days!, reason!, date!, orgaoAutenticador);
+  return generateCertificateHTMLInternal(patientOrSimple as PatientData, doctorOrUndef!, days!, reason!, date!, orgaoAutenticador, false, clinicData);
 }
 
 function generateCertificateHTMLInternal(
@@ -161,8 +175,14 @@ function generateCertificateHTMLInternal(
   days: number,
   reason: string,
   date: string,
-  orgaoAutenticador?: OrgaoAutenticador
+  orgaoAutenticador?: OrgaoAutenticador,
+  isFromTemplate: boolean = false,
+  clinicData?: ClinicData
 ): string {
+  const clinicName = clinicData?.name || 'Clínica';
+  const clinicAddress = clinicData?.address || '';
+  const clinicPhone = clinicData?.phone || '';
+  const clinicCity = clinicData?.city || 'Cidade';
   const startDate = new Date();
   const endDate = new Date();
   endDate.setDate(endDate.getDate() + days - 1);
@@ -190,32 +210,36 @@ function generateCertificateHTMLInternal(
 </head>
 <body>
   <div class="header">
-    <div class="logo">AmplieMed</div>
+    <div class="logo">${clinicName}</div>
     <div class="doctor-info">
       ${doctor.name} - CRM: ${doctor.crm}<br>
       ${doctor.specialty}<br>
-      Av. Paulista, 1000 - São Paulo/SP | Tel: (11) 3456-7890
+      ${clinicAddress}${clinicAddress && clinicPhone ? ' | ' : ''}${clinicPhone ? `Tel: ${clinicPhone}` : ''}
     </div>
   </div>
 
   <div class="certificate-title">Atestado Médico</div>
 
   <div class="content">
-    <p>Atesto para os devidos fins que o(a) Sr(a). <strong>${patient.name}</strong>, 
-    portador(a) do CPF <strong>${patient.cpf}</strong>, nascido(a) em <strong>${patient.birthDate}</strong>, 
-    esteve sob meus cuidados médicos nesta data e necessita se afastar de suas atividades 
-    pelo período de <span class="highlight"><strong>${days} (${numberToWords(days)}) ${days === 1 ? 'dia' : 'dias'}</strong></span>.</p>
+    ${isFromTemplate ? `
+      <pre style="white-space: pre-wrap; font-family: inherit; margin: 0; padding: 0; text-align: justify; border: 0; background: transparent;">${reason}</pre>
+    ` : `
+      <p>Atesto para os devidos fins que o(a) Sr(a). <strong>${patient.name}</strong>, 
+      portador(a) do CPF <strong>${patient.cpf || '____'}</strong>, nascido(a) em <strong>${patient.birthDate || '____'}</strong>, 
+      esteve sob meus cuidados médicos nesta data e necessita se afastar de suas atividades 
+      pelo período de <span class="highlight"><strong>${days} (${numberToWords(days)}) ${days === 1 ? 'dia' : 'dias'}</strong></span>.</p>
 
-    <p><strong>Período de afastamento:</strong> 
-    ${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}</p>
+      <p><strong>Período de afastamento:</strong> 
+      ${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}</p>
 
-    ${reason ? `<p><strong>Observações médicas:</strong> ${reason}</p>` : ''}
+      ${reason ? `<p><strong>Observações médicas:</strong> ${reason}</p>` : ''}
+    `}
 
     <p>Por ser verdade, firmo o presente.</p>
   </div>
 
   <div style="text-align: right; margin-top: 30px;">
-    São Paulo, ${date}
+    ${clinicCity}, ${date}
   </div>
 
   ${orgaoAutenticador ? `

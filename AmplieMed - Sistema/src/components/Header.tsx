@@ -12,6 +12,7 @@ import { NotificationCenter } from './NotificationCenter';
 import { useApp } from './AppContext';
 import { MODULE_PATHS } from '../routes';
 import logoAmplieMed from '../assets/775bd1b6594b305b8d42a07d24da813913fe5060.png';
+import { useAvatarUrl } from '../hooks/useFileUrl';
 
 interface HeaderProps {
   onOpenSearch?: () => void;
@@ -56,6 +57,7 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
 
   const avatarColors = ['bg-pink-600', 'bg-violet-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600'];
   const avatarColor = avatarColors[userInitials.charCodeAt(0) % avatarColors.length];
+  const { url: avatarUrl } = useAvatarUrl(currentUser?.avatarPath);
   const userEmail = currentUser?.email || '';
   const userCRM = currentUser?.crm || '';
   const clinicName = clinicSettings.clinicName || 'Minha Clínica';
@@ -219,9 +221,12 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   aria-expanded={userMenuOpen}
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${avatarColor} text-white ${userMenuOpen ? 'ring-2 ring-offset-2 ring-pink-400' : 'hover:opacity-90'}`}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-all overflow-hidden ${avatarUrl ? '' : avatarColor + ' text-white'} ${userMenuOpen ? 'ring-2 ring-offset-2 ring-pink-400' : 'hover:opacity-90'}`}
                 >
-                  <span className="text-sm font-semibold">{userInitials}</span>
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt={userInitials} className="w-full h-full object-cover" />
+                    : <span className="text-sm font-semibold">{userInitials}</span>
+                  }
                 </button>
 
                 {userMenuOpen && (
@@ -230,8 +235,11 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
                     <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
                       <div className="border-b border-gray-200">
                         <div className="p-4 flex items-center gap-3">
-                          <div className={`w-12 h-12 ${avatarColor} rounded-full flex items-center justify-center flex-shrink-0`}>
-                            <span className="text-base font-semibold text-white">{userInitials}</span>
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${avatarUrl ? '' : avatarColor}`}>
+                            {avatarUrl
+                              ? <img src={avatarUrl} alt={userInitials} className="w-full h-full object-cover" />
+                              : <span className="text-base font-semibold text-white">{userInitials}</span>
+                            }
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900">{userName}</p>
@@ -384,8 +392,11 @@ export function Header({ onOpenSearch, onOpenRecent, onOpenOnboarding }: HeaderP
           <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4">
             {/* User Info Mobile */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-100 md:hidden">
-              <div className={`w-11 h-11 ${avatarColor} rounded-full flex items-center justify-center`}>
-                <span className="text-sm font-semibold text-white">{userInitials}</span>
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center overflow-hidden ${avatarUrl ? '' : avatarColor}`}>
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={userInitials} className="w-full h-full object-cover" />
+                  : <span className="text-sm font-semibold text-white">{userInitials}</span>
+                }
               </div>
               <div>
                 <p className="text-sm text-gray-900">{userName}</p>

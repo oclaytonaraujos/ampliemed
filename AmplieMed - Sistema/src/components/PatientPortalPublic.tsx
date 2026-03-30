@@ -2,12 +2,28 @@ import { useState, useEffect } from 'react';
 import {
   Calendar, FileText, CreditCard, Video, User, Shield, Phone,
   MapPin, Clock, Mail, Eye, EyeOff, LogOut, Loader2, AlertCircle,
-  CheckCircle2, Download, Lock, Smartphone, Heart,
+  CheckCircle2, Download, Lock, Smartphone, Heart, Instagram, Building2,
 } from 'lucide-react';
 import logoAmplieMed from '../assets/775bd1b6594b305b8d42a07d24da813913fe5060.png';
 import { getSupabase } from '../utils/supabaseClient';
+import { useAvatarUrl } from '../hooks/useFileUrl';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
+
+function formatPhone(phone: string | undefined): string {
+  if (!phone) return '';
+  const p = phone.replace(/\\D/g, '');
+  if (p.length === 11) return `(${p.slice(0, 2)}) ${p.slice(2, 7)}-${p.slice(7)}`;
+  if (p.length === 10) return `(${p.slice(0, 2)}) ${p.slice(2, 6)}-${p.slice(6)}`;
+  return phone;
+}
+
+function formatCNPJ(cnpj: string | undefined): string {
+  if (!cnpj) return '';
+  const c = cnpj.replace(/\\D/g, '');
+  if (c.length === 14) return `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}`;
+  return cnpj;
+}
 
 interface ClinicInfo {
   clinicName: string;
@@ -15,6 +31,9 @@ interface ClinicInfo {
   phone: string;
   email: string;
   workingHours: { start: string; end: string };
+  logoPath?: string;
+  cnpj?: string;
+  instagram?: string;
 }
 
 interface PatientRecord {
@@ -99,6 +118,8 @@ export function PatientPortalPublic() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('appointments');
+
+  const { url: logoUrl } = useAvatarUrl(clinicInfo.logoPath);
 
   // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -254,7 +275,11 @@ export function PatientPortalPublic() {
       {/* ── Navbar ────────────────────────────────────────────────────────────── */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <img src={logoAmplieMed} alt="AmplieMed" className="h-8 object-contain" />
+          {logoUrl ? (
+            <img src={logoUrl} alt={clinicInfo.clinicName || 'Clínica'} className="h-8 object-contain" />
+          ) : (
+            <img src={logoAmplieMed} alt="AmplieMed" className="h-8 object-contain" />
+          )}
 
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
@@ -450,7 +475,18 @@ export function PatientPortalPublic() {
                         </div>
                         <div>
                           <h4 className="font-semibold text-gray-900 mb-1">Telefone / WhatsApp</h4>
-                          <p className="text-sm text-gray-500">{clinicInfo.phone}</p>
+                          <p className="text-sm text-gray-500">{formatPhone(clinicInfo.phone)}</p>
+                        </div>
+                      </div>
+                    )}
+                    {clinicInfo.email && (
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Mail className="w-5 h-5 text-pink-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-1">E-mail</h4>
+                          <p className="text-sm text-gray-500">{clinicInfo.email}</p>
                         </div>
                       </div>
                     )}
@@ -463,6 +499,37 @@ export function PatientPortalPublic() {
                           <h4 className="font-semibold text-gray-900 mb-1">Horário de Atendimento</h4>
                           <p className="text-sm text-gray-500">
                             Seg–Sex: {clinicInfo.workingHours.start} às {clinicInfo.workingHours.end}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {clinicInfo.cnpj && (
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Building2 className="w-5 h-5 text-pink-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-1">CNPJ</h4>
+                          <p className="text-sm text-gray-500">{formatCNPJ(clinicInfo.cnpj)}</p>
+                        </div>
+                      </div>
+                    )}
+                    {clinicInfo.instagram && (
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Instagram className="w-5 h-5 text-pink-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-1">Instagram</h4>
+                          <p className="text-sm text-gray-500">
+                            <a 
+                              href={`https://instagram.com/${clinicInfo.instagram.replace('@', '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-pink-600 hover:underline"
+                            >
+                              {clinicInfo.instagram}
+                            </a>
                           </p>
                         </div>
                       </div>
