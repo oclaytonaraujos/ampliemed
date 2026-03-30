@@ -100,7 +100,11 @@ export function CommunicationModule({ userRole }: CommunicationModuleProps) {
   });
 
   const handleSendReminder = async (reminder: Reminder) => {
-    const text = `Olá ${reminder.patientName}! Lembramos sua consulta com ${reminder.doctorName} em ${reminder.date} às ${reminder.time}. Responda SIM para confirmar.`;
+    const patient = patients.find(p => p.name === reminder.patientName);
+    const portalLink = patient?.portalToken
+      ? `\n\nAcesse seu portal: ${window.location.origin}/paciente?t=${patient.portalToken}`
+      : '';
+    const text = `Olá ${reminder.patientName}! Lembramos sua consulta com ${reminder.doctorName} em ${reminder.date} às ${reminder.time}. Responda SIM para confirmar.${portalLink}`;
 
     // Save message record with pending status
     const msg = addCommunicationMessage({

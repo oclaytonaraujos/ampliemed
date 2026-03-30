@@ -4,7 +4,8 @@ import {
   ArrowLeft, Edit, Trash2, User, MapPin, Phone, Mail, Calendar, CreditCard,
   Shield, CheckCircle, Clock, DollarSign, Activity, MessageSquare, Video,
   Printer, Send, FileText, Stethoscope, History, Paperclip, ChevronRight,
-  Building, AlertCircle, FlaskConical, ClipboardList, Eye, ChevronDown, ChevronUp
+  Building, AlertCircle, FlaskConical, ClipboardList, Eye, ChevronDown, ChevronUp,
+  Link2, Copy, Check,
 } from 'lucide-react';
 import type { Patient } from './AppContext';
 import { useApp } from './AppContext';
@@ -40,6 +41,7 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
+  const [portalLinkCopied, setPortalLinkCopied] = useState(false);
   const [recordDateFrom, setRecordDateFrom] = useState('');
   const [recordDateTo, setRecordDateTo] = useState('');
   const [examDateFrom, setExamDateFrom] = useState('');
@@ -274,6 +276,54 @@ export function PatientDetailView({ patient, onClose, onEdit, onDelete, userRole
           </div>
         </div>
       </div>
+
+      {/* Portal do Paciente */}
+      {patient.portalToken && (() => {
+        const portalUrl = `${window.location.origin}/paciente?t=${patient.portalToken}`;
+        return (
+          <div className="bg-white border border-gray-200 rounded-lg">
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Link2 className="w-5 h-5 text-pink-600" />
+                <h3 className="font-semibold text-gray-900">Portal do Paciente</h3>
+                <span className="ml-auto px-2 py-0.5 text-xs bg-pink-50 text-pink-700 rounded-full border border-pink-200">
+                  Link único
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">
+                Compartilhe este link com o paciente para acesso direto ao portal (histórico, consultas, pagamentos).
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-xs text-gray-500 truncate select-all">{portalUrl}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(portalUrl);
+                    setPortalLinkCopied(true);
+                    setTimeout(() => setPortalLinkCopied(false), 2000);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-pink-600 text-white text-xs font-medium rounded-lg hover:bg-pink-700 transition-colors flex-shrink-0"
+                  title="Copiar link"
+                >
+                  {portalLinkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {portalLinkCopied ? 'Copiado!' : 'Copiar'}
+                </button>
+                <a
+                  href={portalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
+                  title="Abrir portal"
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  Abrir
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Quick summary cards linking to other tabs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

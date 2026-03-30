@@ -1,10 +1,10 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { 
-  Search, Plus, Edit, FileText, Shield, CheckCircle, XCircle, Filter, 
+import {
+  Search, Plus, Edit, FileText, Shield, CheckCircle, XCircle, Filter,
   Download, Trash2, User, MapPin, Phone, Mail, Calendar, CreditCard,
   AlertCircle, X, ChevronDown, Eye, EyeOff, Upload, Users, ArrowLeft,
   Clock, DollarSign, Activity, MessageSquare, Video, Printer, Send,
-  ChevronRight, Building, Stethoscope, History, Paperclip
+  ChevronRight, Building, Stethoscope, History, Paperclip, Link2, Check,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router';
 import type { UserRole } from '../App';
@@ -44,6 +44,7 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
   const [showCpf, setShowCpf] = useState(false);
+  const [copiedPortalId, setCopiedPortalId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Patient>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -694,6 +695,24 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                       >
                         <FileText className="w-4 h-4" />
                       </button>
+                      {patient.portalToken && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const url = `${window.location.origin}/paciente?t=${patient.portalToken}`;
+                            navigator.clipboard.writeText(url);
+                            setCopiedPortalId(patient.id);
+                            setTimeout(() => setCopiedPortalId(null), 2000);
+                          }}
+                          className="p-2 text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded transition-all"
+                          title="Copiar link do portal do paciente"
+                        >
+                          {copiedPortalId === patient.id
+                            ? <Check className="w-4 h-4 text-green-600" />
+                            : <Link2 className="w-4 h-4" />
+                          }
+                        </button>
+                      )}
                       {userRole === 'admin' && (
                         <button
                           onClick={(e) => {
