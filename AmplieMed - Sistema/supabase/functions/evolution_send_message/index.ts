@@ -108,10 +108,11 @@ serve(async (req: Request) => {
     );
   }
 
-  // ── 4. Get Evolution instance for this clinic ─────────────────────────────────
+  // ── 4. Get clinic name for audit log ─────────────────────────────────────────
+  // WhatsApp usa uma instância global (variáveis de ambiente), não por clínica.
   const { data: clinic, error: clinicError } = await supabase
     .from('clinics')
-    .select('name, evolution_instance_id')
+    .select('name')
     .eq('id', clinicId)
     .single();
 
@@ -120,17 +121,7 @@ serve(async (req: Request) => {
     return jsonResponse({ error: 'Internal server error' }, 500);
   }
 
-  if (!clinic?.evolution_instance_id) {
-    return jsonResponse(
-      {
-        error: 'Evolution API not configured for this clinic',
-        hint: 'Set clinics.evolution_instance_id before sending WhatsApp messages',
-      },
-      422,
-    );
-  }
-
-  const clinicName: string = clinic.name;
+  const clinicName: string = clinic?.name ?? clinicId;
 
   // ── 5. Mark message as in-flight (if messageId provided) ──────────────────────
   if (messageId) {

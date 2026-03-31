@@ -1,64 +1,15 @@
-import { useState } from 'react';
-import { Shield, Plus, Edit, Trash2, Search, CheckCircle, Lock, User, X, Mail, Phone, Eye, EyeOff, Loader2, Stethoscope, AlertCircle, Filter, Download, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, Plus, Edit, Trash2, Search, Lock, User, X, Mail, Phone, Eye, EyeOff, Loader2, AlertCircle, Filter, Download, FileText } from 'lucide-react';
 import type { UserRole } from '../App';
 import type { SystemUser } from './AppContext';
 import { useApp } from './AppContext';
 import { toastSuccess, toastError, toastWarning } from '../utils/toastService';
-import { ROLE_LABELS, ROLE_COLORS } from '../utils/permissions';
+import { ROLE_LABELS, ROLE_COLORS, PERMISSIONS, type PermissionAction, type ModuleKey } from '../utils/permissions';
 import * as api from '../utils/api';
 import { exportAuditLog, exportAuditLogPDF } from '../utils/exportService';
 
 interface AccessControlProps { userRole: UserRole; }
 
-const ROLE_PERMISSIONS: Record<UserRole, { module: string; create: boolean; read: boolean; update: boolean; delete: boolean }[]> = {
-  admin: [
-    { module: 'Pacientes', create: true, read: true, update: true, delete: true },
-    { module: 'Agendamentos', create: true, read: true, update: true, delete: true },
-    { module: 'Prontuários', create: true, read: true, update: true, delete: true },
-    { module: 'Financeiro', create: true, read: true, update: true, delete: true },
-    { module: 'Estoque', create: true, read: true, update: true, delete: true },
-    { module: 'Usuários', create: true, read: true, update: true, delete: true },
-    { module: 'Auditoria', create: false, read: true, update: false, delete: false },
-    { module: 'Configurações', create: true, read: true, update: true, delete: true },
-  ],
-  doctor: [
-    { module: 'Pacientes', create: true, read: true, update: true, delete: false },
-    { module: 'Agendamentos', create: true, read: true, update: true, delete: false },
-    { module: 'Prontuários', create: true, read: true, update: true, delete: false },
-    { module: 'Financeiro', create: false, read: true, update: false, delete: false },
-    { module: 'Estoque', create: false, read: true, update: false, delete: false },
-    { module: 'Usuários', create: false, read: false, update: false, delete: false },
-    { module: 'Auditoria', create: false, read: false, update: false, delete: false },
-    { module: 'Configurações', create: false, read: true, update: false, delete: false },
-  ],
-  receptionist: [
-    { module: 'Pacientes', create: true, read: true, update: true, delete: false },
-    { module: 'Agendamentos', create: true, read: true, update: true, delete: false },
-    { module: 'Prontuários', create: false, read: false, update: false, delete: false },
-    { module: 'Financeiro', create: true, read: true, update: true, delete: false },
-    { module: 'Estoque', create: false, read: true, update: false, delete: false },
-    { module: 'Usuários', create: false, read: false, update: false, delete: false },
-    { module: 'Auditoria', create: false, read: false, update: false, delete: false },
-    { module: 'Configurações', create: false, read: false, update: false, delete: false },
-  ],
-  financial: [
-    { module: 'Pacientes', create: false, read: true, update: true, delete: false },
-    { module: 'Agendamentos', create: false, read: true, update: false, delete: false },
-    { module: 'Prontuários', create: true, read: true, update: false, delete: false },
-    { module: 'Financeiro', create: false, read: false, update: false, delete: false },
-    { module: 'Estoque', create: false, read: true, update: true, delete: false },
-    { module: 'Usuários', create: false, read: false, update: false, delete: false },
-    { module: 'Auditoria', create: false, read: false, update: false, delete: false },
-    { module: 'Configurações', create: false, read: false, update: false, delete: false },
-  ],
-};
-
-const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-  admin: 'Acesso completo a todos os módulos e configurações do sistema',
-  doctor: 'Acesso a pacientes, agenda, prontuários e consultas',
-  receptionist: 'Gestão de agenda, pacientes e recepção',
-  financial: 'Acesso ao módulo financeiro e relatórios',
-};
 
 const actionIcon = (a: string) => {
   switch (a) {
@@ -96,8 +47,32 @@ const actionLabel = (a: string) => {
   return map[a] || a;
 };
 
+// Módulos exibidos na tabela de permissões (subconjunto legível)
+const PERM_MODULES: { key: ModuleKey; label: string }[] = [
+  { key: 'patients',      label: 'Pacientes' },
+  { key: 'appointments',  label: 'Agendamentos' },
+  { key: 'records',       label: 'Prontuários' },
+  { key: 'exams',         label: 'Exames' },
+  { key: 'queue',         label: 'Fila de Espera' },
+  { key: 'financial',     label: 'Financeiro' },
+  { key: 'stock',         label: 'Estoque' },
+  { key: 'communication', label: 'Comunicação' },
+  { key: 'telemedicine',  label: 'Telemedicina' },
+  { key: 'reports',       label: 'Relatórios' },
+  { key: 'settings',      label: 'Configurações' },
+  { key: 'access',        label: 'Usuários/Acesso' },
+  { key: 'audit',         label: 'Auditoria' },
+];
+const PERM_ACTIONS: { key: PermissionAction; label: string }[] = [
+  { key: 'create', label: 'Criar' },
+  { key: 'read',   label: 'Ler' },
+  { key: 'update', label: 'Editar' },
+  { key: 'delete', label: 'Excluir' },
+  { key: 'export', label: 'Exportar' },
+];
+
 export function AccessControl({ userRole }: AccessControlProps) {
-  const { systemUsers, addSystemUser, updateSystemUser, deleteSystemUser, currentUser, addNotification, addAuditEntry, auditLog } = useApp();
+  const { systemUsers, addSystemUser, updateSystemUser, deleteSystemUser, currentUser, addNotification, addAuditEntry, auditLog, rolePermissions, setRolePermissions, userPermissions, setUserPermissions, selectedClinicId } = useApp();
   const [activeTab, setActiveTab] = useState<'users' | 'permissions' | 'audit'>('users');
 
   // Users tab state
@@ -110,6 +85,84 @@ export function AccessControl({ userRole }: AccessControlProps) {
   const [saving, setSaving] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+
+  // Permissions tab state
+  const [permSubTab, setPermSubTab] = useState<'role' | 'user'>('role');
+  const [savingPermRole, setSavingPermRole] = useState<string | null>(null); // role being saved
+  const [savingPermUser, setSavingPermUser] = useState<string | null>(null); // userId being saved
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+
+  // Load permissions from DB when tab opens
+  useEffect(() => {
+    if (activeTab !== 'permissions' || !selectedClinicId) return;
+    api.loadRolePermissions(selectedClinicId).then(setRolePermissions).catch(() => {});
+    api.loadUserPermissions(selectedClinicId).then(setUserPermissions).catch(() => {});
+  }, [activeTab, selectedClinicId]);
+
+  // Helper: get effective actions for role+module (DB override or static fallback)
+  const getEffectiveActions = (role: UserRole, module: ModuleKey): PermissionAction[] => {
+    const override = rolePermissions.find(r => r.role === role && r.module === module);
+    if (override) return override.actions as PermissionAction[];
+    return PERMISSIONS[role]?.[module] ?? [];
+  };
+
+  // Helper: get user-level actions
+  const getUserActions = (userId: string, module: ModuleKey): PermissionAction[] => {
+    const override = userPermissions.find(u => u.userId === userId && u.module === module);
+    return (override?.actions ?? []) as PermissionAction[];
+  };
+
+  // Toggle a role permission action
+  const toggleRoleAction = (role: UserRole, module: ModuleKey, action: PermissionAction) => {
+    const current = getEffectiveActions(role, module);
+    const updated = current.includes(action) ? current.filter(a => a !== action) : [...current, action];
+    setRolePermissions(prev => {
+      const filtered = prev.filter(r => !(r.role === role && r.module === module));
+      return [...filtered, { role, module, actions: updated }];
+    });
+  };
+
+  // Toggle a user permission action
+  const toggleUserAction = (userId: string, module: ModuleKey, action: PermissionAction) => {
+    const current = getUserActions(userId, module);
+    const updated = current.includes(action) ? current.filter(a => a !== action) : [...current, action];
+    setUserPermissions(prev => {
+      const filtered = prev.filter(u => !(u.userId === userId && u.module === module));
+      return [...filtered, { userId, module, actions: updated }];
+    });
+  };
+
+  // Save role permissions to DB
+  const saveRolePermissions = async (role: UserRole) => {
+    if (!selectedClinicId) return;
+    setSavingPermRole(role);
+    try {
+      const roleRows = rolePermissions.filter(r => r.role === role);
+      await Promise.all(roleRows.map(r => api.saveRolePermission(selectedClinicId, r.role, r.module, r.actions)));
+      toastSuccess(`Permissões de ${ROLE_LABELS[role]} salvas!`);
+      addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Acesso', description: `Permissões do perfil ${ROLE_LABELS[role]} atualizadas`, status: 'success' });
+    } catch (err: any) {
+      toastError('Erro ao salvar permissões', { description: err.message });
+    } finally {
+      setSavingPermRole(null);
+    }
+  };
+
+  // Save user permissions to DB
+  const saveUserPermissions = async (userId: string, userName: string) => {
+    if (!selectedClinicId) return;
+    setSavingPermUser(userId);
+    try {
+      const userRows = userPermissions.filter(u => u.userId === userId);
+      await Promise.all(userRows.map(u => api.saveUserPermission(selectedClinicId, u.userId, u.module, u.actions)));
+      toastSuccess(`Permissões de ${userName} salvas!`);
+      addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Acesso', description: `Permissões individuais de ${userName} atualizadas`, status: 'success' });
+    } catch (err: any) {
+      toastError('Erro ao salvar permissões', { description: err.message });
+    } finally {
+      setSavingPermUser(null);
+    }
+  };
 
   // Audit tab state
   const [auditSearch, setAuditSearch] = useState('');
@@ -319,50 +372,145 @@ export function AccessControl({ userRole }: AccessControlProps) {
       {/* ── Permissions Tab ── */}
       {activeTab === 'permissions' && (
         <div className="space-y-4">
-          <div className="flex gap-2">
-            {(['admin', 'doctor', 'receptionist', 'financial'] as UserRole[]).map(r => (
-              <button key={r} onClick={() => setSelectedRole(r)}
-                className={`px-4 py-2 text-sm border rounded-lg transition-colors ${selectedRole === r ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
-                {ROLE_LABELS[r]}
-              </button>
-            ))}
+          {/* Sub-abas */}
+          <div className="border-b border-gray-200 flex gap-6">
+            <button onClick={() => setPermSubTab('role')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${permSubTab === 'role' ? 'border-pink-600 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              Por Perfil
+            </button>
+            <button onClick={() => setPermSubTab('user')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${permSubTab === 'user' ? 'border-pink-600 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              Por Usuário
+            </button>
           </div>
 
-          <div className="bg-pink-50 border border-pink-100 rounded-lg p-4 flex items-center gap-3">
-            <Shield className="w-5 h-5 text-pink-600 flex-shrink-0" />
-            <p className="text-sm text-pink-800">{ROLE_DESCRIPTIONS[selectedRole]}</p>
-          </div>
+          {/* Permissões por Perfil */}
+          {permSubTab === 'role' && (
+            <div className="space-y-4">
+              <div className="flex gap-2 flex-wrap">
+                {(['admin', 'doctor', 'receptionist', 'financial'] as UserRole[]).map(r => (
+                  <button key={r} onClick={() => setSelectedRole(r)}
+                    className={`px-4 py-2 text-sm border rounded-lg transition-colors ${selectedRole === r ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
+                    {ROLE_LABELS[r]}
+                  </button>
+                ))}
+              </div>
 
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-sm font-medium text-gray-900">Permissões — {ROLE_LABELS[selectedRole]}</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead><tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-5 py-3 text-left text-xs text-gray-600 uppercase">Módulo</th>
-                  <th className="px-5 py-3 text-center text-xs text-gray-600 uppercase">Criar</th>
-                  <th className="px-5 py-3 text-center text-xs text-gray-600 uppercase">Ler</th>
-                  <th className="px-5 py-3 text-center text-xs text-gray-600 uppercase">Editar</th>
-                  <th className="px-5 py-3 text-center text-xs text-gray-600 uppercase">Excluir</th>
-                </tr></thead>
-                <tbody className="divide-y divide-gray-100">
-                  {ROLE_PERMISSIONS[selectedRole]?.map(p => (
-                    <tr key={p.module} className="hover:bg-gray-50">
-                      <td className="px-5 py-3 text-sm text-gray-800">{p.module}</td>
-                      {(['create', 'read', 'update', 'delete'] as const).map(action => (
-                        <td key={action} className="px-5 py-3 text-center">
-                          {(p as any)[action]
-                            ? <CheckCircle className="w-4 h-4 text-green-600 mx-auto" />
-                            : <span className="block w-4 h-4 mx-auto border border-gray-200 rounded-full" />}
-                        </td>
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-900">Permissões — {ROLE_LABELS[selectedRole]}</h3>
+                  <button
+                    onClick={() => saveRolePermissions(selectedRole)}
+                    disabled={savingPermRole === selectedRole}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-600 text-white text-xs rounded-lg hover:bg-pink-700 disabled:opacity-50"
+                  >
+                    {savingPermRole === selectedRole && <Loader2 className="w-3 h-3 animate-spin" />}
+                    Salvar
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead><tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="px-5 py-3 text-left text-xs text-gray-600 uppercase">Módulo</th>
+                      {PERM_ACTIONS.map(a => (
+                        <th key={a.key} className="px-3 py-3 text-center text-xs text-gray-600 uppercase">{a.label}</th>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </tr></thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {PERM_MODULES.map(({ key, label }) => {
+                        const effective = getEffectiveActions(selectedRole, key);
+                        return (
+                          <tr key={key} className="hover:bg-gray-50">
+                            <td className="px-5 py-3 text-sm text-gray-800">{label}</td>
+                            {PERM_ACTIONS.map(a => (
+                              <td key={a.key} className="px-3 py-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={effective.includes(a.key)}
+                                  onChange={() => toggleRoleAction(selectedRole, key, a.key)}
+                                  className="w-4 h-4 accent-pink-600"
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Permissões por Usuário */}
+          {permSubTab === 'user' && (
+            <div className="space-y-3">
+              <p className="text-xs text-gray-500">Overrides individuais que prevalecem sobre o perfil do usuário.</p>
+              {systemUsers.map(u => (
+                <div key={u.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="px-5 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{u.name}</p>
+                        <p className="text-xs text-gray-500">{ROLE_LABELS[u.role as UserRole] ?? u.role} • {u.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => saveUserPermissions(u.id, u.name)}
+                        disabled={savingPermUser === u.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-600 text-white text-xs rounded-lg hover:bg-pink-700 disabled:opacity-50"
+                      >
+                        {savingPermUser === u.id && <Loader2 className="w-3 h-3 animate-spin" />}
+                        Salvar
+                      </button>
+                      <button onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}
+                        className="px-3 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50">
+                        {expandedUser === u.id ? 'Recolher' : 'Editar'}
+                      </button>
+                    </div>
+                  </div>
+                  {expandedUser === u.id && (
+                    <div className="border-t border-gray-100 overflow-x-auto">
+                      <table className="w-full">
+                        <thead><tr className="bg-gray-50 border-b border-gray-100">
+                          <th className="px-5 py-2 text-left text-xs text-gray-500 uppercase">Módulo</th>
+                          {PERM_ACTIONS.map(a => (
+                            <th key={a.key} className="px-3 py-2 text-center text-xs text-gray-500 uppercase">{a.label}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {PERM_MODULES.map(({ key, label }) => {
+                            const userActs = getUserActions(u.id, key);
+                            const roleActs = getEffectiveActions(u.role as UserRole, key);
+                            return (
+                              <tr key={key} className="hover:bg-gray-50">
+                                <td className="px-5 py-2 text-sm text-gray-800">{label}</td>
+                                {PERM_ACTIONS.map(a => (
+                                  <td key={a.key} className="px-3 py-2 text-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={userActs.length > 0 ? userActs.includes(a.key) : roleActs.includes(a.key)}
+                                      onChange={() => toggleUserAction(u.id, key, a.key)}
+                                      className="w-4 h-4 accent-pink-600"
+                                    />
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {systemUsers.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-8">Nenhum usuário cadastrado</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -18,7 +18,6 @@ interface AgendaSidebarProps {
   onSearchAppointment: (term: string) => void;
   className?: string;
   onOpenScaleConfig?: () => void;
-  onOpenMessages?: () => void;
   appointments?: any[]; // Para exportar agenda
 }
 
@@ -28,7 +27,6 @@ export function AgendaSidebar({
   onSearchAppointment,
   className,
   onOpenScaleConfig,
-  onOpenMessages,
   appointments = [],
 }: AgendaSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -481,16 +479,7 @@ export function AgendaSidebar({
           </button>
         </div>
 
-        {/* Recados */}
-        <div className="p-4 border-b border-gray-200">
-          <button
-            onClick={onOpenMessages}
-            className="w-full flex items-center gap-2 p-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <MessageSquare className="w-4 h-4" />
-            <span>Recados</span>
-          </button>
-        </div>
+
       </div>
 
       {/* Modal: Legendas dos Status */}

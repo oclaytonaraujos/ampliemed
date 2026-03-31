@@ -2,11 +2,12 @@ import { useState } from 'react';
 import {
   Plus, Search, Edit, Trash2, Filter, X, CheckCircle, AlertCircle,
   Shield, Mail, Phone, User, Download, Eye, Stethoscope,
-  TrendingUp, DollarSign, Award, Calendar, KeyRound, ChevronDown
+  TrendingUp, DollarSign, Award, Calendar, KeyRound, ChevronDown, Paperclip
 } from 'lucide-react';
 import type { UserRole } from '../App';
 import type { Professional } from './AppContext';
 import { useApp } from './AppContext';
+import { FileUpload } from './FileUpload';
 import { validateCPF } from '../utils/validators';
 import { toastSuccess, toastError, toastWarning } from '../utils/toastService';
 import { exportProfessionalsExcel } from '../utils/exportService';
@@ -44,7 +45,7 @@ const EMPTY_FORM: Omit<Professional, 'id' | 'createdAt'> & { password?: string; 
 };
 
 export function ProfessionalManagement({ userRole }: ProfessionalManagementProps) {
-  const { professionals, addProfessional, updateProfessional, deleteProfessional, appointments, addNotification, addAuditEntry, currentUser, addSystemUser, systemUsers } = useApp();
+  const { professionals, addProfessional, updateProfessional, deleteProfessional, appointments, addNotification, addAuditEntry, currentUser, addSystemUser, systemUsers, getAttachmentsByEntity, addFileAttachment, deleteFileAttachment } = useApp();
   const { canCreate, canUpdate, canDelete, canExport } = usePermission('professionals');
 
   const [view, setView] = useState<'list' | 'add' | 'edit' | 'details'>('list');
@@ -58,6 +59,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
   const [isCreatingUser, setIsCreatingUser] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
+  const [detailTab, setDetailTab] = useState<'info' | 'documents'>('info');
 
   // Filtering
   let filtered = [...professionals];
@@ -490,6 +492,8 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
     const revenue = getMonthlyRevenue(selectedProf.name);
     const isDoctor = selectedProf.role === 'doctor' || (!selectedProf.role && selectedProf.crm);
 
+    const profDocs = getAttachmentsByEntity('professional', selectedProf.id);
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -515,7 +519,42 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Abas */}
+        <div className="border-b border-gray-200 flex gap-6">
+          <button
+            onClick={() => setDetailTab('info')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors ${detailTab === 'info' ? 'border-pink-600 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Informações
+          </button>
+          <button
+            onClick={() => setDetailTab('documents')}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${detailTab === 'documents' ? 'border-pink-600 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            <Paperclip className="w-3.5 h-3.5" />
+            Documentos {profDocs.length > 0 && <span className="bg-pink-100 text-pink-700 text-xs px-1.5 py-0.5 rounded-full">{profDocs.length}</span>}
+          </button>
+        </div>
+
+        {detailTab === 'documents' && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <FileUpload
+              bucketType="documents"
+              folder={`professionals/${selectedProf.id}`}
+              label="Anexar documento do profissional"
+              description="PDF, Word, JPG, PNG — máx. 20 MB"
+              multiple
+              entityType="professional"
+              entityId={selectedProf.id}
+              uploadedBy={currentUser?.name || ''}
+              existingFiles={profDocs}
+              onUploadComplete={(file) => addFileAttachment(file)}
+              onRemove={(id) => deleteFileAttachment(id)}
+            />
+          </div>
+        )}
+
+        {detailTab === 'info' && <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <div className="border border-gray-200 p-6 rounded-lg bg-white">
               <h3 className="font-bold text-gray-900 mb-4">Informações Pessoais</h3>
@@ -604,7 +643,7 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
               </div>
             )}
           </div>
-        </div>
+        </div>}
       </div>
     );
   };

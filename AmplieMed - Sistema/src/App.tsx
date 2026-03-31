@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/react';
 import { AppProvider } from './components/AppContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { router } from './routes';
+import FloatingChat from './components/FloatingChat';
 
 // Initialize Sentry for error tracking and monitoring
 const isDev = import.meta.env.DEV;
@@ -41,6 +42,7 @@ function App() {
             },
           }}
         />
+        <FloatingChat />
       </AppProvider>
     </ErrorBoundary>
   );

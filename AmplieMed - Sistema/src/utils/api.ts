@@ -998,6 +998,133 @@ export async function bulkLoad(_collections: CollectionName[]): Promise<Record<s
 export async function bulkSave(_collections: { name: CollectionName; data: any }[]): Promise<void> {
   console.warn('[API] bulkSave is deprecated. Use specific sync functions.');
 }
+// ─── Permissões Editáveis ─────────────────────────────────────────────────────
+
+export interface RolePermissionRow {
+  role: string;
+  module: string;
+  actions: string[];
+}
+
+export interface UserPermissionRow {
+  userId: string;
+  module: string;
+  actions: string[];
+}
+
+export async function loadRolePermissions(clinicId: string): Promise<RolePermissionRow[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('role_permissions')
+    .select('role, module, actions')
+    .eq('clinic_id', clinicId);
+  if (error) throw error;
+  return (data || []).map((r: any) => ({ role: r.role, module: r.module, actions: r.actions }));
+}
+
+export async function saveRolePermission(
+  clinicId: string,
+  role: string,
+  module: string,
+  actions: string[],
+): Promise<void> {
+  const supabase = getSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from('role_permissions')
+    .upsert(
+      { clinic_id: clinicId, role, module, actions, updated_at: new Date().toISOString(), updated_by: user?.id },
+      { onConflict: 'clinic_id,role,module' },
+    );
+  if (error) throw error;
+}
+
+export async function loadUserPermissions(clinicId: string): Promise<UserPermissionRow[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('user_permissions')
+    .select('user_id, module, actions')
+    .eq('clinic_id', clinicId);
+  if (error) throw error;
+  return (data || []).map((r: any) => ({ userId: r.user_id, module: r.module, actions: r.actions }));
+}
+
+export async function saveUserPermission(
+  clinicId: string,
+  userId: string,
+  module: string,
+  actions: string[],
+): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from('user_permissions')
+    .upsert(
+      { clinic_id: clinicId, user_id: userId, module, actions, updated_at: new Date().toISOString() },
+      { onConflict: 'clinic_id,user_id,module' },
+    );
+  if (error) throw error;
+}
+
+// ─── Escala de Horários ───────────────────────────────────────────────────────
+
+export interface WorkScheduleDay {
+  dayOfWeek: number;    // 0=Dom, 1=Seg, ..., 6=Sáb
+  shiftStart: string;   // "HH:MM"
+  shiftEnd: string;     // "HH:MM"
+  breakTime: string;    // "HH:MM" — horário de início do intervalo/pausa
+  isActive: boolean;
+  consultationDuration: number; // minutos
+}
+
+export async function loadWorkSchedules(professionalId: string, clinicId: string): Promise<WorkScheduleDay[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('professional_work_schedules')
+    .select('day_of_week, shift_start, shift_end, break_time, is_active, consultation_duration')
+    .eq('professional_id', professionalId)
+    .eq('clinic_id', clinicId)
+    .order('day_of_week');
+  if (error) throw error;
+  return (data || []).map((r: any) => ({
+    dayOfWeek: r.day_of_week,
+    shiftStart: r.shift_start?.slice(0, 5) ?? '08:00',
+    shiftEnd: r.shift_end?.slice(0, 5) ?? '18:00',
+    breakTime: r.break_time?.slice(0, 5) ?? '',
+    isActive: r.is_active ?? true,
+    consultationDuration: r.consultation_duration ?? 30,
+  }));
+}
+
+export async function saveWorkSchedules(
+  professionalId: string,
+  clinicId: string,
+  days: WorkScheduleDay[],
+): Promise<void> {
+  const supabase = getSupabase();
+  // Substitui todos os registros existentes para este profissional+clínica
+  await supabase
+    .from('professional_work_schedules')
+    .delete()
+    .eq('professional_id', professionalId)
+    .eq('clinic_id', clinicId);
+  const today = new Date().toISOString().split('T')[0];
+  const rows = days.map(d => ({
+    professional_id: professionalId,
+    clinic_id: clinicId,
+    day_of_week: d.dayOfWeek,
+    shift_start: d.shiftStart,
+    shift_end: d.shiftEnd,
+    break_time: d.breakTime || null,
+    is_active: d.isActive,
+    consultation_duration: d.consultationDuration,
+    effective_from: today,
+  }));
+  if (rows.length > 0) {
+    const { error } = await supabase.from('professional_work_schedules').insert(rows);
+    if (error) throw error;
+  }
+}
+
 export async function deleteCollection(_name: CollectionName): Promise<void> {
   console.warn('[API] deleteCollection is deprecated.');
 }

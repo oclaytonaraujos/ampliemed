@@ -796,10 +796,10 @@ function SystemSettings() {
             </div>
             <div className="flex items-center justify-between p-3 border border-gray-200">
               <div>
-                <p className="text-sm text-gray-900">WhatsApp Business API</p>
-                <p className="text-xs text-gray-500">Chatbot automático</p>
+                <p className="text-sm text-gray-900">WhatsApp Business API (Global)</p>
+                <p className="text-xs text-gray-500">Instância única para todas as clínicas — configurada via variáveis de ambiente do servidor</p>
               </div>
-              <span className="px-3 py-1 bg-green-50 text-green-700 text-xs">Ativo</span>
+              <span className="px-3 py-1 bg-green-50 text-green-700 text-xs">Global</span>
             </div>
           </div>
         </div>

@@ -384,7 +384,7 @@ export interface LocalUploadFile {
  */
 export interface StoredFileAttachment {
   id: string;
-  entityType: 'patient' | 'exam' | 'record' | 'appointment' | 'chat';
+  entityType: 'patient' | 'exam' | 'record' | 'appointment' | 'chat' | 'professional';
   entityId: string;
   name: string;
   type: string;       // MIME type
@@ -616,6 +616,12 @@ interface AppContextType {
   clinicSettings: ClinicSettings;
   updateClinicSettings: (data: Partial<ClinicSettings>) => void;
 
+  // Editable Permissions
+  rolePermissions: import('../utils/api').RolePermissionRow[];
+  userPermissions: import('../utils/api').UserPermissionRow[];
+  setRolePermissions: React.Dispatch<React.SetStateAction<import('../utils/api').RolePermissionRow[]>>;
+  setUserPermissions: React.Dispatch<React.SetStateAction<import('../utils/api').UserPermissionRow[]>>;
+
   // Navigation (clinic selector)
   selectedClinicId: string;
   setSelectedClinicId: React.Dispatch<React.SetStateAction<string>>;
@@ -710,6 +716,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings>(DEFAULT_SETTINGS);
 
   const [selectedClinicId, setSelectedClinicId] = useState('');
+  const [rolePermissions, setRolePermissions] = useState<import('../utils/api').RolePermissionRow[]>([]);
+  const [userPermissions, setUserPermissions] = useState<import('../utils/api').UserPermissionRow[]>([]);
 
   // ── Refs for current values (used by debounced sync) ──────────────────────
   const patientsRef = useRef(patients); patientsRef.current = patients;
@@ -1561,6 +1569,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       campaigns, setCampaigns, addCampaign, updateCampaign, deleteCampaign,
       fileAttachments, addFileAttachment, deleteFileAttachment, getAttachmentsByEntity,
       clinicSettings, updateClinicSettings,
+      rolePermissions, setRolePermissions,
+      userPermissions, setUserPermissions,
       selectedClinicId, setSelectedClinicId,
     }}>
       {children}

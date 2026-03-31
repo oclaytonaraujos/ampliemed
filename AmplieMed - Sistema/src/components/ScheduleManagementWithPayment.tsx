@@ -17,7 +17,6 @@ import {
   WaitingListModal,
   PatientsWaitingModal,
   ScaleConfigModal,
-  MessagesModal,
 } from './AgendaSidebarModals';
 
 interface ScheduleManagementWithPaymentProps {
@@ -44,6 +43,8 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
     selectedClinicId, addCommunicationMessage,
     clinicSettings,
   } = useApp();
+
+  const isDoctor = currentUser?.role === 'doctor';
 
   const sendStatusWhatsApp = (phone: string | undefined, patientName: string, text: string) => {
     if (!phone || !selectedClinicId) return;
@@ -79,7 +80,6 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
   const [showWaitingListModal, setShowWaitingListModal] = useState(false);
   const [showPatientsWaitingModal, setShowPatientsWaitingModal] = useState(false);
   const [showScaleConfigModal, setShowScaleConfigModal] = useState(false);
-  const [showMessagesModal, setShowMessagesModal] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
   
   const [filters, setFilters] = useState<FilterOptions>({
@@ -138,7 +138,6 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
   // Dynamic lists from context — empty when no data (never fall back to hardcoded mocks)
   const doctorOptions = professionals.map(p => p.name);
   const specialtyOptions = [...new Set(professionals.map(p => p.specialty).filter(Boolean))];
-  const rooms = ['Sala 101', 'Sala 102', 'Sala 201', 'Sala 202'];
   const insuranceOptions = insurances.map(i => i.name);
 
   // Patient search results (filtered live)
@@ -186,6 +185,8 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
 
   // Ref for the day-view scroll container
   const dayScrollRef = useRef<HTMLDivElement>(null);
+  // Ref for the week-view scroll container
+  const weekScrollRef = useRef<HTMLDivElement>(null);
 
   // Each 30-min slot is 30px tall; 8 hours = 16 slots = 480px visible at once
   const SLOT_HEIGHT = 30;
@@ -212,6 +213,26 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
         container.scrollTop = startEl.offsetTop;
 
         // Resize viewport so exactly 8 hours are visible without scrolling
+        if (endEl) {
+          container.style.height = `${endEl.offsetTop - startEl.offsetTop}px`;
+        }
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [viewMode, selectedDate]);
+
+  // Week-view: same scroll logic as day-view — anchor at current hour, show 8 h.
+  useEffect(() => {
+    if (viewMode !== 'week') return;
+    const timer = setTimeout(() => {
+      const container = weekScrollRef.current;
+      if (!container) return;
+      const currentHour = new Date().getHours();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const startEl = container.querySelector<HTMLElement>(`[data-time="${pad(currentHour)}:00"]`);
+      const endEl   = container.querySelector<HTMLElement>(`[data-time="${pad(Math.min(currentHour + 8, 23))}:00"]`);
+      if (startEl) {
+        container.scrollTop = startEl.offsetTop;
         if (endEl) {
           container.style.height = `${endEl.offsetTop - startEl.offsetTop}px`;
         }
@@ -1090,7 +1111,6 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
           onSearchAppointment={(term) => setSearchTerm(term)}
           className="h-full"
           onOpenScaleConfig={() => setShowScaleConfigModal(true)}
-          onOpenMessages={() => setShowMessagesModal(true)}
           appointments={appointments}
         />
 
@@ -1151,8 +1171,8 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
           )}
 
           {viewMode === 'week' && (
-            <div className="overflow-x-auto h-full">
-              <div className="min-w-[700px] h-full flex flex-col">
+            <div className="overflow-x-auto">
+              <div className="min-w-[700px] flex flex-col">
                 {/* Week header */}
                 <div className="grid grid-cols-8 border-b border-gray-200 flex-shrink-0">
                   <div className="w-16" />
@@ -1176,10 +1196,10 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     );
                   })}
                 </div>
-                {/* Week slots */}
-                <div className="overflow-y-auto flex-1">
+                {/* Week slots — same fixed height + auto-scroll as day view */}
+                <div ref={weekScrollRef} className="overflow-y-auto" style={{ height: `${DAY_VIEW_HEIGHT}px` }}>
                   {timeSlots.map((time) => (
-                    <div key={time} className="grid grid-cols-8 border-b border-gray-100 min-h-[50px]">
+                    <div key={time} data-time={time} className="grid grid-cols-8 border-b border-gray-100 min-h-[30px]">
                       <div className="w-16 px-2 py-2 text-xs text-gray-400 border-r border-gray-100">
                         {time}
                       </div>
@@ -1586,14 +1606,13 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                   </div>
                   <div>
                     <label className="block text-xs text-gray-600 mb-1">Sala</label>
-                    <select
+                    <input
+                      type="text"
                       value={newAppointmentForm.room}
-                      onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, room: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    >
-                      <option value="">Selecione...</option>
-                      {rooms.map(r => <option key={r} value={r}>{r}</option>)}
-                    </select>
+                      readOnly
+                      className="w-full px-3 py-2 bg-gray-100 border border-gray-200 text-sm text-gray-500 cursor-not-allowed"
+                      placeholder="Definida pelo cadastro do médico"
+                    />
                   </div>
                 </div>
                 {newAppointmentForm.type === 'telemedicina' && (
@@ -1632,8 +1651,9 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
                     <input
                       type="number"
                       value={newAppointmentForm.consultationValue}
-                      onChange={(e) => setNewAppointmentForm({ ...newAppointmentForm, consultationValue: Number(e.target.value) })}
-                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                      onChange={(e) => !isDoctor && setNewAppointmentForm({ ...newAppointmentForm, consultationValue: Number(e.target.value) })}
+                      readOnly={isDoctor}
+                      className={`w-full px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 ${isDoctor ? 'bg-gray-100 cursor-not-allowed text-gray-500' : 'bg-gray-50'}`}
                     />
                   </div>
                   {newAppointmentForm.paymentType === 'convenio' && (
@@ -1852,10 +1872,6 @@ export function ScheduleManagementWithPayment({ userRole }: ScheduleManagementWi
       <ScaleConfigModal
         isOpen={showScaleConfigModal}
         onClose={() => setShowScaleConfigModal(false)}
-      />
-      <MessagesModal
-        isOpen={showMessagesModal}
-        onClose={() => setShowMessagesModal(false)}
       />
     </div>
   );

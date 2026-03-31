@@ -66,7 +66,7 @@ export interface LocalUploadFile {
  */
 export interface StoredFileAttachment {
   id: string;
-  entityType: 'patient' | 'exam' | 'record' | 'appointment' | 'chat';
+  entityType: 'patient' | 'exam' | 'record' | 'appointment' | 'chat' | 'professional';
   entityId: string;
   name: string;
   type: string;       // MIME type

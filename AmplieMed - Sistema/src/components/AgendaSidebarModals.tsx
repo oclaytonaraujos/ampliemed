@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Users, Clock, Calendar, Plus, Trash2, Settings, MessageSquare, Send, Loader2, Trash } from 'lucide-react';
 import { useApp } from './AppContext';
 import { getSupabase } from '../utils/supabaseClient';
+import { loadWorkSchedules, saveWorkSchedules, type WorkScheduleDay } from '../utils/api';
+import { toastSuccess, toastError } from '../utils/toastService';
 
 interface WaitingListModalProps {
   isOpen: boolean;
@@ -219,13 +221,68 @@ interface ScaleConfigModalProps {
   onClose: () => void;
 }
 
+const DEFAULT_SCHEDULE: WorkScheduleDay[] = [
+  { dayOfWeek: 1, shiftStart: '08:00', shiftEnd: '18:00', breakTime: '12:00', isActive: true,  consultationDuration: 30 },
+  { dayOfWeek: 2, shiftStart: '08:00', shiftEnd: '18:00', breakTime: '12:00', isActive: true,  consultationDuration: 30 },
+  { dayOfWeek: 3, shiftStart: '08:00', shiftEnd: '18:00', breakTime: '12:00', isActive: true,  consultationDuration: 30 },
+  { dayOfWeek: 4, shiftStart: '08:00', shiftEnd: '18:00', breakTime: '12:00', isActive: true,  consultationDuration: 30 },
+  { dayOfWeek: 5, shiftStart: '08:00', shiftEnd: '18:00', breakTime: '12:00', isActive: true,  consultationDuration: 30 },
+  { dayOfWeek: 6, shiftStart: '08:00', shiftEnd: '13:00', breakTime: '',      isActive: false, consultationDuration: 30 },
+  { dayOfWeek: 0, shiftStart: '08:00', shiftEnd: '12:00', breakTime: '',      isActive: false, consultationDuration: 30 },
+];
+const DAY_LABELS: Record<number, string> = { 1: 'Segunda', 2: 'Terça', 3: 'Quarta', 4: 'Quinta', 5: 'Sexta', 6: 'Sábado', 0: 'Domingo' };
+
 export function ScaleConfigModal({ isOpen, onClose }: ScaleConfigModalProps) {
-  const { professionals } = useApp();
+  const { professionals, selectedClinicId } = useApp();
   const [selectedDoctor, setSelectedDoctor] = useState('');
+  const [schedule, setSchedule] = useState<WorkScheduleDay[]>(DEFAULT_SCHEDULE);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const doctors = professionals.filter(p => p.role === 'doctor' || (!p.role && p.crm));
+
+  // Carrega a escala existente quando o médico é selecionado
+  useEffect(() => {
+    if (!selectedDoctor || !selectedClinicId) {
+      setSchedule(DEFAULT_SCHEDULE);
+      return;
+    }
+    setIsLoading(true);
+    loadWorkSchedules(selectedDoctor, selectedClinicId)
+      .then(rows => {
+        if (rows.length === 0) {
+          setSchedule(DEFAULT_SCHEDULE);
+        } else {
+          setSchedule(DEFAULT_SCHEDULE.map(day => {
+            const row = rows.find(r => r.dayOfWeek === day.dayOfWeek);
+            if (!row) return { ...day, isActive: false };
+            return { ...day, ...row };
+          }));
+        }
+      })
+      .catch(err => console.error('[ScaleConfig] Load error:', err))
+      .finally(() => setIsLoading(false));
+  }, [selectedDoctor, selectedClinicId]);
+
+  const updateDay = (dayOfWeek: number, field: keyof WorkScheduleDay, value: string | boolean | number) => {
+    setSchedule(prev => prev.map(d => d.dayOfWeek === dayOfWeek ? { ...d, [field]: value } : d));
+  };
+
+  const handleSave = async () => {
+    if (!selectedDoctor || !selectedClinicId) return;
+    setIsSaving(true);
+    try {
+      await saveWorkSchedules(selectedDoctor, selectedClinicId, schedule);
+      toastSuccess('Escala salva com sucesso!');
+      onClose();
+    } catch (err: any) {
+      toastError('Erro ao salvar escala', { description: err.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!isOpen) return null;
-
-  const doctors = professionals.filter(p => p.role === 'doctor');
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
@@ -257,7 +314,14 @@ export function ScaleConfigModal({ isOpen, onClose }: ScaleConfigModalProps) {
               </select>
             </div>
 
-            {selectedDoctor && (
+            {selectedDoctor && isLoading && (
+              <div className="py-8 text-center text-gray-500">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-pink-500" />
+                <p className="text-sm">Carregando escala...</p>
+              </div>
+            )}
+
+            {selectedDoctor && !isLoading && (
               <>
                 {/* Grid de Horários */}
                 <div>
@@ -267,45 +331,70 @@ export function ScaleConfigModal({ isOpen, onClose }: ScaleConfigModalProps) {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-4 py-2 text-left text-gray-700">Dia da Semana</th>
-                          <th className="px-4 py-2 text-left text-gray-700">Horário Início</th>
-                          <th className="px-4 py-2 text-left text-gray-700">Horário Fim</th>
+                          <th className="px-4 py-2 text-left text-gray-700">Início</th>
+                          <th className="px-4 py-2 text-left text-gray-700">Fim</th>
                           <th className="px-4 py-2 text-left text-gray-700">Intervalo</th>
+                          <th className="px-4 py-2 text-left text-gray-700">Duração (min)</th>
                           <th className="px-4 py-2 text-center text-gray-700">Ativo</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((day) => (
-                          <tr key={day} className="border-t border-gray-200">
-                            <td className="px-4 py-2 text-gray-900">{day}</td>
+                        {schedule.map((day) => (
+                          <tr key={day.dayOfWeek} className={`border-t border-gray-200 ${!day.isActive ? 'bg-gray-50 opacity-60' : ''}`}>
+                            <td className="px-4 py-2 text-gray-900 font-medium">{DAY_LABELS[day.dayOfWeek]}</td>
                             <td className="px-4 py-2">
-                              <input type="time" className="px-2 py-1 border border-gray-200 text-xs w-full" defaultValue="08:00" />
+                              <input
+                                type="time"
+                                value={day.shiftStart}
+                                onChange={(e) => updateDay(day.dayOfWeek, 'shiftStart', e.target.value)}
+                                disabled={!day.isActive}
+                                className="px-2 py-1 border border-gray-200 text-xs w-full disabled:bg-gray-100"
+                              />
                             </td>
                             <td className="px-4 py-2">
-                              <input type="time" className="px-2 py-1 border border-gray-200 text-xs w-full" defaultValue="18:00" />
+                              <input
+                                type="time"
+                                value={day.shiftEnd}
+                                onChange={(e) => updateDay(day.dayOfWeek, 'shiftEnd', e.target.value)}
+                                disabled={!day.isActive}
+                                className="px-2 py-1 border border-gray-200 text-xs w-full disabled:bg-gray-100"
+                              />
                             </td>
                             <td className="px-4 py-2">
-                              <input type="time" className="px-2 py-1 border border-gray-200 text-xs w-full" defaultValue="12:00" />
+                              <input
+                                type="time"
+                                value={day.breakTime}
+                                onChange={(e) => updateDay(day.dayOfWeek, 'breakTime', e.target.value)}
+                                disabled={!day.isActive}
+                                className="px-2 py-1 border border-gray-200 text-xs w-full disabled:bg-gray-100"
+                                placeholder="—"
+                              />
+                            </td>
+                            <td className="px-4 py-2">
+                              <input
+                                type="number"
+                                value={day.consultationDuration}
+                                onChange={(e) => updateDay(day.dayOfWeek, 'consultationDuration', Number(e.target.value))}
+                                disabled={!day.isActive}
+                                min={5}
+                                max={120}
+                                className="px-2 py-1 border border-gray-200 text-xs w-20 disabled:bg-gray-100"
+                              />
                             </td>
                             <td className="px-4 py-2 text-center">
-                              <input type="checkbox" className="w-4 h-4" defaultChecked={day !== 'Domingo'} />
+                              <input
+                                type="checkbox"
+                                checked={day.isActive}
+                                onChange={(e) => updateDay(day.dayOfWeek, 'isActive', e.target.checked)}
+                                className="w-4 h-4"
+                              />
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                </div>
-
-                {/* Configurações Adicionais */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">Duração Padrão (min)</label>
-                    <input type="number" defaultValue="30" className="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">Intervalo entre Consultas (min)</label>
-                    <input type="number" defaultValue="0" className="w-full px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500" />
-                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Intervalo = horário de início da pausa/almoço</p>
                 </div>
               </>
             )}
@@ -323,8 +412,13 @@ export function ScaleConfigModal({ isOpen, onClose }: ScaleConfigModalProps) {
           <button onClick={onClose} className="px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
             Cancelar
           </button>
-          {selectedDoctor && (
-            <button className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors">
+          {selectedDoctor && !isLoading && (
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
               Salvar Escala
             </button>
           )}
@@ -334,198 +428,3 @@ export function ScaleConfigModal({ isOpen, onClose }: ScaleConfigModalProps) {
   );
 }
 
-interface MessagesModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function MessagesModal({ isOpen, onClose }: MessagesModalProps) {
-  const { currentUser, selectedClinicId } = useApp();
-  const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState<{
-    id: string;
-    author_name: string;
-    author_role: string;
-    author_id: string;
-    message: string;
-    created_at: string;
-  }[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  // Get current auth user id
-  useEffect(() => {
-    getSupabase().auth.getSession().then(({ data: { session } }) => {
-      setCurrentUserId(session?.user?.id ?? null);
-    });
-  }, []);
-
-  // Load messages + subscribe to realtime when modal opens
-  useEffect(() => {
-    if (!isOpen || !selectedClinicId) return;
-
-    setLoading(true);
-    const supabase = getSupabase();
-
-    supabase
-      .from('team_messages')
-      .select('id, author_name, author_role, author_id, message, created_at')
-      .eq('clinic_id', selectedClinicId)
-      .order('created_at', { ascending: true })
-      .then(({ data, error }) => {
-        if (!error && data) setMessages(data);
-        setLoading(false);
-      });
-
-    const channel = supabase
-      .channel(`team_messages:${selectedClinicId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'team_messages',
-          filter: `clinic_id=eq.${selectedClinicId}`,
-        },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as any]);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'team_messages',
-          filter: `clinic_id=eq.${selectedClinicId}`,
-        },
-        (payload) => {
-          setMessages((prev) => prev.filter((m) => m.id !== payload.old.id));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isOpen, selectedClinicId]);
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  if (!isOpen) return null;
-
-  const handleSendMessage = async () => {
-    const text = newMessage.trim();
-    if (!text || !selectedClinicId || !currentUserId) return;
-
-    setSending(true);
-    setNewMessage('');
-
-    const { error } = await getSupabase().from('team_messages').insert({
-      clinic_id: selectedClinicId,
-      author_id: currentUserId,
-      author_name: currentUser?.name || 'Usuário',
-      author_role: currentUser?.role || 'user',
-      message: text,
-    });
-
-    if (error) {
-      setNewMessage(text); // restore on error
-      console.error('[TeamMessages] Erro ao enviar:', error.message);
-    }
-    setSending(false);
-  };
-
-  const handleDelete = async (id: string) => {
-    await getSupabase().from('team_messages').delete().eq('id', id);
-  };
-
-  const timeAgo = (iso: string) => {
-    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-    if (diff < 60) return 'agora mesmo';
-    if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
-    if (diff < 86400) return `há ${Math.floor(diff / 3600)}h`;
-    return `há ${Math.floor(diff / 86400)}d`;
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white w-full max-w-2xl mx-4 shadow-lg flex flex-col h-[520px]" onClick={(e) => e.stopPropagation()}>
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <MessageSquare className="w-5 h-5 text-pink-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Recados da Equipe</h3>
-          </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {loading ? (
-            <div className="py-12 flex justify-center">
-              <Loader2 className="w-6 h-6 text-pink-400 animate-spin" />
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="py-12 text-center text-gray-500">
-              <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p>Nenhum recado ainda</p>
-            </div>
-          ) : (
-            messages.map((msg) => {
-              const isOwn = msg.author_id === currentUserId;
-              return (
-                <div key={msg.id} className="group border border-gray-200 p-4 bg-gray-50 relative">
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-900">{msg.author_name}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">{timeAgo(msg.created_at)}</span>
-                      {isOwn && (
-                        <button
-                          onClick={() => handleDelete(msg.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
-                          title="Excluir recado"
-                        >
-                          <Trash className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-700">{msg.message}</p>
-                </div>
-              );
-            })
-          )}
-          <div ref={bottomRef} />
-        </div>
-
-        <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              placeholder="Digite seu recado..."
-              className="flex-1 px-3 py-2 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              disabled={sending}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={sending || !newMessage.trim()}
-              className="px-4 py-2 bg-pink-600 text-white hover:bg-pink-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              Enviar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
