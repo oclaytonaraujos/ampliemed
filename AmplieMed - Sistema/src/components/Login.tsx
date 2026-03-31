@@ -4,6 +4,7 @@ import logoAmplieMed from '../assets/775bd1b6594b305b8d42a07d24da813913fe5060.pn
 import { ClinicSignup } from './ClinicSignup';
 import type { ClinicSignupResult } from '../types';
 import { getSupabase } from '../utils/supabaseClient';
+import { DitheringShader } from "./ui/dithering-shader";
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
@@ -172,15 +173,28 @@ export function Login({ onLogin, onSignup, onClinicSignup }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-pink-50/40 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <DitheringShader
+          shape="wave"
+          type="8x8"
+          colorBack="#ffffff"
+          colorFront="#ff0088"
+          pxSize={2}
+          speed={0.6}
+          className="w-full h-full"
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
+
+      <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <img src={logoAmplieMed} alt="AmplieMed" className="h-10 w-auto" />
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-[0_4px_32px_rgba(0,0,0,0.06)] border border-gray-100/80 p-7">
+        <div className="bg-white/95 rounded-2xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5),0_20px_40px_-10px_rgba(0,0,0,0.3)] border-2 border-white/50 backdrop-blur-md p-7 ring-1 ring-black/5">
           {/* ══════════════════════════════════════════════════════════════ */}
           {/* LOGIN FORM                                                    */}
           {/* ══════════════════════════════════════════════════════════════ */}
