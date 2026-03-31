@@ -56,6 +56,7 @@ const COMMON_EMOJIS = ['👍', '❤️', '😂', '🎉', '🤔', '👀'];
 
 const FloatingChat: React.FC = () => {
   const { currentUser } = useApp();
+  const userEmail = currentUser?.email;
   const [isOpen, setIsOpen] = useState(false);
   const [activeChatId, setActiveChatId] = useState<string | 'broadcast' | null>(null);
   const [inputText, setInputText] = useState("");
@@ -243,7 +244,7 @@ const FloatingChat: React.FC = () => {
       channelsRef.current.forEach(ch => supabase.removeChannel(ch));
       if (presenceChannelRef.current) supabase.removeChannel(presenceChannelRef.current);
     };
-  }, [attemptReconnect, playNotificationSound]);
+  }, [attemptReconnect, playNotificationSound, userEmail]);
 
   // Keyboard Shortcuts
   useEffect(() => {

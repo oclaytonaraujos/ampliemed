@@ -25,6 +25,10 @@ interface CacheEntry {
 
 const urlCache = new Map<string, CacheEntry>();
 
+export function clearUrlCache(): void {
+  urlCache.clear();
+}
+
 function getCached(key: string): string | null {
   const entry = urlCache.get(key);
   if (!entry) return null;

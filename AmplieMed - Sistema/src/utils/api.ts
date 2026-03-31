@@ -577,6 +577,7 @@ export async function loadAllData(): Promise<AllData> {
     filesRes,
     settingsRes,
     clinicsRes,
+    profilesRes,
   ] = await Promise.all([
     supabase.from('patients').select('*').order('created_at', { ascending: false }),
     supabase.from('appointments').select('*').order('appointment_date', { ascending: false }),
@@ -602,6 +603,7 @@ export async function loadAllData(): Promise<AllData> {
     supabase.from('file_attachments').select('*').order('created_at', { ascending: false }),
     supabase.from('clinic_settings').select('*').limit(1),
     supabase.from('clinics').select('id, name, cnpj, email, phone, address_street, address_number, address_neighborhood, address_city, address_state').limit(1),
+    supabase.from('profiles').select('id, name, email, role, status, phone, created_at'),
   ]);
 
   // Transform all rows through mappers
@@ -650,7 +652,23 @@ export async function loadAllData(): Promise<AllData> {
     protocols: (protocolsRes.data || []).map((row: any) => M.protocolFromRow(row, allSteps)),
     auditLog: (auditRes.data || []).map(M.auditFromRow),
     telemedicineSessions: (teleRes.data || []).map(M.telemedicineFromRow),
-    systemUsers: (sysUsersRes.data || []).map(M.systemUserFromRow),
+    systemUsers: (() => {
+      const fromTable = (sysUsersRes.data || []).map(M.systemUserFromRow);
+      const existingEmails = new Set(fromTable.map((u: any) => u.email));
+      const fromProfiles = (profilesRes.data || [])
+        .filter((p: any) => p.email && !existingEmails.has(p.email))
+        .map((p: any) => ({
+          id: p.id,
+          name: p.name || p.email.split('@')[0],
+          email: p.email,
+          role: p.role || 'doctor',
+          status: p.status || 'active',
+          lastLogin: p.last_login ? new Date(p.last_login).toLocaleString('pt-BR') : '-',
+          createdAt: p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+          phone: p.phone || undefined,
+        }));
+      return [...fromTable, ...fromProfiles];
+    })(),
     appTemplates: (templatesRes.data || []).map(M.templateFromRow),
     communicationMessages: (commMsgRes.data || []).map(M.commMessageFromRow),
     campaigns: (campaignsRes.data || []).map(M.campaignFromRow),

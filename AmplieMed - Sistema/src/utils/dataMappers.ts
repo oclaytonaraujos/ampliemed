@@ -896,7 +896,7 @@ export function systemUserToRow(u: any, ownerId: string): Record<string, any> {
     email: u.email || '',
     role: u.role || 'doctor',
     status: u.status || 'active',
-    last_login: u.lastLogin ? new Date(brDateToIso(u.lastLogin) || u.lastLogin).toISOString() : null,
+    last_login: (u.lastLogin && u.lastLogin !== '-') ? new Date(brDateToIso(u.lastLogin) || u.lastLogin).toISOString() : null,
     phone: u.phone || null,
   };
 }

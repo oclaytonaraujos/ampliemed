@@ -3,6 +3,7 @@ import type { UserRole } from '../App';
 import { getSupabase } from '../utils/supabaseClient';
 import * as api from '../utils/api';
 import { purgeLocalStorage } from '../utils/backupService';
+import { clearUrlCache } from '../hooks/useFileUrl';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Interfaces — single source of truth for all shared entities
@@ -824,7 +825,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setProtocols(data.protocols.length > 0 ? data.protocols : defaultProtocols);
         setAuditLog(data.auditLog);
         setTelemedicineSessions(data.telemedicineSessions);
-        setSystemUsers(data.systemUsers);
+        // Stamp last login for the current session user
+        const now = new Date().toLocaleString('pt-BR');
+        setSystemUsers(data.systemUsers.map((u: any) =>
+          u.email === currentUser?.email ? { ...u, lastLogin: now } : u
+        ));
         setAppTemplates(data.appTemplates.length > 0 ? data.appTemplates : defaultTemplates);
         setCommunicationMessages(data.communicationMessages);
         setCampaigns(data.campaigns);
@@ -1181,6 +1186,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCurrentUser(user);
         setIsAuthenticated(true);
         dataLoadedRef.current = false;
+        // Update last_login in profiles table
+        try {
+          getSupabase().from('profiles').update({ last_login: new Date().toISOString() }).eq('id', signInData.session.user.id).then(() => {});
+        } catch { /* non-critical */ }
         const entry: AuditEntry = {
           id: crypto.randomUUID(),
           timestamp: new Date().toLocaleString('pt-BR'),
@@ -1373,6 +1382,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFileAttachments([]);
     setClinicSettings(DEFAULT_SETTINGS);
 
+    clearUrlCache();
     purgeLocalStorage();
   };
 

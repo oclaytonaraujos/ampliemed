@@ -241,7 +241,12 @@ export function purgeLocalStorage(): void {
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && (key.startsWith('ampliemed_') || key === 'hasSeenOnboarding')) {
+    if (key && (
+      key.startsWith('ampliemed_') ||
+      key.startsWith('sb-') ||
+      key === 'hasSeenOnboarding' ||
+      key === 'supabase_access_token'
+    )) {
       keysToRemove.push(key);
     }
   }
@@ -249,4 +254,5 @@ export function purgeLocalStorage(): void {
   if (keysToRemove.length > 0) {
     console.log(`[AmplieMed] Purged ${keysToRemove.length} localStorage keys:`, keysToRemove);
   }
+  sessionStorage.clear();
 }
