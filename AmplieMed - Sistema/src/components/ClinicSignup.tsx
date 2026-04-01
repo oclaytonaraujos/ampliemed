@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, Building2, Mail, Phone, MapPin } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, Building2, Mail, Phone, MapPin, User } from 'lucide-react';
 import type { ClinicSignupResult } from '../types';
 import { toastSuccess, toastError } from '../utils/toastService';
 import { useApp } from './AppContext';
+import { fetchAddressByCEP } from '../utils/validationService';
 
 interface ClinicSignupProps {
   /**
@@ -41,7 +42,9 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [complement, setComplement] = useState('');
+  const [cepLoading, setCepLoading] = useState(false);
 
+  const [adminName, setAdminName] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminConfirmPassword, setAdminConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -84,6 +87,12 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
     const zipDigits = zipCode.replace(/\D/g, '');
     if (zipDigits.length !== 8) {
       setError('CEP deve conter 8 dígitos');
+      return false;
+    }
+
+    // Admin name validation
+    if (!adminName.trim()) {
+      setError('Informe seu nome completo');
       return false;
     }
 
@@ -163,6 +172,7 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
         clinicName: clinicName.trim(),
         cnpj: cnpj.replace(/\D/g, '') || undefined,
         email: clinicEmail.trim(),
+        name: adminName.trim(),
         phone: clinicPhone.replace(/\D/g, ''),
         password: adminPassword,
         confirmPassword: adminConfirmPassword,
@@ -220,6 +230,23 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
     const digits = value.replace(/\D/g, '').slice(0, 8);
     if (digits.length <= 5) return digits;
     return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  };
+
+  const handleZipCodeChange = async (value: string) => {
+    const formatted = formatZipCode(value);
+    setZipCode(formatted);
+    const digits = formatted.replace(/\D/g, '');
+    if (digits.length === 8) {
+      setCepLoading(true);
+      const addr = await fetchAddressByCEP(digits);
+      setCepLoading(false);
+      if (addr) {
+        setStreet(addr.street);
+        setNeighborhood(addr.neighborhood);
+        setCity(addr.city);
+        setState(addr.state);
+      }
+    }
   };
 
   const getProgress = () => {
@@ -360,6 +387,29 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
             <div className="grid grid-cols-2 gap-3.5">
               <div className="col-span-2">
                 <label className="text-xs font-medium text-gray-700 mb-1.5 block">
+                  CEP <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={zipCode}
+                    onChange={(e) => handleZipCodeChange(e.target.value)}
+                    className={`${INPUT_CLASS} pr-9`}
+                    placeholder="01234-567"
+                    disabled={loading || cepLoading}
+                    maxLength={9}
+                  />
+                  {cepLoading && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-500 animate-spin" />
+                  )}
+                </div>
+                {cepLoading && (
+                  <p className="text-[11px] text-pink-500 mt-1">Buscando endereço...</p>
+                )}
+              </div>
+
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-gray-700 mb-1.5 block">
                   Rua <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -368,7 +418,7 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
                   onChange={(e) => setStreet(e.target.value)}
                   className={INPUT_CLASS}
                   placeholder="Ex: Rua das Flores"
-                  disabled={loading}
+                  disabled={loading || cepLoading}
                 />
               </div>
 
@@ -410,7 +460,7 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
                   onChange={(e) => setNeighborhood(e.target.value)}
                   className={INPUT_CLASS}
                   placeholder="Ex: Centro"
-                  disabled={loading}
+                  disabled={loading || cepLoading}
                 />
               </div>
 
@@ -424,7 +474,7 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
                   onChange={(e) => setCity(e.target.value)}
                   className={INPUT_CLASS}
                   placeholder="São Paulo"
-                  disabled={loading}
+                  disabled={loading || cepLoading}
                 />
               </div>
 
@@ -438,23 +488,8 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
                   onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
                   className={INPUT_CLASS}
                   placeholder="SP"
-                  disabled={loading}
+                  disabled={loading || cepLoading}
                   maxLength={2}
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                  CEP <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={zipCode}
-                  onChange={(e) => setZipCode(formatZipCode(e.target.value))}
-                  className={INPUT_CLASS}
-                  placeholder="01234-567"
-                  disabled={loading}
-                  maxLength={9}
                 />
               </div>
             </div>
@@ -462,6 +497,31 @@ export function ClinicSignup({ onSignupSuccess, onBackToLogin }: ClinicSignupPro
 
           {/* Credentials Section */}
           <div className="pt-4 border-t border-gray-200 space-y-3.5">
+            <div>
+              <label className="block text-xs font-medium mb-1.5 text-gray-900 font-semibold">
+                Dados do Administrador
+              </label>
+              <p className="text-xs text-gray-600 mb-3">
+                Estas informações identificarão o administrador da clínica no sistema.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-700 mb-1.5 block">Nome completo <span className="text-red-400">*</span></label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                <input
+                  type="text"
+                  value={adminName}
+                  onChange={(e) => setAdminName(e.target.value)}
+                  className={`${INPUT_CLASS} pl-9`}
+                  placeholder="Ex: João Silva"
+                  disabled={loading}
+                  autoComplete="name"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-medium mb-1.5 text-gray-900 font-semibold">
                 Sua Senha de Acesso

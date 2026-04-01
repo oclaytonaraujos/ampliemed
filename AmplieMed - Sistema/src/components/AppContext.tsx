@@ -249,6 +249,15 @@ export interface Professional {
   avgSatisfaction?: number;
   avgConsultationTime?: number;
   room?: string;
+  address?: {
+    cep: string;
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+  };
 }
 
 // ── Insurance ─────────────────────────────────────────────────────────────────
@@ -623,6 +632,13 @@ interface AppContextType {
   setRolePermissions: React.Dispatch<React.SetStateAction<import('../utils/api').RolePermissionRow[]>>;
   setUserPermissions: React.Dispatch<React.SetStateAction<import('../utils/api').UserPermissionRow[]>>;
 
+  // Profile Types
+  profileTypes: import('../utils/api').ProfileType[];
+  setProfileTypes: React.Dispatch<React.SetStateAction<import('../utils/api').ProfileType[]>>;
+  addProfileType: (pt: import('../utils/api').ProfileType) => void;
+  updateProfileType: (id: string, data: Partial<import('../utils/api').ProfileType>) => void;
+  removeProfileType: (id: string) => void;
+
   // Navigation (clinic selector)
   selectedClinicId: string;
   setSelectedClinicId: React.Dispatch<React.SetStateAction<string>>;
@@ -719,6 +735,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [selectedClinicId, setSelectedClinicId] = useState('');
   const [rolePermissions, setRolePermissions] = useState<import('../utils/api').RolePermissionRow[]>([]);
   const [userPermissions, setUserPermissions] = useState<import('../utils/api').UserPermissionRow[]>([]);
+  const [profileTypes, setProfileTypes] = useState<import('../utils/api').ProfileType[]>([]);
 
   // ── Refs for current values (used by debounced sync) ──────────────────────
   const patientsRef = useRef(patients); patientsRef.current = patients;
@@ -836,6 +853,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setFileAttachments(data.fileAttachments);
         setClinicSettings(data.clinicSettings || DEFAULT_SETTINGS);
         if (data.clinicId) setSelectedClinicId(data.clinicId);
+        setProfileTypes(data.profileTypes || []);
 
         // Load avatar_path from profiles table
         try {
@@ -1283,7 +1301,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const meta = signInData.session.user?.user_metadata || {};
         const adminName = meta.name || 'Administrador';
         const initials = adminName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-        
+
         // Set current user as clinic admin
         const user: AuthUser = {
           name: adminName,
@@ -1294,11 +1312,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
           specialty: data.specialty || '',
           phone: data.phone || '',
         };
-        
+
         setCurrentUser(user);
         setIsAuthenticated(true);
         dataLoadedRef.current = false;
         if (result.clinic?.id) setSelectedClinicId(result.clinic.id);
+
+        // Garante que profiles.role = 'admin' e semeia as permissões padrão do administrador
+        if (result.clinic?.id && signInData.session.user?.id) {
+          api.seedAdminPermissions(result.clinic.id, signInData.session.user.id).catch(err =>
+            console.warn('[Auth] seedAdminPermissions failed (non-fatal):', err?.message),
+          );
+        }
 
         const entry: AuditEntry = {
           id: crypto.randomUUID(),
@@ -1381,6 +1406,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCampaigns([]);
     setFileAttachments([]);
     setClinicSettings(DEFAULT_SETTINGS);
+    setProfileTypes([]);
 
     clearUrlCache();
     purgeLocalStorage();
@@ -1542,6 +1568,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateSystemUser = (id: string, data: Partial<SystemUser>) => setSystemUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
   const deleteSystemUser = (id: string) => setSystemUsers(prev => prev.filter(u => u.id !== id));
 
+  // ── Profile Type helpers ──────────────────────────────────────────────────
+  const addProfileType = (pt: import('../utils/api').ProfileType) => setProfileTypes(prev => [...prev, pt]);
+  const updateProfileType = (id: string, data: Partial<import('../utils/api').ProfileType>) => setProfileTypes(prev => prev.map(pt => pt.id === id ? { ...pt, ...data } : pt));
+  const removeProfileType = (id: string) => setProfileTypes(prev => prev.filter(pt => pt.id !== id));
+
   // ── Notification helpers ──────────────────────────────────────────────────
   const addNotification = (n: Omit<AppNotification, 'id' | 'time' | 'read'>) => {
     const newNotif: AppNotification = { ...n, id: crypto.randomUUID(), time: 'Agora', read: false };
@@ -1581,6 +1612,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       clinicSettings, updateClinicSettings,
       rolePermissions, setRolePermissions,
       userPermissions, setUserPermissions,
+      profileTypes, setProfileTypes, addProfileType, updateProfileType, removeProfileType,
       selectedClinicId, setSelectedClinicId,
     }}>
       {children}

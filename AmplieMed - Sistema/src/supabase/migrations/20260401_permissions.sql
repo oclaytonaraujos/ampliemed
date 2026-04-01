@@ -19,6 +19,18 @@ CREATE TABLE IF NOT EXISTS public.role_permissions (
   CONSTRAINT role_permissions_unique UNIQUE (clinic_id, role, module)
 );
 
+-- Adiciona constraint UNIQUE caso a tabela já existisse sem ela
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'role_permissions_unique'
+      AND conrelid = 'public.role_permissions'::regclass
+  ) THEN
+    ALTER TABLE public.role_permissions
+      ADD CONSTRAINT role_permissions_unique UNIQUE (clinic_id, role, module);
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.user_permissions (
   id          uuid        NOT NULL DEFAULT gen_random_uuid(),
   clinic_id   uuid        REFERENCES public.clinics(id) ON DELETE CASCADE,
@@ -30,16 +42,51 @@ CREATE TABLE IF NOT EXISTS public.user_permissions (
   CONSTRAINT user_permissions_unique UNIQUE (clinic_id, user_id, module)
 );
 
+-- Adiciona constraint UNIQUE caso a tabela já existisse sem ela
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'user_permissions_unique'
+      AND conrelid = 'public.user_permissions'::regclass
+  ) THEN
+    ALTER TABLE public.user_permissions
+      ADD CONSTRAINT user_permissions_unique UNIQUE (clinic_id, user_id, module);
+  END IF;
+END $$;
+
 ALTER TABLE public.role_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_permissions  ENABLE ROW LEVEL SECURITY;
 
--- Somente administradores podem gerenciar permissões
+DROP POLICY IF EXISTS "admins_manage_role_permissions" ON public.role_permissions;
+DROP POLICY IF EXISTS "admins_manage_user_permissions" ON public.user_permissions;
+DROP POLICY IF EXISTS "members_read_role_permissions"  ON public.role_permissions;
+DROP POLICY IF EXISTS "members_read_user_permissions"  ON public.user_permissions;
+
+-- Somente administradores podem gerenciar permissões.
+-- Verifica (em ordem): profiles.role, clinic_memberships.role e user_metadata do JWT.
+-- O fallback em clinic_memberships é necessário pois o perfil pode ter sido criado
+-- com role 'doctor' (default) enquanto a membership já tem role 'admin'.
 CREATE POLICY "admins_manage_role_permissions" ON public.role_permissions
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM public.profiles
       WHERE id = auth.uid() AND role = 'admin'
     )
+    OR EXISTS (
+      SELECT 1 FROM public.clinic_memberships
+      WHERE user_id = auth.uid() AND role = 'admin' AND active = true
+    )
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.clinic_memberships
+      WHERE user_id = auth.uid() AND role = 'admin' AND active = true
+    )
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 CREATE POLICY "admins_manage_user_permissions" ON public.user_permissions
@@ -48,6 +95,21 @@ CREATE POLICY "admins_manage_user_permissions" ON public.user_permissions
       SELECT 1 FROM public.profiles
       WHERE id = auth.uid() AND role = 'admin'
     )
+    OR EXISTS (
+      SELECT 1 FROM public.clinic_memberships
+      WHERE user_id = auth.uid() AND role = 'admin' AND active = true
+    )
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.clinic_memberships
+      WHERE user_id = auth.uid() AND role = 'admin' AND active = true
+    )
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 -- Todos os membros autenticados podem ler (para carregar permissões em runtime)

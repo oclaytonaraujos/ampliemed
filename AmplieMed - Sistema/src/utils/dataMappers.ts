@@ -698,6 +698,14 @@ export function professionalToRow(p: any, ownerId: string): Record<string, any> 
     revenue_this_month: p.revenueThisMonth ?? null,
     avg_satisfaction: p.avgSatisfaction ?? null,
     avg_consultation_time: p.avgConsultationTime ?? null,
+    // ── Address fields (migration 20260401_professional_address) ────────────
+    address_cep:          p.address?.cep          || '',
+    address_street:       p.address?.street       || '',
+    address_number:       p.address?.number       || '',
+    address_complement:   p.address?.complement   || '',
+    address_neighborhood: p.address?.neighborhood || '',
+    address_city:         p.address?.city         || '',
+    address_state:        p.address?.state        || '',
   };
 }
 
@@ -731,6 +739,16 @@ export function professionalFromRow(row: any): any {
       ? Number(row.avg_satisfaction)
       : undefined,
     avgConsultationTime: row.avg_consultation_time ?? undefined,
+    // ── Address fields (migration 20260401_professional_address) ────────────
+    address: {
+      cep:          row.address_cep          || '',
+      street:       row.address_street       || '',
+      number:       row.address_number       || '',
+      complement:   row.address_complement   || '',
+      neighborhood: row.address_neighborhood || '',
+      city:         row.address_city         || '',
+      state:        row.address_state        || '',
+    },
   };
 }
 

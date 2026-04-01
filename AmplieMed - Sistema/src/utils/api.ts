@@ -125,6 +125,7 @@ export async function clinicSignup(data: {
   clinicName: string;
   cnpj?: string;
   email: string;
+  name?: string;
   phone: string;
   password: string;
   confirmPassword: string;
@@ -435,9 +436,11 @@ export async function healthCheck(): Promise<boolean> {
 // ═════════════════════════════════════════════════════════════════════════════
 
 async function getOwnerId(): Promise<string> {
-  const { data: { session } } = await getSupabase().auth.getSession();
-  if (!session?.user?.id) throw new Error('Usuário não autenticado');
-  return session.user.id;
+  // getUser() validates against the server and handles token refresh automatically.
+  // More reliable than getSession() which can return null during token refresh.
+  const { data: { user } } = await getSupabase().auth.getUser();
+  if (!user?.id) throw new Error('Usuário não autenticado');
+  return user.id;
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -544,6 +547,25 @@ export interface AllData {
   fileAttachments: any[];
   clinicSettings: any | null;
   clinicId: string | null;
+  profileTypes: ProfileType[];
+}
+
+// ─── Tipos de Perfil/Profissional ─────────────────────────────────────────────
+
+export interface ProfileType {
+  id: string;
+  name: string;
+  description?: string;
+  /** Slug de compatibilidade retroativa: 'doctor', 'nurse', 'technician', etc. */
+  code?: string;
+  baseRole: string;
+  color: string;
+  status: 'active' | 'inactive';
+  /** Tipo padrão do sistema (não pode ser excluído) */
+  isDefault?: boolean;
+  clinicId?: string;
+  ownerId?: string;
+  createdAt: string;
 }
 
 export async function loadAllData(): Promise<AllData> {
@@ -578,6 +600,7 @@ export async function loadAllData(): Promise<AllData> {
     settingsRes,
     clinicsRes,
     profilesRes,
+    profileTypesRes,
   ] = await Promise.all([
     supabase.from('patients').select('*').order('created_at', { ascending: false }),
     supabase.from('appointments').select('*').order('appointment_date', { ascending: false }),
@@ -604,6 +627,7 @@ export async function loadAllData(): Promise<AllData> {
     supabase.from('clinic_settings').select('*').limit(1),
     supabase.from('clinics').select('id, name, cnpj, email, phone, address_street, address_number, address_neighborhood, address_city, address_state').limit(1),
     supabase.from('profiles').select('id, name, email, role, status, phone, created_at'),
+    supabase.from('profile_types').select('*').order('name'),
   ]);
 
   // Transform all rows through mappers
@@ -675,6 +699,19 @@ export async function loadAllData(): Promise<AllData> {
     fileAttachments: (filesRes.data || []).map(M.fileAttachmentFromRow),
     clinicSettings: finalSettingsRow ? M.clinicSettingsFromRow(finalSettingsRow) : null,
     clinicId: settingsRes.data?.[0]?.clinic_id || clinicsRes.data?.[0]?.id || null,
+    profileTypes: (profileTypesRes.data || []).map((r: any): ProfileType => ({
+      id: r.id,
+      name: r.name,
+      description: r.description || undefined,
+      code: r.code || undefined,
+      baseRole: r.base_role || 'doctor',
+      color: r.color || '#6366f1',
+      status: r.status || 'active',
+      isDefault: r.is_default || false,
+      clinicId: r.clinic_id || undefined,
+      ownerId: r.owner_id || undefined,
+      createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+    })),
   };
 }
 
@@ -1030,6 +1067,53 @@ export interface UserPermissionRow {
   actions: string[];
 }
 
+// Módulos e ações padrão que o administrador deve ter acesso total
+const ADMIN_DEFAULT_PERMISSIONS: { module: string; actions: string[] }[] = [
+  { module: 'patients',      actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'appointments',  actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'records',       actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'exams',         actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'queue',         actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'financial',     actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'stock',         actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'communication', actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'telemedicine',  actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'reports',       actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'settings',      actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'access',        actions: ['create', 'read', 'update', 'delete', 'export'] },
+  { module: 'audit',         actions: ['create', 'read', 'update', 'delete', 'export'] },
+];
+
+/**
+ * Seeds default admin permissions for a newly created clinic.
+ * Also sets the user's profiles.role to 'admin'.
+ * Called right after clinic signup.
+ */
+export async function seedAdminPermissions(clinicId: string, userId: string): Promise<void> {
+  const supabase = getSupabase();
+
+  // Update profiles.role to 'admin'
+  await supabase
+    .from('profiles')
+    .update({ role: 'admin' })
+    .eq('id', userId);
+
+  // Seed all admin permissions (skip rows that already exist)
+  const now = new Date().toISOString();
+  const rows = ADMIN_DEFAULT_PERMISSIONS.map(({ module, actions }) => ({
+    clinic_id: clinicId,
+    role: 'admin',
+    module,
+    actions,
+    updated_at: now,
+    updated_by: userId,
+  }));
+
+  await supabase
+    .from('role_permissions')
+    .upsert(rows, { onConflict: 'clinic_id,role,module' });
+}
+
 export async function loadRolePermissions(clinicId: string): Promise<RolePermissionRow[]> {
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -1081,6 +1165,36 @@ export async function saveUserPermission(
       { onConflict: 'clinic_id,user_id,module' },
     );
   if (error) throw error;
+}
+
+/**
+ * Substitui atomicamente todos os overrides de um usuário:
+ * deleta os existentes e insere os novos de uma vez.
+ * Módulos ausentes da lista voltam a seguir as permissões do perfil.
+ */
+export async function replaceUserPermissions(
+  clinicId: string,
+  userId: string,
+  rows: { module: string; actions: string[] }[],
+): Promise<void> {
+  const supabase = getSupabase();
+  const { error: delErr } = await supabase
+    .from('user_permissions')
+    .delete()
+    .eq('clinic_id', clinicId)
+    .eq('user_id', userId);
+  if (delErr) throw delErr;
+  if (rows.length === 0) return;
+  const { error: insErr } = await supabase
+    .from('user_permissions')
+    .insert(rows.map(r => ({
+      clinic_id: clinicId,
+      user_id: userId,
+      module: r.module,
+      actions: r.actions,
+      updated_at: new Date().toISOString(),
+    })));
+  if (insErr) throw insErr;
 }
 
 // ─── Escala de Horários ───────────────────────────────────────────────────────
@@ -1141,6 +1255,63 @@ export async function saveWorkSchedules(
     const { error } = await supabase.from('professional_work_schedules').insert(rows);
     if (error) throw error;
   }
+}
+
+// ─── Tipos de Perfil/Profissional ─────────────────────────────────────────────
+
+export async function saveProfileType(
+  clinicId: string,
+  data: Omit<ProfileType, 'id' | 'createdAt' | 'clinicId' | 'ownerId'> & { id?: string },
+): Promise<ProfileType> {
+  const supabase = getSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  const row = {
+    clinic_id: clinicId,
+    owner_id: user?.id,
+    name: data.name,
+    description: data.description || null,
+    base_role: data.baseRole,
+    color: data.color,
+    status: data.status,
+  };
+  const fromRow = (r: any): ProfileType => ({
+    id: r.id,
+    name: r.name,
+    description: r.description || undefined,
+    code: r.code || undefined,
+    baseRole: r.base_role,
+    color: r.color,
+    status: r.status,
+    isDefault: r.is_default || false,
+    clinicId: r.clinic_id || undefined,
+    ownerId: r.owner_id || undefined,
+    createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+  });
+
+  if (data.id) {
+    const { data: updated, error } = await supabase
+      .from('profile_types')
+      .update(row)
+      .eq('id', data.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return fromRow(updated);
+  } else {
+    const { data: inserted, error } = await supabase
+      .from('profile_types')
+      .insert(row)
+      .select()
+      .single();
+    if (error) throw error;
+    return fromRow(inserted);
+  }
+}
+
+export async function deleteProfileType(id: string): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from('profile_types').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function deleteCollection(_name: CollectionName): Promise<void> {

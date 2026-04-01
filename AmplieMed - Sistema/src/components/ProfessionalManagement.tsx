@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Plus, Search, Edit, Trash2, Filter, X, CheckCircle, AlertCircle,
   Shield, Mail, Phone, User, Download, Eye, Stethoscope,
-  TrendingUp, DollarSign, Award, Calendar, KeyRound, ChevronDown, Paperclip
+  TrendingUp, DollarSign, Award, Calendar, KeyRound, ChevronDown, Paperclip, MapPin
 } from 'lucide-react';
+import { estados } from '../utils/brasilLocations';
+import { fetchAddressByCEP } from '../utils/validationService';
 import type { UserRole } from '../App';
 import type { Professional } from './AppContext';
 import { useApp } from './AppContext';
@@ -23,7 +25,9 @@ const SPECIALTIES = [
   'Cirurgia Geral', 'Anestesiologia', 'Radiologia', 'Patologia', 'Medicina do Trabalho',
 ];
 
-const ROLES_PROF: { value: string; label: string }[] = [
+// Fallback estático — usado apenas quando a tabela profile_types ainda não foi
+// populada (ex: nova instalação antes de rodar a migration).
+const ROLES_PROF_FALLBACK: { value: string; label: string }[] = [
   { value: 'doctor', label: 'Médico(a)' },
   { value: 'nurse', label: 'Enfermeiro(a)' },
   { value: 'technician', label: 'Técnico(a)' },
@@ -42,11 +46,19 @@ const EMPTY_FORM: Omit<Professional, 'id' | 'createdAt'> & { password?: string; 
   password: '',
   room: '',
   otherProfessionalType: '',
+  address: { cep: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' },
 };
 
 export function ProfessionalManagement({ userRole }: ProfessionalManagementProps) {
-  const { professionals, addProfessional, updateProfessional, deleteProfessional, appointments, addNotification, addAuditEntry, currentUser, addSystemUser, systemUsers, getAttachmentsByEntity, addFileAttachment, deleteFileAttachment } = useApp();
+  const { professionals, addProfessional, updateProfessional, deleteProfessional, appointments, addNotification, addAuditEntry, currentUser, addSystemUser, systemUsers, getAttachmentsByEntity, addFileAttachment, deleteFileAttachment, profileTypes } = useApp();
   const { canCreate, canUpdate, canDelete, canExport } = usePermission('professionals');
+
+  // Tipos de profissional: usa a tabela profile_types como fonte única.
+  // Fallback para a lista estática caso a tabela ainda não tenha sido populada.
+  const activeProfileTypes = profileTypes.filter(pt => pt.status === 'active');
+  const ROLES_PROF = activeProfileTypes.length > 0
+    ? activeProfileTypes.map(pt => ({ value: pt.code || pt.id, label: pt.name, color: pt.color }))
+    : ROLES_PROF_FALLBACK.map(r => ({ ...r, color: undefined }));
 
   const [view, setView] = useState<'list' | 'add' | 'edit' | 'details'>('list');
   const [selectedProf, setSelectedProf] = useState<Professional | null>(null);
@@ -60,6 +72,49 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
   const [showFilters, setShowFilters] = useState(false);
   const [statsExpanded, setStatsExpanded] = useState(false);
   const [detailTab, setDetailTab] = useState<'info' | 'documents'>('info');
+  const [cepLoading, setCepLoading] = useState(false);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const pendingCityRef = useRef<string | null>(null);
+
+  const fetchCities = useCallback(async (uf: string) => {
+    if (!uf) { setAvailableCities([]); return; }
+    setLoadingCities(true);
+    try {
+      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+      const data = await response.json();
+      setAvailableCities(data.map((city: any) => city.nome));
+    } catch { setAvailableCities([]); } finally { setLoadingCities(false); }
+  }, []);
+
+  useEffect(() => { fetchCities(form.address?.state || ''); }, [form.address?.state, fetchCities]);
+
+  useEffect(() => {
+    if (!loadingCities && pendingCityRef.current && availableCities.length > 0) {
+      const pending = pendingCityRef.current;
+      pendingCityRef.current = null;
+      const match = availableCities.find(c => c.toLowerCase() === pending.toLowerCase())
+        || availableCities.find(c => c.toLowerCase().includes(pending.toLowerCase()) || pending.toLowerCase().includes(c.toLowerCase()));
+      if (match) setForm(prev => ({ ...prev, address: { ...prev.address!, city: match } }));
+    }
+  }, [loadingCities, availableCities]);
+
+  const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2').replace(/(-\d{3})\d+?$/, '$1');
+
+  const handleCepChange = async (value: string) => {
+    const formatted = maskCEP(value);
+    setForm(prev => ({ ...prev, address: { ...prev.address!, cep: formatted } }));
+    const digits = formatted.replace(/\D/g, '');
+    if (digits.length === 8) {
+      setCepLoading(true);
+      const addr = await fetchAddressByCEP(digits);
+      setCepLoading(false);
+      if (addr) {
+        pendingCityRef.current = addr.city;
+        setForm(prev => ({ ...prev, address: { ...prev.address!, street: addr.street, neighborhood: addr.neighborhood, state: addr.state } }));
+      }
+    }
+  };
 
   // Filtering
   let filtered = [...professionals];
@@ -101,7 +156,14 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
   const totalConsultationsMonth = professionals.reduce((sum, p) => sum + getMonthlyConsultations(p.name), 0);
   const totalRevenueMonth = professionals.reduce((sum, p) => sum + getMonthlyRevenue(p.name), 0);
 
-  const getRoleLabel = (role?: string) => ROLES_PROF.find(r => r.value === role)?.label || 'Médico(a)';
+  // Resolve label: tenta pelo value (code ou id), depois pelo id direto no profileTypes
+  const getRoleLabel = (role?: string) => {
+    if (!role) return 'Médico(a)';
+    return ROLES_PROF.find(r => r.value === role)?.label
+      || profileTypes.find(pt => pt.id === role)?.name
+      || ROLES_PROF_FALLBACK.find(r => r.value === role)?.label
+      || role;
+  };
 
   const getPaymentModelLabel = (model?: string) => ({
     fixed: 'Salário Fixo', percentage: 'Percentual', procedure: 'Por Procedimento', mixed: 'Misto',
@@ -666,18 +728,15 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
         <div className="bg-white border border-gray-200 p-6 space-y-6 rounded-lg">
           <div>
             <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3 mb-4">Tipo de Profissional</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <select
+              value={form.role}
+              onChange={e => setForm({ ...form, role: e.target.value })}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            >
               {ROLES_PROF.map(r => (
-                <button key={r.value} onClick={() => setForm({ ...form, role: r.value })}
-                  className={`px-4 py-2.5 text-sm border rounded-lg transition-colors ${
-                    form.role === r.value
-                      ? 'bg-pink-600 text-white border-pink-600'
-                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                  }`}>
-                  {r.label}
-                </button>
+                <option key={r.value} value={r.value}>{r.label}</option>
               ))}
-            </div>
+            </select>
             {form.role === 'other' && (
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Especifique o tipo</label>
@@ -715,6 +774,79 @@ export function ProfessionalManagement({ userRole }: ProfessionalManagementProps
                 placeholder="(00) 00000-0000" />
             </div>
 
+          </div>
+
+          <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3 pt-2 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-gray-500" /> Endereço
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={form.address?.cep || ''}
+                  onChange={e => handleCepChange(e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                  disabled={cepLoading}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-70"
+                />
+                {cepLoading && (
+                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                )}
+              </div>
+              {cepLoading && <p className="text-xs text-pink-500 mt-1">Buscando endereço...</p>}
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Logradouro</label>
+              <input type="text" value={form.address?.street || ''}
+                onChange={e => setForm(prev => ({ ...prev, address: { ...prev.address!, street: e.target.value } }))}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="Rua, Avenida..." />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Número</label>
+              <input type="text" value={form.address?.number || ''}
+                onChange={e => setForm(prev => ({ ...prev, address: { ...prev.address!, number: e.target.value } }))}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="Nº" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
+              <input type="text" value={form.address?.complement || ''}
+                onChange={e => setForm(prev => ({ ...prev, address: { ...prev.address!, complement: e.target.value } }))}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                placeholder="Apto, Sala..." />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+              <input type="text" value={form.address?.neighborhood || ''}
+                onChange={e => setForm(prev => ({ ...prev, address: { ...prev.address!, neighborhood: e.target.value } }))}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <select value={form.address?.state || ''}
+                onChange={e => setForm(prev => ({ ...prev, address: { ...prev.address!, state: e.target.value, city: '' } }))}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                <option value="">Selecione...</option>
+                {estados.map(est => <option key={est.uf} value={est.uf}>{est.nome}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+              <select value={form.address?.city || ''}
+                onChange={e => setForm(prev => ({ ...prev, address: { ...prev.address!, city: e.target.value } }))}
+                disabled={!form.address?.state || loadingCities}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 disabled:opacity-60">
+                <option value="">{loadingCities ? 'Carregando...' : 'Selecione...'}</option>
+                {availableCities.map(city => <option key={city} value={city}>{city}</option>)}
+              </select>
+            </div>
           </div>
 
           <h3 className="font-semibold text-gray-900 border-b border-gray-200 pb-3 pt-2">Dados Profissionais</h3>

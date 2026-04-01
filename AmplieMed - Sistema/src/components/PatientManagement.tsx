@@ -15,6 +15,7 @@ import { medicalToast, toastError, toastWarning, toastSuccess } from '../utils/t
 import { exportPatientsExcel, exportPatientsPDF, importFromCSV } from '../utils/exportService';
 import { usePermission } from './PermissionGuard';
 import { estados } from '../utils/brasilLocations';
+import { fetchAddressByCEP } from '../utils/validationService';
 
 interface PatientManagementProps {
   userRole: UserRole;
@@ -56,6 +57,8 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
   // Cidades disponíveis baseadas no estado selecionado (API IBGE - todas as cidades)
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+  const pendingCityRef = useRef<string | null>(null);
 
   const fetchCities = useCallback(async (uf: string) => {
     if (!uf) {
@@ -78,6 +81,25 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
   useEffect(() => {
     fetchCities(formData.address?.state || '');
   }, [formData.address?.state, fetchCities]);
+
+  useEffect(() => {
+    if (!loadingCities && pendingCityRef.current && availableCities.length > 0) {
+      const pending = pendingCityRef.current;
+      pendingCityRef.current = null;
+      const match = availableCities.find(
+        (c) => c.toLowerCase() === pending.toLowerCase()
+      ) || availableCities.find(
+        (c) => c.toLowerCase().includes(pending.toLowerCase()) ||
+               pending.toLowerCase().includes(c.toLowerCase())
+      );
+      if (match) {
+        setFormData((prev) => ({
+          ...prev,
+          address: { ...prev.address!, city: match },
+        }));
+      }
+    }
+  }, [loadingCities, availableCities]);
 
   // Auto-open patient detail when returning from another module
   useEffect(() => {
@@ -143,6 +165,23 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
       .replace(/\D/g, '')
       .replace(/(\d{5})(\d)/, '$1-$2')
       .replace(/(-\d{3})\d+?$/, '$1');
+  };
+
+  const handleCepChange = async (value: string) => {
+    const formatted = maskCEP(value);
+    handleAddressChange('cep', formatted);
+    const digits = formatted.replace(/\D/g, '');
+    if (digits.length === 8) {
+      setCepLoading(true);
+      const addr = await fetchAddressByCEP(digits);
+      setCepLoading(false);
+      if (addr) {
+        handleAddressChange('street', addr.street);
+        handleAddressChange('neighborhood', addr.neighborhood);
+        pendingCityRef.current = addr.city;
+        handleAddressChange('state', addr.state);
+      }
+    }
   };
 
   const maskDate = (value: string) => {
@@ -996,17 +1035,29 @@ export function PatientManagement({ userRole }: PatientManagementProps) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm text-gray-700 mb-2">CEP *</label>
-                    <input
-                      type="text"
-                      value={formData.address?.cep || ''}
-                      onChange={(e) => handleAddressChange('cep', maskCEP(e.target.value))}
-                      placeholder="00000-000"
-                      maxLength={9}
-                      className={`w-full px-4 py-3 bg-gray-50 border ${
-                        formErrors.cep ? 'border-red-500' : 'border-gray-200'
-                      } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all`}
-                    />
-                    {formErrors.cep && (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.address?.cep || ''}
+                        onChange={(e) => handleCepChange(e.target.value)}
+                        placeholder="00000-000"
+                        maxLength={9}
+                        disabled={cepLoading}
+                        className={`w-full px-4 py-3 pr-10 bg-gray-50 border ${
+                          formErrors.cep ? 'border-red-500' : 'border-gray-200'
+                        } focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white transition-all disabled:opacity-70`}
+                      />
+                      {cepLoading && (
+                        <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                      )}
+                    </div>
+                    {cepLoading && (
+                      <p className="text-xs text-pink-500 mt-1">Buscando endereço...</p>
+                    )}
+                    {formErrors.cep && !cepLoading && (
                       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
                         {formErrors.cep}

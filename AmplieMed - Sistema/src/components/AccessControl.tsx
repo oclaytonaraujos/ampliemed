@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Shield, Plus, Edit, Trash2, Search, Lock, User, X, Mail, Phone, Eye, EyeOff, Loader2, AlertCircle, Filter, Download, FileText } from 'lucide-react';
 import type { UserRole } from '../App';
 import type { SystemUser } from './AppContext';
+import type { ProfileType } from '../utils/api';
 import { useApp } from './AppContext';
 import { toastSuccess, toastError, toastWarning } from '../utils/toastService';
 import { ROLE_LABELS, ROLE_COLORS, PERMISSIONS, type PermissionAction, type ModuleKey } from '../utils/permissions';
@@ -72,14 +73,14 @@ const PERM_ACTIONS: { key: PermissionAction; label: string }[] = [
 ];
 
 export function AccessControl({ userRole }: AccessControlProps) {
-  const { systemUsers, addSystemUser, updateSystemUser, deleteSystemUser, currentUser, addNotification, addAuditEntry, auditLog, rolePermissions, setRolePermissions, userPermissions, setUserPermissions, selectedClinicId } = useApp();
+  const { systemUsers, updateSystemUser, deleteSystemUser, currentUser, addAuditEntry, auditLog, rolePermissions, setRolePermissions, userPermissions, setUserPermissions, selectedClinicId, profileTypes, addProfileType, updateProfileType, removeProfileType } = useApp();
   const [activeTab, setActiveTab] = useState<'users' | 'permissions' | 'audit'>('users');
 
   // Users tab state
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('doctor');
+  const [selectedRole, setSelectedRole] = useState<string>('doctor');
   const [formData, setFormData] = useState<Partial<SystemUser> & { password?: string; specialty?: string; crm?: string; crm_uf?: string }>({ role: 'doctor', status: 'active' });
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -87,7 +88,7 @@ export function AccessControl({ userRole }: AccessControlProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   // Permissions tab state
-  const [permSubTab, setPermSubTab] = useState<'role' | 'user'>('role');
+  const [permSubTab, setPermSubTab] = useState<'profiles' | 'user'>('profiles');
   const [savingPermRole, setSavingPermRole] = useState<string | null>(null); // role being saved
   const [savingPermUser, setSavingPermUser] = useState<string | null>(null); // userId being saved
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
@@ -100,20 +101,40 @@ export function AccessControl({ userRole }: AccessControlProps) {
   }, [activeTab, selectedClinicId]);
 
   // Helper: get effective actions for role+module (DB override or static fallback)
-  const getEffectiveActions = (role: UserRole, module: ModuleKey): PermissionAction[] => {
+  // Accepts both base roles ('doctor', 'admin', etc.) and profile type IDs (UUID)
+  const getEffectiveActions = (role: string, module: ModuleKey): PermissionAction[] => {
+    // 1. Check for a specific override for this exact role/id
     const override = rolePermissions.find(r => r.role === role && r.module === module);
     if (override) return override.actions as PermissionAction[];
-    return PERMISSIONS[role]?.[module] ?? [];
+    // 2. If it's a profile type ID, fall back to its baseRole permissions
+    const pt = profileTypes.find(p => p.id === role);
+    if (pt) {
+      const baseOverride = rolePermissions.find(r => r.role === pt.baseRole && r.module === module);
+      if (baseOverride) return baseOverride.actions as PermissionAction[];
+      return PERMISSIONS[pt.baseRole as UserRole]?.[module] ?? [];
+    }
+    // 3. Base role static permissions
+    return PERMISSIONS[role as UserRole]?.[module] ?? [];
   };
 
-  // Helper: get user-level actions
-  const getUserActions = (userId: string, module: ModuleKey): PermissionAction[] => {
+  // Helper: get display name for any role (base or profile type)
+  const getRoleName = (role: string): string =>
+    ROLE_LABELS[role as UserRole] || profileTypes.find(pt => pt.id === role)?.name || role;
+
+  // Helper: retorna as ações salvas como override do usuário (undefined = sem override)
+  const getUserOverride = (userId: string, module: ModuleKey): PermissionAction[] | undefined => {
     const override = userPermissions.find(u => u.userId === userId && u.module === module);
-    return (override?.actions ?? []) as PermissionAction[];
+    return override ? (override.actions as PermissionAction[]) : undefined;
+  };
+
+  // Helper: ações efetivas para um usuário (override próprio > permissões do perfil)
+  const getEffectiveUserActions = (userId: string, userRole: string, module: ModuleKey): PermissionAction[] => {
+    const override = getUserOverride(userId, module);
+    return override ?? getEffectiveActions(userRole, module);
   };
 
   // Toggle a role permission action
-  const toggleRoleAction = (role: UserRole, module: ModuleKey, action: PermissionAction) => {
+  const toggleRoleAction = (role: string, module: ModuleKey, action: PermissionAction) => {
     const current = getEffectiveActions(role, module);
     const updated = current.includes(action) ? current.filter(a => a !== action) : [...current, action];
     setRolePermissions(prev => {
@@ -122,9 +143,10 @@ export function AccessControl({ userRole }: AccessControlProps) {
     });
   };
 
-  // Toggle a user permission action
-  const toggleUserAction = (userId: string, module: ModuleKey, action: PermissionAction) => {
-    const current = getUserActions(userId, module);
+  // Toggle de ação para um usuário num módulo.
+  // Se não havia override, inicializa a partir das permissões do perfil (não do zero).
+  const toggleUserAction = (userId: string, userRole: string, module: ModuleKey, action: PermissionAction) => {
+    const current = getEffectiveUserActions(userId, userRole, module);
     const updated = current.includes(action) ? current.filter(a => a !== action) : [...current, action];
     setUserPermissions(prev => {
       const filtered = prev.filter(u => !(u.userId === userId && u.module === module));
@@ -132,15 +154,21 @@ export function AccessControl({ userRole }: AccessControlProps) {
     });
   };
 
+  // Remove o override de um módulo: o usuário volta a seguir as permissões do perfil
+  const resetUserModule = (userId: string, module: ModuleKey) => {
+    setUserPermissions(prev => prev.filter(u => !(u.userId === userId && u.module === module)));
+  };
+
   // Save role permissions to DB
-  const saveRolePermissions = async (role: UserRole) => {
+  const saveRolePermissions = async (role: string) => {
     if (!selectedClinicId) return;
     setSavingPermRole(role);
+    const roleName = getRoleName(role);
     try {
       const roleRows = rolePermissions.filter(r => r.role === role);
       await Promise.all(roleRows.map(r => api.saveRolePermission(selectedClinicId, r.role, r.module, r.actions)));
-      toastSuccess(`Permissões de ${ROLE_LABELS[role]} salvas!`);
-      addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Acesso', description: `Permissões do perfil ${ROLE_LABELS[role]} atualizadas`, status: 'success' });
+      toastSuccess('Permissões de ' + roleName + ' salvas!');
+      addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Acesso', description: 'Permissões do perfil ' + roleName + ' atualizadas', status: 'success' });
     } catch (err: any) {
       toastError('Erro ao salvar permissões', { description: err.message });
     } finally {
@@ -148,19 +176,97 @@ export function AccessControl({ userRole }: AccessControlProps) {
     }
   };
 
-  // Save user permissions to DB
+  // Salva permissões de usuário: substitui tudo atomicamente (delete + insert).
+  // Módulos sem override no estado voltam a seguir o perfil automaticamente.
   const saveUserPermissions = async (userId: string, userName: string) => {
     if (!selectedClinicId) return;
     setSavingPermUser(userId);
     try {
-      const userRows = userPermissions.filter(u => u.userId === userId);
-      await Promise.all(userRows.map(u => api.saveUserPermission(selectedClinicId, u.userId, u.module, u.actions)));
+      const userRows = userPermissions
+        .filter(u => u.userId === userId)
+        .map(u => ({ module: u.module, actions: u.actions }));
+      await api.replaceUserPermissions(selectedClinicId, userId, userRows);
       toastSuccess(`Permissões de ${userName} salvas!`);
       addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Acesso', description: `Permissões individuais de ${userName} atualizadas`, status: 'success' });
     } catch (err: any) {
       toastError('Erro ao salvar permissões', { description: err.message });
     } finally {
       setSavingPermUser(null);
+    }
+  };
+
+  // Profile types tab state
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
+  const [profileForm, setProfileForm] = useState<Partial<ProfileType>>({ baseRole: 'doctor', color: '#6366f1', status: 'active' });
+  const [profileFormErrors, setProfileFormErrors] = useState<Record<string, string>>({});
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [deletingProfileId, setDeletingProfileId] = useState<string | null>(null);
+
+  const PRESET_COLORS = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6'];
+
+  const openNewProfile = () => {
+    setEditingProfileId(null);
+    setProfileForm({ baseRole: 'doctor', color: '#6366f1', status: 'active' });
+    setProfileFormErrors({});
+    setShowProfileModal(true);
+  };
+
+  const openEditProfile = (pt: ProfileType) => {
+    setEditingProfileId(pt.id);
+    setProfileForm({ ...pt });
+    setProfileFormErrors({});
+    setShowProfileModal(true);
+  };
+
+  const validateProfileForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    if (!profileForm.name?.trim()) errors.name = 'Nome é obrigatório';
+    setProfileFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSaveProfile = async () => {
+    if (!validateProfileForm() || !selectedClinicId) return;
+    setSavingProfile(true);
+    try {
+      const saved = await api.saveProfileType(selectedClinicId, {
+        id: editingProfileId || undefined,
+        name: profileForm.name!,
+        description: profileForm.description,
+        baseRole: profileForm.baseRole || 'doctor',
+        color: profileForm.color || '#6366f1',
+        status: profileForm.status || 'active',
+      });
+      if (editingProfileId) {
+        updateProfileType(editingProfileId, saved);
+        toastSuccess('Tipo de perfil atualizado!', { description: saved.name });
+        addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'update', module: 'Acesso', description: `Tipo de perfil atualizado: ${saved.name}`, status: 'success' });
+      } else {
+        addProfileType(saved);
+        toastSuccess('Tipo de perfil criado!', { description: saved.name });
+        addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'create', module: 'Acesso', description: `Tipo de perfil criado: ${saved.name}`, status: 'success' });
+      }
+      setShowProfileModal(false);
+    } catch (err: any) {
+      toastError('Erro ao salvar tipo de perfil', { description: err.message });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleDeleteProfile = async (pt: ProfileType) => {
+    if (pt.isDefault) { toastWarning('Tipos padrão do sistema não podem ser excluídos. Você pode desativá-los.'); return; }
+    setDeletingProfileId(pt.id);
+    try {
+      await api.deleteProfileType(pt.id);
+      removeProfileType(pt.id);
+      toastSuccess(`"${pt.name}" removido`);
+      addAuditEntry({ user: currentUser?.name || 'Sistema', userRole: currentUser?.role || 'admin', action: 'delete', module: 'Acesso', description: `Tipo de perfil removido: ${pt.name}`, status: 'success' });
+    } catch (err: any) {
+      toastError('Erro ao remover tipo de perfil', { description: err.message });
+    } finally {
+      setDeletingProfileId(null);
     }
   };
 
@@ -288,7 +394,7 @@ export function AccessControl({ userRole }: AccessControlProps) {
       <div className="flex border border-gray-200 bg-white w-fit rounded-lg overflow-hidden">
         {([
           { id: 'users',       label: `Usuários (${systemUsers.length})` },
-          { id: 'permissions', label: 'Permissões por Perfil' },
+          { id: 'permissions', label: 'Perfis e Permissões' },
           { id: 'audit',       label: 'Log de Auditoria' },
         ] as const).map((tab, i, arr) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -369,14 +475,14 @@ export function AccessControl({ userRole }: AccessControlProps) {
         </div>
       )}
 
-      {/* ── Permissions Tab ── */}
+      {/* ── Profiles + Permissions Tab ── */}
       {activeTab === 'permissions' && (
         <div className="space-y-4">
           {/* Sub-abas */}
           <div className="border-b border-gray-200 flex gap-6">
-            <button onClick={() => setPermSubTab('role')}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${permSubTab === 'role' ? 'border-pink-600 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-              Por Perfil
+            <button onClick={() => setPermSubTab('profiles')}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${permSubTab === 'profiles' ? 'border-pink-600 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              Perfis
             </button>
             <button onClick={() => setPermSubTab('user')}
               className={`pb-3 text-sm font-medium border-b-2 transition-colors ${permSubTab === 'user' ? 'border-pink-600 text-pink-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
@@ -384,21 +490,83 @@ export function AccessControl({ userRole }: AccessControlProps) {
             </button>
           </div>
 
-          {/* Permissões por Perfil */}
-          {permSubTab === 'role' && (
-            <div className="space-y-4">
-              <div className="flex gap-2 flex-wrap">
+          {/* Perfis + Permissões padrão */}
+          {permSubTab === 'profiles' && (
+            <div className="space-y-5">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 uppercase font-medium tracking-wide">Selecione um perfil para configurar suas permissões padrão</p>
+                <button onClick={openNewProfile}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-600 text-white text-xs rounded-lg hover:bg-pink-700 transition-colors">
+                  <Plus className="w-3.5 h-3.5" /> Novo Tipo
+                </button>
+              </div>
+
+              {/* Profile selector chips */}
+              <div className="flex flex-wrap gap-2">
+                {/* Base roles */}
                 {(['admin', 'doctor', 'receptionist', 'financial'] as UserRole[]).map(r => (
                   <button key={r} onClick={() => setSelectedRole(r)}
-                    className={`px-4 py-2 text-sm border rounded-lg transition-colors ${selectedRole === r ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}>
-                    {ROLE_LABELS[r]}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
+                      selectedRole === r
+                        ? 'border-pink-500 bg-pink-50 text-pink-700 shadow-sm'
+                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300'
+                    }`}>
+                    <Shield className="w-3.5 h-3.5 opacity-60" />
+                    <span>{ROLE_LABELS[r]}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">base</span>
                   </button>
+                ))}
+                {/* Custom profile types */}
+                {profileTypes.map(pt => (
+                  <div key={pt.id}
+                    className={`group flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all cursor-pointer select-none ${
+                      selectedRole === pt.id
+                        ? 'border-2 shadow-sm'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                    }`}
+                    style={selectedRole === pt.id
+                      ? { borderColor: pt.color, backgroundColor: pt.color + '18', color: pt.color }
+                      : {}}
+                    onClick={() => setSelectedRole(pt.id)}>
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: pt.color }} />
+                    <span>{pt.name}</span>
+                    {pt.isDefault && <span className="text-xs px-1.5 py-0.5 rounded bg-black/10 text-current opacity-60">padrão</span>}
+                    {pt.status === 'inactive' && <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-500">inativo</span>}
+                    <div className="flex items-center gap-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={e => { e.stopPropagation(); openEditProfile(pt); }}
+                        className="p-0.5 rounded hover:bg-black/10 transition-colors" title="Editar">
+                        <Edit className="w-3 h-3" />
+                      </button>
+                      {!pt.isDefault && (
+                        <button onClick={e => { e.stopPropagation(); handleDeleteProfile(pt); }}
+                          disabled={deletingProfileId === pt.id}
+                          className="p-0.5 rounded hover:bg-black/10 transition-colors disabled:opacity-40" title="Excluir">
+                          {deletingProfileId === pt.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
 
+              {/* Permission table for selected profile */}
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div className="px-5 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-gray-900">Permissões — {ROLE_LABELS[selectedRole]}</h3>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">Permissões padrão — {getRoleName(selectedRole)}</h3>
+                    {(() => {
+                      const pt = profileTypes.find(p => p.id === selectedRole);
+                      return pt ? (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Herda de: {ROLE_LABELS[pt.baseRole as UserRole] || pt.baseRole}
+                          {' · '}Permissões individuais de usuário sobrescrevem estas
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-400 mt-0.5">Permissões individuais de usuário sobrescrevem estas</p>
+                      );
+                    })()}
+                  </div>
                   <button
                     onClick={() => saveRolePermissions(selectedRole)}
                     disabled={savingPermRole === selectedRole}
@@ -445,67 +613,110 @@ export function AccessControl({ userRole }: AccessControlProps) {
           {/* Permissões por Usuário */}
           {permSubTab === 'user' && (
             <div className="space-y-3">
-              <p className="text-xs text-gray-500">Overrides individuais que prevalecem sobre o perfil do usuário.</p>
-              {systemUsers.map(u => (
-                <div key={u.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="px-5 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{u.name}</p>
-                        <p className="text-xs text-gray-500">{ROLE_LABELS[u.role as UserRole] ?? u.role} • {u.email}</p>
+              <p className="text-xs text-gray-500">
+                Permissões individuais que sobrescrevem as do perfil.
+                Módulos sem personalização seguem automaticamente as permissões do perfil — inclusive quando o perfil for editado.
+              </p>
+              {systemUsers.map(u => {
+                const userOverrideCount = userPermissions.filter(up => up.userId === u.id).length;
+                return (
+                  <div key={u.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="px-5 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-gray-900">{u.name}</p>
+                            {userOverrideCount > 0 && (
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
+                                {userOverrideCount} personalizado{userOverrideCount > 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500">{ROLE_LABELS[u.role as UserRole] ?? u.role} • {u.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => saveUserPermissions(u.id, u.name)}
+                          disabled={savingPermUser === u.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-600 text-white text-xs rounded-lg hover:bg-pink-700 disabled:opacity-50"
+                        >
+                          {savingPermUser === u.id && <Loader2 className="w-3 h-3 animate-spin" />}
+                          Salvar
+                        </button>
+                        <button onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}
+                          className="px-3 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50">
+                          {expandedUser === u.id ? 'Recolher' : 'Editar'}
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => saveUserPermissions(u.id, u.name)}
-                        disabled={savingPermUser === u.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-600 text-white text-xs rounded-lg hover:bg-pink-700 disabled:opacity-50"
-                      >
-                        {savingPermUser === u.id && <Loader2 className="w-3 h-3 animate-spin" />}
-                        Salvar
-                      </button>
-                      <button onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}
-                        className="px-3 py-1.5 text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50">
-                        {expandedUser === u.id ? 'Recolher' : 'Editar'}
-                      </button>
-                    </div>
-                  </div>
-                  {expandedUser === u.id && (
-                    <div className="border-t border-gray-100 overflow-x-auto">
-                      <table className="w-full">
-                        <thead><tr className="bg-gray-50 border-b border-gray-100">
-                          <th className="px-5 py-2 text-left text-xs text-gray-500 uppercase">Módulo</th>
-                          {PERM_ACTIONS.map(a => (
-                            <th key={a.key} className="px-3 py-2 text-center text-xs text-gray-500 uppercase">{a.label}</th>
-                          ))}
-                        </tr></thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {PERM_MODULES.map(({ key, label }) => {
-                            const userActs = getUserActions(u.id, key);
-                            const roleActs = getEffectiveActions(u.role as UserRole, key);
-                            return (
-                              <tr key={key} className="hover:bg-gray-50">
-                                <td className="px-5 py-2 text-sm text-gray-800">{label}</td>
-                                {PERM_ACTIONS.map(a => (
-                                  <td key={a.key} className="px-3 py-2 text-center">
-                                    <input
-                                      type="checkbox"
-                                      checked={userActs.length > 0 ? userActs.includes(a.key) : roleActs.includes(a.key)}
-                                      onChange={() => toggleUserAction(u.id, key, a.key)}
-                                      className="w-4 h-4 accent-pink-600"
-                                    />
+                    {expandedUser === u.id && (
+                      <div className="border-t border-gray-100 overflow-x-auto">
+                        <table className="w-full">
+                          <thead><tr className="bg-gray-50 border-b border-gray-100">
+                            <th className="px-5 py-2 text-left text-xs text-gray-500 uppercase">Módulo</th>
+                            {PERM_ACTIONS.map(a => (
+                              <th key={a.key} className="px-3 py-2 text-center text-xs text-gray-500 uppercase">{a.label}</th>
+                            ))}
+                            <th className="px-3 py-2 text-center text-xs text-gray-500 uppercase w-8" title="Resetar para permissões do perfil" />
+                          </tr></thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {PERM_MODULES.map(({ key, label }) => {
+                              const override = getUserOverride(u.id, key);
+                              const hasOverride = override !== undefined;
+                              const effective = hasOverride ? override! : getEffectiveActions(u.role, key);
+                              return (
+                                <tr key={key} className={hasOverride ? 'bg-blue-50/40 hover:bg-blue-50/60' : 'hover:bg-gray-50'}>
+                                  <td className="px-5 py-2 text-sm text-gray-800">
+                                    <div className="flex items-center gap-2">
+                                      {label}
+                                      {hasOverride && (
+                                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">personalizado</span>
+                                      )}
+                                    </div>
                                   </td>
-                                ))}
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              ))}
+                                  {PERM_ACTIONS.map(a => (
+                                    <td key={a.key} className="px-3 py-2 text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={effective.includes(a.key)}
+                                        onChange={() => toggleUserAction(u.id, u.role, key, a.key)}
+                                        className="w-4 h-4 accent-pink-600"
+                                      />
+                                    </td>
+                                  ))}
+                                  <td className="px-3 py-2 text-center">
+                                    {hasOverride && (
+                                      <button
+                                        onClick={() => resetUserModule(u.id, key)}
+                                        className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                        title="Resetar para permissões do perfil"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {userOverrideCount > 0 && (
+                          <div className="px-5 py-2 border-t border-gray-100 bg-gray-50">
+                            <button
+                              onClick={() => setUserPermissions(prev => prev.filter(up => up.userId !== u.id))}
+                              className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                              Resetar todos os módulos para o perfil
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {systemUsers.length === 0 && (
                 <p className="text-sm text-gray-500 text-center py-8">Nenhum usuário cadastrado</p>
               )}
@@ -710,6 +921,79 @@ export function AccessControl({ userRole }: AccessControlProps) {
                 className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {saving ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal — Criar/Editar Tipo de Perfil */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white max-w-md w-full rounded-lg shadow-xl">
+            <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{editingProfileId ? 'Editar Tipo de Perfil' : 'Novo Tipo de Perfil'}</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Defina um tipo de profissional para uso no sistema</p>
+              </div>
+              <button onClick={() => setShowProfileModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nome do tipo *</label>
+                <input type="text" placeholder="Ex: Fisioterapeuta, Nutricionista..." value={profileForm.name || ''}
+                  onChange={(e) => { setProfileForm(p => ({ ...p, name: e.target.value })); setProfileFormErrors(p => ({ ...p, name: '' })); }}
+                  className={`w-full px-3 py-2.5 bg-gray-50 border ${profileFormErrors.name ? 'border-red-400' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500`} />
+                {profileFormErrors.name && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{profileFormErrors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Descrição</label>
+                <textarea placeholder="Descreva o papel deste tipo de profissional..." value={profileForm.description || ''}
+                  onChange={(e) => setProfileForm(p => ({ ...p, description: e.target.value }))}
+                  rows={2}
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Perfil base (herança de permissões)</label>
+                <select value={profileForm.baseRole || 'doctor'}
+                  onChange={(e) => setProfileForm(p => ({ ...p, baseRole: e.target.value }))}
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                  {(['admin', 'doctor', 'receptionist', 'financial'] as UserRole[]).map(r => (
+                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">As permissões iniciais serão herdadas do perfil base selecionado.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Cor de identificação</label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {PRESET_COLORS.map(c => (
+                    <button key={c} type="button" onClick={() => setProfileForm(p => ({ ...p, color: c }))}
+                      className={`w-7 h-7 rounded-full transition-transform ${profileForm.color === c ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'}`}
+                      style={{ backgroundColor: c }} />
+                  ))}
+                  <input type="color" value={profileForm.color || '#6366f1'}
+                    onChange={(e) => setProfileForm(p => ({ ...p, color: e.target.value }))}
+                    className="w-7 h-7 rounded cursor-pointer border-0 p-0" title="Escolher cor personalizada" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+                <select value={profileForm.status || 'active'} onChange={(e) => setProfileForm(p => ({ ...p, status: e.target.value as any }))}
+                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500">
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 rounded-b-lg">
+              <button onClick={() => setShowProfileModal(false)} className="px-5 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" disabled={savingProfile}>
+                Cancelar
+              </button>
+              <button onClick={handleSaveProfile} disabled={savingProfile || !profileForm.name}
+                className="px-5 py-2.5 bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2">
+                {savingProfile && <Loader2 className="w-4 h-4 animate-spin" />}
+                {savingProfile ? 'Salvando...' : editingProfileId ? 'Salvar Alterações' : 'Criar Tipo de Perfil'}
               </button>
             </div>
           </div>
